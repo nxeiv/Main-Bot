@@ -36,6 +36,18 @@ function log(tag, message) {
   console.log(`[${timestamp}] [${tag}] ${message}`);
 }
 
+// Render health server
+const http = require('http');
+
+const PORT = process.env.PORT || 3000;
+
+http.createServer((req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
+  res.end('BOT Server is online.');
+}).listen(PORT, '0.0.0.0', () => {
+  log('Web', `Health server listening on port ${PORT}.`);
+});
+
 function formatUptime(totalSeconds) {
   if (!totalSeconds) return '0s';
 
