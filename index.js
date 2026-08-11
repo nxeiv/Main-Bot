@@ -48,6 +48,19 @@ http.createServer((req, res) => {
   log('Web', `Health server listening on port ${PORT}.`);
 });
 
+// Render keep-alive
+const RENDER_URL = process.env.RENDER_EXTERNAL_URL;
+
+if (RENDER_URL) {
+  setInterval(() => {
+    http.get(RENDER_URL, res => {
+      res.resume();
+    }).on('error', () => {});
+  }, 10 * 60 * 1000);
+
+  log('Web', `Keep-alive enabled: ${RENDER_URL}`);
+}
+
 function formatUptime(totalSeconds) {
   if (!totalSeconds) return '0s';
 
