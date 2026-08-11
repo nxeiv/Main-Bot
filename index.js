@@ -36,30 +36,274 @@ function log(tag, message) {
   console.log(`[${timestamp}] [${tag}] ${message}`);
 }
 
-// Render health server
+// Render web console + health server
 const http = require('http');
 const https = require('https');
 
 const PORT = process.env.PORT || 3000;
+const RENDER_URL = 'https://discomine-priv.onrender.com';
 
-http.createServer((req, res) => {
-  res.writeHead(200, { 'Content-Type': 'text/plain' });
-  res.end('BOT Server is online.');
-}).listen(PORT, '0.0.0.0', () => {
+// Store recent console logs for the web dashboard
+const recentLogs = [];
+const MAX_LOGS = 100;
+
+function addWebLog(message) {
+  recentLogs.push({
+    time: new Date().toISOString(),
+    message: String(message),
+  });
+
+  if (recentLogs.length > MAX_LOGS) {
+    recentLogs.shift();
+  }
+}
+
+function escapeHtml(text) {
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+// Save normal console logs to the web console too
+const originalLog = console.log;
+
+console.log = (...args) => {
+  const message = args
+    .map(arg => {
+      if (typeof arg === 'string') return arg;
+
+      try {
+        return JSON.stringify(arg);
+      } catch {
+        return String(arg);
+      }
+    })
+    .join(' ');
+
+  addWebLog(message);
+  originalLog(...args);
+};
+
+const server = http.createServer((req, res) => {
+  // Main dashboard
+  if (req.url === '/' || req.url === '/console') {
+    const status = mc.getStatus();
+
+    const botStatus = status.connected
+      ? '🟢 Online'
+      : (status.connecting || status.reconnecting)
+        ? '🟡 Reconnecting'
+        : '🔴 Offline';
+
+    const discordStatus = client.isReady()
+      ? '🟢 Connected'
+      : '🔴 Disconnected';
+
+    const logsHtml = recentLogs
+      .slice()
+      .reverse()
+      .map(log => `
+        <div class="log">
+          <span class="time">${escapeHtml(log.time.slice(11, 19))}</span>
+          <span>${escapeHtml(log.message)}</span>
+        </div>
+      `)
+      .join('');
+
+    const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="refresh" content="10">
+<title>DiscoMine Console</title>
+
+<style>
+  body {
+    margin: 0;
+    padding: 30px;
+    background: #0d1117;
+    color: #e6edf3;
+    font-family: Arial, sans-serif;
+  }
+
+  .container {
+    max-width: 1000px;
+    margin: auto;
+  }
+
+  h1 {
+    margin-bottom: 5px;
+  }
+
+  .subtitle {
+    color: #8b949e;
+    margin-bottom: 25px;
+  }
+
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 25px;
+  }
+
+  .card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 10px;
+    padding: 18px;
+  }
+
+  .label {
+    color: #8b949e;
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+
+  .value {
+    font-size: 20px;
+    font-weight: bold;
+  }
+
+  .logs {
+    background: #010409;
+    border: 1px solid #30363d;
+    border-radius: 10px;
+    padding: 15px;
+    max-height: 600px;
+    overflow-y: auto;
+    font-family: Consolas, monospace;
+    font-size: 13px;
+  }
+
+  .log {
+    padding: 5px 0;
+    border-bottom: 1px solid #161b22;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .time {
+    color: #8b949e;
+    margin-right: 10px;
+  }
+
+  .refresh {
+    color: #8b949e;
+    font-size: 12px;
+    margin-top: 10px;
+  }
+</style>
+</head>
+
+<body>
+<div class="container">
+
+  <h1>⛏️ DiscoMine Console</h1>
+  <div class="subtitle">The Cottage★ SMP AFK Bot</div>
+
+  <div class="cards">
+
+    <div class="card">
+      <div class="label">Minecraft</div>
+      <div class="value">${botStatus}</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Players Online</div>
+      <div class="value">${status.playerCount}</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Minecraft Server</div>
+      <div class="value">${escapeHtml(status.server)}</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Discord</div>
+      <div class="value">${discordStatus}</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Reconnect Attempts</div>
+      <div class="value">${status.reconnectAttempts}</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Bot Uptime</div>
+      <div class="value">
+        ${status.connected ? escapeHtml(formatUptime(status.uptime)) : 'Offline'}
+      </div>
+    </div>
+
+  </div>
+
+  <h2>Console</h2>
+
+  <div class="logs">
+    ${logsHtml || '<div class="log">Waiting for logs...</div>'}
+  </div>
+
+  <div class="refresh">
+    Automatically refreshes every 10 seconds.
+  </div>
+
+</div>
+</body>
+</html>
+`;
+
+    res.writeHead(200, {
+      'Content-Type': 'text/html; charset=utf-8',
+    });
+
+    return res.end(html);
+  }
+
+  // Simple health endpoint
+  if (req.url === '/health') {
+    res.writeHead(200, {
+      'Content-Type': 'text/plain',
+    });
+
+    return res.end('DiscoMine is online.');
+  }
+
+  res.writeHead(404, {
+    'Content-Type': 'text/plain',
+  });
+
+  res.end('Not found.');
+});
+
+server.listen(PORT, '0.0.0.0', () => {
   log('Web', `Health server listening on port ${PORT}.`);
+  log('Web', `Console available at ${RENDER_URL}/console`);
 });
 
 // Render keep-alive
-const RENDER_URL = 'https://discomine-priv.onrender.com';
-
 setInterval(() => {
-  http.get(RENDER_URL, res => {
+  https.get(RENDER_URL, res => {
     res.resume();
-    log('Web', `Keep-alive ping sent. HTTP ${res.statusCode}.`);
+
+    log(
+      'Web',
+      `Keep-alive ping sent. HTTP ${res.statusCode}.`,
+    );
   }).on('error', error => {
-    log('Web', `Keep-alive ping failed: ${error.message}`);
+    log(
+      'Web',
+      `Keep-alive ping failed: ${error.message}`,
+    );
   });
-}, 60 * 1000);
+}, 10 * 60 * 1000);
+
+log('Web', `Keep-alive enabled: ${RENDER_URL}`);
 
 log('Web', `Keep-alive enabled: ${RENDER_URL}`);
 
