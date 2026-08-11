@@ -49,17 +49,18 @@ http.createServer((req, res) => {
 });
 
 // Render keep-alive
-const RENDER_URL = process.env.RENDER_EXTERNAL_URL;
+const RENDER_URL = 'https://discomine-priv.onrender.com';
 
-if (RENDER_URL) {
-  setInterval(() => {
-    http.get(RENDER_URL, res => {
-      res.resume();
-    }).on('error', () => {});
-  }, 10 * 60 * 1000);
+setInterval(() => {
+  http.get(RENDER_URL, res => {
+    res.resume();
+    log('Web', `Keep-alive ping sent. HTTP ${res.statusCode}.`);
+  }).on('error', error => {
+    log('Web', `Keep-alive ping failed: ${error.message}`);
+  });
+}, 60 * 1000);
 
-  log('Web', `Keep-alive enabled: ${RENDER_URL}`);
-}
+log('Web', `Keep-alive enabled: ${RENDER_URL}`);
 
 function formatUptime(totalSeconds) {
   if (!totalSeconds) return '0s';
