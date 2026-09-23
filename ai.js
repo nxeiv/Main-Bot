@@ -98,7 +98,7 @@ const FEATURE_GUIDE = {
   'Cottage Protection': 'Lets players protect their builds and belongings.',
   'Cottage Teams': 'Lets players team up with other players.',
   'Cozy Sitting': 'Lets players sit down and relax around the world.',
-  'Cottage Teleport': 'Lets players travel to a random location.',
+  'Cottage Teleport': 'Lets players send teleport requests to other players.',
   "Wanderer's Way": 'Lets players travel to a random location.',
   'Lantern Light': 'Held light sources can illuminate the surroundings.',
   'Pure Survival': 'The server is focused on a survival experience.',
@@ -148,10 +148,10 @@ const FEATURE_TUTORIALS = {
     'Use /sit or right-click stairs, slabs, and players to sit. To disable accidental sitting, use /gsit toggle off.',
 
   'Cottage Teleport':
-    'Use /rtp in chat to request a random teleport.',
+    'Use /tpa <player> in chat to send a teleport request to another player.',
 
   "Wanderer's Way":
-    "Wanderer's Way lets players travel to a random location. The bot does not have a confirmed command configured for this feature.",
+    "Wanderer's Way lets players travel to a random location.",
 
   'Lantern Light':
     'Lantern Light is automatic. Held light sources can illuminate the surroundings without needing a separate bot command.',
