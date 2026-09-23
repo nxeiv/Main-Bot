@@ -48,41 +48,91 @@ const SERVER_INFO = {
 
   // Features
   features: [
-    'Cracked',
-    'Elytra Lunge',
-    'Spawn Animations',
-    'Clickable Villagers',
-    'Armor Stand Customization',
-    'One Mace',
-    'Players Drop Their Heads on Death',
-    'Netherite Disabled',
-    'Better Mending',
-    'Grief Prevention',
-    'Ultimate Teams',
-    'GSit',
-    'Just TPA',
-    'Simple RTP',
-    'Dynamic Lights',
-    'Strictly Survival',
-    'Vanilla Refresh Mechanics',
-    'Keep Inventory OFF',
-    'Attribute Swapping Fixed on PaperMC',
-    'Dream Displays',
-    'Veinminer',
-    'Simple Voice Chat',
+    'Open Doors',
+    'Cottage Boost',
+    'Grand Arrivals',
+    'Friendly Neighbors',
+    'Cottage Custom',
+    'The Cottage Mace',
+    'Memorial Keepsakes',
+    'Classic Crafting',
+    'Cozy Repairs',
+    'Cottage Protection',
+    'Cottage Teams',
+    'Cozy Sitting',
+    'Cottage Teleport',
+    "Wanderer's Way",
+    'Lantern Light',
+    'Pure Survival',
+    'Fresh Vanilla',
+    'True Hardcore',
+    'Steady Stats',
+    'Cottage Displays',
+    'Cottage Harvest',
+    'Cottage Voice',
   ],
 
   voiceChatInfo:
-    'Simple Voice Chat requires the Simple Voice Chat mod.',
+    'Cottage Voice provides proximity voice chat. Java players need the required voice-chat support installed.',
 
   veinminerInfo:
-    'Veinminer works on wood except stripped logs and on ores. Sneak to activate it.',
+    'Cottage Harvest works on eligible connected wood and ores. Sneak while breaking to activate it. Stripped logs are excluded.',
 
   dvcInfo:
     'Bedrock players can use /dvc start in-game for the dedicated Minecraft voice chat.',
 
   rulesReminder:
     'Players must follow The Cottage★ SMP Code of Conduct.',
+};
+
+const FEATURE_GUIDE = {
+  'Open Doors': 'Players can join without owning a premium Minecraft account.',
+  'Cottage Boost': 'Gives players Elytra flight and Spear Lunging.',
+  'Grand Arrivals': 'Players get special animations when entering the world.',
+  'Friendly Neighbors': 'Provides convenient interactions with villagers.',
+  'Cottage Custom': 'Lets players customize and pose armor stands.',
+  'The Cottage Mace': 'Provides the server’s special one-of-a-kind Mace setup.',
+  'Memorial Keepsakes': 'Players leave behind their head when they die.',
+  'Classic Crafting': 'Netherite is unavailable on the server.',
+  'Cozy Repairs': 'Provides a more convenient Mending experience.',
+  'Cottage Protection': 'Lets players protect their builds and belongings.',
+  'Cottage Teams': 'Lets players team up with other players.',
+  'Cozy Sitting': 'Lets players sit down and relax around the world.',
+  'Cottage Teleport': 'Lets players request teleportation to other players.',
+  "Wanderer's Way": 'Lets players travel to a random location.',
+  'Lantern Light': 'Held light sources can illuminate the surroundings.',
+  'Pure Survival': 'The server is focused on a survival experience.',
+  'Fresh Vanilla': 'Keeps familiar vanilla gameplay while adding carefully chosen quality-of-life improvements.',
+  'True Hardcore': 'The server uses a Hardcore experience where Keep Inventory is disabled and death matters.',
+  'Steady Stats': 'Player attributes work correctly on the server.',
+  'Cottage Displays': 'Provides decorative displays for builds.',
+  'Cottage Harvest': 'Lets players quickly harvest connected wood and ores while sneaking. Stripped logs are excluded.',
+  'Cottage Voice': 'Provides proximity voice chat. Java players need the required voice-chat support installed. Bedrock players can use /dvc start in-game for their dedicated voice connection.',
+};
+
+const FEATURE_ALIASES = {
+  cracked: 'Open Doors',
+  'elytra lunge': 'Cottage Boost',
+  'spawn animations': 'Grand Arrivals',
+  'clickable villagers': 'Friendly Neighbors',
+  'armor stand customization': 'Cottage Custom',
+  'one mace': 'The Cottage Mace',
+  'players drop their heads on death': 'Memorial Keepsakes',
+  'netherite disabled': 'Classic Crafting',
+  'better mending': 'Cozy Repairs',
+  'grief prevention': 'Cottage Protection',
+  'ultimate teams': 'Cottage Teams',
+  gsit: 'Cozy Sitting',
+  'just tpa': 'Cottage Teleport',
+  'simple rtp': "Wanderer's Way",
+  'dynamic lights': 'Lantern Light',
+  'strictly survival': 'Pure Survival',
+  'vanilla refresh mechanics': 'Fresh Vanilla',
+  'keep inventory off': 'True Hardcore',
+  'attribute swapping fixed on papermc': 'Steady Stats',
+  'dream displays': 'Cottage Displays',
+  veinminer: 'Cottage Harvest',
+  'simple voice chat': 'Cottage Voice',
 };
 
 const SYSTEM_PROMPT = `
@@ -149,8 +199,8 @@ Use the authoritative server information when the user specifically asks about:
 - Whitelisting
 - SMP rules
 - SMP features
-- Simple Voice Chat
-- MCXboxBroadcast
+- Cottage Voice
+- Cottage Harvest
 - Minecraft gameplay systems
 - Other clearly Minecraft-related topics
 
@@ -225,13 +275,13 @@ Port: ${SERVER_INFO.bedrockPort}
 
 BEDROCK JOINING
 
-The preferred simple joining method for Bedrock players is through MCXboxBroadcast.
+The preferred simple joining method for Bedrock players is through the server's Bedrock friend system.
 
-A Bedrock player can add the server's Bedrock/Xbox account as a friend.
+A Bedrock player can add "Emmcee4483" as a friend.
 
-MCXboxBroadcast automatically adds them back and invites them to the server.
+After the friend request is sent, they can be invited to the server through their friends list.
 
-This allows Bedrock players to join from their friends list without manually entering the server IP and port.
+Do not reveal or discuss the internal technology behind this joining system.
 
 Only provide the manual Bedrock IP and port when:
 - The user specifically asks for the IP and port
@@ -924,6 +974,38 @@ function getKnownAnswer(message) {
     /\bnetherite\b/.test(text);
 
   // ============================================================
+  // COTTAGE★ FEATURE QUESTIONS
+  // ============================================================
+
+  if (
+    text === 'what are your features?' ||
+    text === 'what are your features' ||
+    text === 'server features?' ||
+    text === 'server features' ||
+    text === 'smp features?' ||
+    text === 'smp features'
+  ) {
+    return [
+      '**The Cottage★ SMP features:**',
+      ...SERVER_INFO.features.map(
+        feature => `• **${feature}** — ${FEATURE_GUIDE[feature]}`,
+      ),
+    ].join('\\n');
+  }
+
+  for (const [alias, feature] of Object.entries(FEATURE_ALIASES)) {
+    if (
+      text === alias ||
+      text === `${alias}?` ||
+      text.includes(`what is ${alias}`) ||
+      text.includes(`what's ${alias}`) ||
+      text.includes(`how does ${alias} work`)
+    ) {
+      return `**${feature}** — ${FEATURE_GUIDE[feature]}`;
+    }
+  }
+
+  // ============================================================
   // GENERAL MINECRAFT IP INFORMATION
   // ============================================================
 
@@ -967,14 +1049,12 @@ function getKnownAnswer(message) {
   // ============================================================
 
   if (
-    minecraftContext &&
-    (
-      text === 'map?' ||
-      /\bserver map\b/.test(text) ||
-      /\bworld map\b/.test(text) ||
-      /\blive map\b/.test(text) ||
-      /\bsquaremap\b/.test(text)
-    )
+    text === 'map?' ||
+    text === 'map' ||
+    /\bserver map\b/.test(text) ||
+    /\bworld map\b/.test(text) ||
+    /\blive map\b/.test(text) ||
+    /\bsquaremap\b/.test(text)
   ) {
     return 'The old live world map feature was removed from The Cottage★ SMP.';
   }
@@ -1015,6 +1095,20 @@ function getKnownAnswer(message) {
     )
   ) {
     return `The Cottage★ SMP is invite-only. Invite: ${SERVER_INFO.invite}`;
+  }
+
+  // ============================================================
+  // BEDROCK JOINING
+  // ============================================================
+
+  if (
+    text === 'bedrock join?' ||
+    text === 'how do i join on bedrock?' ||
+    text === 'how do i join bedrock?' ||
+    text === 'bedrock joining?' ||
+    /\bjoin.*bedrock\b/.test(text)
+  ) {
+    return SERVER_INFO.bedrockJoiningInfo;
   }
 
   // ============================================================
