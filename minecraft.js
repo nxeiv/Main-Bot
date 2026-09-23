@@ -206,6 +206,7 @@ function createBot() {
   }, 150_000);
 
   let spawnHandled = false;
+  let playerJoinTrackingReady = false;
 
   bot.once('spawn', () => {
     if (state.bot !== bot) return;
@@ -227,6 +228,15 @@ function createBot() {
       if (state.bot !== bot || !state.connected) return;
       checkAndActOnPlayers(bot);
     }, 2_000);
+
+    // Give Mineflayer time to populate the initial player list.
+    // This prevents the daily welcome system from treating players
+    // who were already online when the bot connected as new joins.
+    setTimeout(() => {
+      if (state.bot !== bot || !state.connected) return;
+      playerJoinTrackingReady = true;
+      log('Bot', 'Player join detection is ready.');
+    }, 5_000);
   });
 
   bot.on('kicked', (reason) => {
@@ -283,6 +293,7 @@ function createBot() {
 
   bot.on('playerJoined', player => {
     if (state.bot !== bot) return;
+    if (!playerJoinTrackingReady) return;
     if (!player?.username) return;
     if (player.username === bot.username) return;
 
