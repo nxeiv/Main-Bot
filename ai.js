@@ -110,6 +110,74 @@ const FEATURE_GUIDE = {
   'Cottage Voice': 'Provides proximity voice chat. Java players need the required voice-chat support installed. Bedrock players can use /dvc start in-game for their dedicated voice connection.',
 };
 
+const FEATURE_TUTORIALS = {
+  'Open Doors':
+    'Open Doors is automatic. It allows players to join without owning a premium Minecraft account, so there is nothing you need to activate in-game.',
+
+  'Cottage Boost':
+    'Cottage Boost provides Elytra flight and Spear Lunging. No specific activation command is configured in the bot, so use the server\'s in-game guidance if you need the exact controls.',
+
+  'Grand Arrivals':
+    'Grand Arrivals is automatic. The special arrival animations play when players enter the world.',
+
+  'Friendly Neighbors':
+    'Friendly Neighbors adds convenient interactions with villagers. The bot does not have a confirmed activation command for this feature.',
+
+  'Cottage Custom':
+    'Cottage Custom lets you customize and pose armor stands. The bot does not have a confirmed command for the customization interface.',
+
+  'The Cottage Mace':
+    'The Cottage Mace is the server\'s special one-of-a-kind Mace setup. The bot does not have a confirmed usage command for it.',
+
+  'Memorial Keepsakes':
+    'Memorial Keepsakes is automatic. When a player dies, their head is left behind as a memorial keepsake.',
+
+  'Classic Crafting':
+    'Classic Crafting is a server rule rather than a command. Netherite is unavailable on The Cottage★ SMP.',
+
+  'Cozy Repairs':
+    'Cozy Repairs provides a more convenient Mending experience. The bot does not have a confirmed command for activating it.',
+
+  'Cottage Protection':
+    'Cottage Protection lets players protect their builds and belongings. The bot does not have a confirmed setup command, so use the server\'s in-game protection guidance.',
+
+  'Cottage Teams':
+    'Cottage Teams lets players team up with other players. The bot does not have a confirmed command list for team management.',
+
+  'Cozy Sitting':
+    'Cozy Sitting lets players sit down around the world. The bot does not have a confirmed activation command configured.',
+
+  'Cottage Teleport':
+    'Cottage Teleport lets players request teleportation to other players. The bot does not have a confirmed command list for requesting a teleport.',
+
+  "Wanderer's Way":
+    "Wanderer's Way lets players travel to a random location. The bot does not have a confirmed command configured for this feature.",
+
+  'Lantern Light':
+    'Lantern Light is automatic. Held light sources can illuminate the surroundings without needing a separate bot command.',
+
+  'Pure Survival':
+    'Pure Survival is the server\'s survival-focused gameplay setup. There is nothing you need to activate for it.',
+
+  'Fresh Vanilla':
+    'Fresh Vanilla keeps familiar vanilla gameplay while adding carefully chosen quality-of-life improvements. There is nothing you need to activate for it.',
+
+  'True Hardcore':
+    'True Hardcore is always active. Keep Inventory is disabled, so death matters on the server.',
+
+  'Steady Stats':
+    'Steady Stats is automatic. Player attributes work correctly on the server without needing a command.',
+
+  'Cottage Displays':
+    'Cottage Displays provides decorative displays for builds. The bot does not have a confirmed setup command for this feature.',
+
+  'Cottage Harvest':
+    'To use Cottage Harvest, sneak while breaking eligible connected wood or ores. Stripped logs are excluded.',
+
+  'Cottage Voice':
+    'Cottage Voice provides proximity voice chat. Java players need the required voice-chat support installed. Bedrock players can use /dvc start in-game for their dedicated voice connection.',
+};
+
 const FEATURE_ALIASES = {
   cracked: 'Open Doors',
   'elytra lunge': 'Cottage Boost',
@@ -993,13 +1061,47 @@ function getKnownAnswer(message) {
     ].join('\\n');
   }
 
-  for (const [alias, feature] of Object.entries(FEATURE_ALIASES)) {
+  // Feature tutorials work with both the public Cottage★ name and
+  // older/internal phrases so players can ask naturally without the
+  // bot exposing those internal names in its response.
+  const featureEntries = [
+    ...SERVER_INFO.features.map(feature => [feature.toLowerCase(), feature]),
+    ...Object.entries(FEATURE_ALIASES),
+  ];
+
+  for (const [term, feature] of featureEntries) {
+    const normalizedTerm = term.toLowerCase();
+
+    if (!text.includes(normalizedTerm)) {
+      continue;
+    }
+
+    const asksForTutorial =
+      /\bhow (?:do i|can i|do you|does this|does it|do we)\b/.test(text) ||
+      /\bhow to\b/.test(text) ||
+      /\bhow does\b/.test(text) ||
+      /\bhow do\b/.test(text) ||
+      /\bhow can\b/.test(text) ||
+      /\bhow should\b/.test(text) ||
+      /\bguide\b/.test(text) ||
+      /\btutorial\b/.test(text) ||
+      /\buse\b/.test(text);
+
+    const asksForDescription =
+      /\bwhat is\b/.test(text) ||
+      /\bwhat's\b/.test(text) ||
+      /\bwhat does\b/.test(text) ||
+      /\btell me about\b/.test(text) ||
+      /\bexplain\b/.test(text);
+
+    if (asksForTutorial && FEATURE_TUTORIALS[feature]) {
+      return `**${feature}** — ${FEATURE_TUTORIALS[feature]}`;
+    }
+
     if (
-      text === alias ||
-      text === `${alias}?` ||
-      text.includes(`what is ${alias}`) ||
-      text.includes(`what's ${alias}`) ||
-      text.includes(`how does ${alias} work`)
+      asksForDescription ||
+      text === normalizedTerm ||
+      text === `${normalizedTerm}?`
     ) {
       return `**${feature}** — ${FEATURE_GUIDE[feature]}`;
     }
