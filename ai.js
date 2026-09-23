@@ -193,7 +193,7 @@ const BOT_FEATURES_MESSAGE = [
   '• 🗑️ **Forget Controls** — Supports forgetting a user conversation or all conversations.',
   '• 🩺 **Command Watchdog** — Monitors the bot\'s registered slash commands.',
   '• ⚡ **Instant Answers** — Handles common Cottage★ questions without needing an AI request.',
-].join('\\n');
+].join('\n');
 
 const BOT_HELP_MESSAGE = [
   '**The Cottage★ Bot Help**',
@@ -223,7 +223,7 @@ const BOT_HELP_MESSAGE = [
   '• rtp? — Random teleport help',
   '',
   'For anything else, just ask naturally and I\'ll do my best to help.',
-].join('\\n');
+].join('\n');
 
 const FEATURE_ALIASES = {
   cracked: 'Open Doors',
@@ -1036,7 +1036,7 @@ function getKnownAnswer(message) {
       ...SERVER_INFO.features.map(
         feature => `• **${feature}** — ${FEATURE_GUIDE[feature]}`,
       ),
-    ].join('\\n');
+    ].join('\n');
   }
 
   // Feature tutorials work with both the public Cottage★ name and
@@ -1140,7 +1140,7 @@ function getKnownAnswer(message) {
       '• General — <#1398568017708978258>',
       '• Minecraft / Status — <#1533883039287873566>',
       '• Bedrock Voice — <#1533895421988962334>',
-    ].join('\\n');
+    ].join('\n');
   }
 
   if (text === 'rules?' || text === 'rules' || text === 'discord rules?' || text === 'discord rules') {
