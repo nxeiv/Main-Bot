@@ -32,6 +32,114 @@ const SCHEDULE_FILE = path.join(
   'scheduled-actions.json',
 );
 
+const DAILY_WELCOME_FILE = path.join(
+  __dirname,
+  'daily-welcomes.json',
+);
+
+let dailyWelcomeState = {
+  date: '',
+  players: [],
+};
+
+function getPhilippineDateKey() {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Manila',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date());
+
+  const values = Object.fromEntries(
+    parts
+      .filter(part => part.type !== 'literal')
+      .map(part => [part.type, part.value]),
+  );
+
+  return `${values.year}-${values.month}-${values.day}`;
+}
+
+function saveDailyWelcomeState() {
+  try {
+    fs.writeFileSync(
+      DAILY_WELCOME_FILE,
+      JSON.stringify(dailyWelcomeState, null, 2),
+      'utf8',
+    );
+  } catch (error) {
+    log(
+      'AI',
+      `Unable to save daily welcome state: ${error.message}`,
+    );
+  }
+}
+
+function loadDailyWelcomeState() {
+  const today = getPhilippineDateKey();
+
+  try {
+    if (fs.existsSync(DAILY_WELCOME_FILE)) {
+      const raw = fs.readFileSync(
+        DAILY_WELCOME_FILE,
+        'utf8',
+      );
+
+      if (raw.trim()) {
+        const saved = JSON.parse(raw);
+
+        if (
+          saved &&
+          saved.date === today &&
+          Array.isArray(saved.players)
+        ) {
+          dailyWelcomeState = {
+            date: today,
+            players: saved.players.filter(
+              player => typeof player === 'string',
+            ),
+          };
+
+          return;
+        }
+      }
+    }
+  } catch (error) {
+    log(
+      'AI',
+      `Unable to load daily welcome state: ${error.message}`,
+    );
+  }
+
+  dailyWelcomeState = {
+    date: today,
+    players: [],
+  };
+
+  saveDailyWelcomeState();
+}
+
+function shouldWelcomePlayer(username) {
+  const today = getPhilippineDateKey();
+
+  if (dailyWelcomeState.date !== today) {
+    dailyWelcomeState = {
+      date: today,
+      players: [],
+    };
+  }
+
+  if (dailyWelcomeState.players.includes(username)) {
+    return false;
+  }
+
+  dailyWelcomeState.players.push(username);
+  saveDailyWelcomeState();
+
+  return true;
+}
+
+loadDailyWelcomeState();
+
 const PERSISTABLE_ADMIN_ACTIONS = new Set([
   'start',
   'stop',
@@ -747,6 +855,47 @@ const response = await ai.ask(question, {
       'AI',
       `Unable to answer Minecraft chat: ${error.message}`,
     );
+  }
+});
+
+mc.emitter.on('minecraftPlayerJoined', async ({ username }) => {
+  if (!username || username === config.bot.username) {
+    return;
+  }
+
+  if (!shouldWelcomePlayer(username)) {
+    return;
+  }
+
+  await new Promise(resolve => setTimeout(resolve, 1500));
+
+  try {
+    log('AI', `Generating daily welcome for Minecraft player ${username}.`);
+
+    const response = await ai.ask(
+      `A player named ${username} just joined The Cottage★ SMP. Give them a short, friendly in-game welcome. Mention their username, make it feel natural and welcoming, and keep it under 180 characters. Do not use Markdown, emojis, commands, server facts, or a question.`,
+      {
+        userId: `mc:welcome:${username}`,
+        platform: 'minecraft',
+      },
+    );
+
+    mc.chat(response);
+    log('AI', `Sent daily welcome to ${username}: ${response}`);
+  } catch (error) {
+    log(
+      'AI',
+      `Unable to generate daily welcome for ${username}: ${error.message}`,
+    );
+
+    try {
+      mc.chat(`Welcome to The Cottage★, ${username}!`);
+    } catch (chatError) {
+      log(
+        'AI',
+        `Unable to send fallback welcome to ${username}: ${chatError.message}`,
+      );
+    }
   }
 });
 
