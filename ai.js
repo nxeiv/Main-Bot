@@ -205,6 +205,7 @@ const BOT_HELP_MESSAGE = [
   '**⛏️ The Cottage★ SMP**',
   '• Ask about joining the SMP, Java, Bedrock, server addresses, rules, and world downloads.',
   '• Ask **"what are your features?"** or **"what can you do?"** for my bot features.',
+  '• Ask **"what are the SMP features?"** or **"server features?"** for the full Cottage★ SMP feature list.',
   '• Ask **"what is Cottage Harvest?"** or **"how do I use Cottage Voice?"** for feature help and tutorials.',
   '',
   '**🧭 Useful questions**',
