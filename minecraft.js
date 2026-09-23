@@ -91,6 +91,8 @@ function start() {
   createBot();
 }
 
+
+
 function stop() {
   state.manualStop = true;
   clearTimers();
@@ -111,6 +113,22 @@ function stop() {
   state.startTime = null;
   log('Bot', 'Bot stopped.');
   emitter.emit('stopped');
+}
+
+function chat(message) {
+  if (!state.bot || !state.connected) {
+    throw new Error('Minecraft bot is not connected.');
+  }
+
+  const text = String(message).trim();
+
+  if (!text) {
+    throw new Error('Message cannot be empty.');
+  }
+
+  state.bot.chat(text);
+
+  log('Chat', `Sent Minecraft chat: ${text}`);
 }
 
 function getStatus() {
@@ -169,11 +187,19 @@ function createBot() {
   state.bot = bot;
 
   clearTimers();
+    
   state.connectionTimer = setTimeout(() => {
+    if (state.bot !== bot) return;
+
     if (!state.connected) {
       state.isConnecting = false;
       log('Bot', 'Connection timed out: no spawn event after 150 seconds.');
-      try { bot.removeAllListeners(); bot.end(); } catch (_) { }
+
+      try {
+        bot.removeAllListeners();
+        bot.end();
+      } catch (_) { }
+
       state.bot = null;
       rejoinASAP();
     }
@@ -182,7 +208,9 @@ function createBot() {
   let spawnHandled = false;
 
   bot.once('spawn', () => {
+    if (state.bot !== bot) return;
     if (spawnHandled) return;
+
     spawnHandled = true;
 
     clearTimers();
@@ -195,23 +223,40 @@ function createBot() {
     log('Bot', `Connected (Minecraft ${bot.version}). Checking for other players.`);
     emitter.emit('connected', { version: bot.version });
 
-    setTimeout(() => checkAndActOnPlayers(bot), 2_000);
+    setTimeout(() => {
+      if (state.bot !== bot || !state.connected) return;
+      checkAndActOnPlayers(bot);
+    }, 2_000);
   });
 
   bot.on('kicked', (reason) => {
-    const r = typeof reason === 'object' ? JSON.stringify(reason) : reason;
+    if (state.bot !== bot) return;
+
+    const r = typeof reason === 'object'
+      ? JSON.stringify(reason)
+      : reason;
+
     log('Bot', `Kicked from the server: ${r}`);
+
     state.connected = false;
     clearIntervals();
+    clearTimers();
+
     emitter.emit('kicked', r);
   });
 
   bot.on('end', (reason) => {
+    if (state.bot !== bot) return;
+
     log('Bot', `Disconnected: ${reason || 'unknown reason'}.`);
+
     state.connected = false;
     state.isConnecting = false;
     state.playerCount = 0;
+
     clearIntervals();
+    clearTimers();
+
     emitter.emit('disconnected', reason);
 
     if (state.manualStop) return;
@@ -221,61 +266,104 @@ function createBot() {
   });
 
   bot.on('error', (err) => {
+    if (state.bot !== bot) return;
+
     log('Bot', `Network error: ${err.message}`);
   });
+
+  bot.on('chat', (username, message) => {
+    if (state.bot !== bot) return;
+    if (username === bot.username) return;
+
+    emitter.emit('minecraftChat', {
+      username,
+      message,
+    });
+  });
+    
 }
 
 function startAntiAFK(bot) {
   addInterval(() => {
-    if (!state.connected || !bot) return;
+    if (!state.connected || !bot || state.bot !== bot) return;
     try { bot.swingArm(); } catch (_) { }
   }, 15_000 + Math.random() * 45_000);
 
   addInterval(() => {
-    if (!state.connected || !bot) return;
+    if (!state.connected || !bot || state.bot !== bot) return;
     try {
       bot.look(Math.random() * Math.PI * 2, (Math.random() - 0.5) * Math.PI / 2, true);
     } catch (_) { }
   }, 8_000 + Math.random() * 12_000);
 
   addInterval(() => {
-    if (!state.connected || !bot) return;
+    if (!state.connected || !bot || state.bot !== bot) return;
     try { bot.setQuickBarSlot(Math.floor(Math.random() * 9)); } catch (_) { }
   }, 30_000 + Math.random() * 60_000);
 
   addInterval(() => {
-    if (!state.connected || !bot || typeof bot.setControlState !== 'function') return;
+    if (
+  !state.connected ||
+  !bot ||
+  state.bot !== bot ||
+  typeof bot.setControlState !== 'function'
+) return;
     try {
       bot.look(Math.random() * Math.PI * 2, 0, true);
       bot.setControlState('forward', true);
-      setTimeout(() => {
-        if (bot && typeof bot.setControlState === 'function')
-          bot.setControlState('forward', false);
-      }, 500 + Math.random() * 1_500);
+setTimeout(() => {
+  if (
+    state.connected &&
+    state.bot === bot &&
+    typeof bot.setControlState === 'function'
+  ) {
+    bot.setControlState('forward', false);
+  }
+}, 500 + Math.random() * 1_500);
     } catch (_) { }
   }, 120_000 + Math.random() * 240_000);
 
   addInterval(() => {
-    if (!state.connected || !bot || typeof bot.setControlState !== 'function') return;
+    if (
+  !state.connected ||
+  !bot ||
+  state.bot !== bot ||
+  typeof bot.setControlState !== 'function'
+) return;
     if (Math.random() > 0.6) {
       try {
         bot.setControlState('sneak', true);
-        setTimeout(() => {
-          if (bot && typeof bot.setControlState === 'function')
-            bot.setControlState('sneak', false);
-        }, 300 + Math.random() * 800);
+      setTimeout(() => {
+  if (
+    state.connected &&
+    state.bot === bot &&
+    typeof bot.setControlState === 'function'
+  ) {
+    bot.setControlState('sneak', false);
+  }
+}, 300 + Math.random() * 800);
       } catch (_) { }
     }
   }, 60_000 + Math.random() * 90_000);
 
   addInterval(() => {
-    if (!state.connected || !bot || typeof bot.setControlState !== 'function') return;
+    if (
+  !state.connected ||
+  !bot ||
+  state.bot !== bot ||
+  typeof bot.setControlState !== 'function'
+) return;
     try {
       bot.setControlState('jump', true);
-      setTimeout(() => {
-        if (bot && typeof bot.setControlState === 'function')
-          bot.setControlState('jump', false);
-      }, 100);
+setTimeout(() => {
+  if (
+    state.connected &&
+    state.bot === bot &&
+    typeof bot.setControlState === 'function'
+  ) {
+    bot.setControlState('jump', false);
+  }
+}, 100);
     } catch (_) { }
   }, 90_000 + Math.random() * 180_000);
 
@@ -283,8 +371,8 @@ function startAntiAFK(bot) {
 }
 
 function checkAndActOnPlayers(bot) {
-  if (!state.connected || !bot) return;
-
+  if (!state.connected || !bot || state.bot !== bot) return;
+    
   const count = Object.values(bot.players || {})
     .filter(p => p.username !== config.bot.username)
     .length;
@@ -302,7 +390,7 @@ function checkAndActOnPlayers(bot) {
 
   let lastPlayerCount = count;
   addInterval(() => {
-    if (!state.connected || !bot) return;
+    if (!state.connected || !bot || state.bot !== bot) return;
 
     const currentCount = Object.values(bot.players || {})
       .filter(p => p.username !== config.bot.username)
@@ -342,4 +430,10 @@ function rejoinASAP() {
   }, delay);
 }
 
-module.exports = { start, stop, getStatus, emitter };
+module.exports = {
+  start,
+  stop,
+  chat,
+  getStatus,
+  emitter,
+};
