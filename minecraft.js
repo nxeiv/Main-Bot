@@ -280,6 +280,16 @@ function createBot() {
       message,
     });
   });
+
+  bot.on('playerJoined', player => {
+    if (state.bot !== bot) return;
+    if (!player?.username) return;
+    if (player.username === bot.username) return;
+
+    emitter.emit('minecraftPlayerJoined', {
+      username: player.username,
+    });
+  });
     
 }
 
