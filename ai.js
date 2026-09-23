@@ -13,7 +13,7 @@ const SERVER_INFO = {
   bedrockAddress: '62.141.62.31',
   bedrockPort: '37731',
   bedrockJoiningInfo:
-    'Bedrock players can add the server\'s Bedrock/Xbox account as a friend. MCXboxBroadcast automatically adds them back and invites them to the server, allowing them to join through their friends list without manually entering the server IP and port.',
+    'Bedrock players can add "Emmcee4483" as a friend on Bedrock. Once the friend request is sent, they can be invited to the server through their friends list.',
 
  smpIntroMessage:
     'https://discord.com/channels/1398568016915992667/1478252152169431134/1545519313606287390',
@@ -44,7 +44,7 @@ const SERVER_INFO = {
   // Joining
   inviteOnly: true,
   javaAutoWhitelistSameIp: true,
-  bedrockRequiresManualWhitelist: true,
+  bedrockRequiresManualWhitelist: false,
 
   // Features
   features: [
@@ -286,7 +286,7 @@ Do not reveal or discuss the internal technology behind this joining system.
 Only provide the manual Bedrock IP and port when:
 - The user specifically asks for the IP and port
 - The user needs an alternative joining method
-- The user is unable to use the MCXboxBroadcast method
+- The user is unable to use the Bedrock friend/invite method
 
 SMP INTRODUCTION MESSAGE:
 https://discord.com/channels/1398568016915992667/1478252152169431134/1545519313606287390
