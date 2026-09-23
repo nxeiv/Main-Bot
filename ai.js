@@ -388,7 +388,8 @@ const USER_COOLDOWN_MS = 5000;
 // Minimum time between ALL Gemini requests.
 const GLOBAL_COOLDOWN_MS = 2000;
 
-// Maximum number of requests waiting in the queue.const MAX_QUEUE_SIZE = 10;
+// Maximum number of requests waiting in the queue.
+const MAX_QUEUE_SIZE = 10;
 
 const userLastRequest = new Map();
 
