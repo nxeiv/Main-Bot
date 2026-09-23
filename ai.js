@@ -178,6 +178,29 @@ const FEATURE_TUTORIALS = {
     'Cottage Voice provides proximity voice chat. Java players need the required voice-chat support installed. Bedrock players can use /dvc start in-game for their dedicated voice connection.',
 };
 
+const BOT_HELP_MESSAGE = [
+  '**The Cottage★ Bot Help**',
+  '',
+  '**💬 Discord & Community**',
+  '• Ask me about Discord channels, roles, server navigation, and community information.',
+  '• Ask general questions or have a normal conversation with me.',
+  '',
+  '**⛏️ The Cottage★ SMP**',
+  '• Ask about joining the SMP, Java, Bedrock, server addresses, rules, and world downloads.',
+  '• Ask **"what are your features?"** for the full Cottage★ feature list.',
+  '• Ask **"what is Cottage Harvest?"** or **"how do I use Cottage Voice?"** for feature help and tutorials.',
+  '',
+  '**🧭 Useful questions**',
+  '• ip? — Server IP information',
+  '• bedrock join? — Bedrock joining instructions',
+  '• rules? — SMP Code of Conduct',
+  '• world download? — World download',
+  '• map? — Check the current map status',
+  '• features? — Cottage★ SMP features',
+  '',
+  'For anything else, just ask naturally and I\'ll do my best to help.',
+].join('\\n');
+
 const FEATURE_ALIASES = {
   cracked: 'Open Doors',
   'elytra lunge': 'Cottage Boost',
@@ -1040,6 +1063,30 @@ function getKnownAnswer(message) {
     /\bveinminer\b/.test(text) ||
     /\belytra lunge\b/.test(text) ||
     /\bnetherite\b/.test(text);
+
+  // ============================================================
+  // BOT HELP
+  // ============================================================
+
+  if (
+    text === 'help' ||
+    text === 'help?' ||
+    text === '/help' ||
+    text === 'bot help' ||
+    text === 'bot help?' ||
+    text === 'commands' ||
+    text === 'commands?' ||
+    text === 'what can you do' ||
+    text === 'what can you do?' ||
+    text === 'what do you do' ||
+    text === 'what do you do?' ||
+    text === 'what can the bot do' ||
+    text === 'what can the bot do?' ||
+    text === 'how can you help' ||
+    text === 'how can you help?'
+  ) {
+    return BOT_HELP_MESSAGE;
+  }
 
   // ============================================================
   // COTTAGE★ FEATURE QUESTIONS
