@@ -187,16 +187,22 @@ const BOT_HELP_MESSAGE = [
   '',
   '**⛏️ The Cottage★ SMP**',
   '• Ask about joining the SMP, Java, Bedrock, server addresses, rules, and world downloads.',
-  '• Ask **"what are your features?"** for the full Cottage★ feature list.',
+  '• Ask **"what are your features?"** or **"features?"** for the full Cottage★ feature list.',
   '• Ask **"what is Cottage Harvest?"** or **"how do I use Cottage Voice?"** for feature help and tutorials.',
   '',
   '**🧭 Useful questions**',
   '• ip? — Server IP information',
   '• bedrock join? — Bedrock joining instructions',
-  '• rules? — SMP Code of Conduct',
+  '• rules? — Main Discord rules',
+  '• smp rules? — SMP Code of Conduct',
+  '• roles? — Server roles',
+  '• channels? — Important channels',
   '• world download? — World download',
-  '• map? — Check the current map status',
   '• features? — Cottage★ SMP features',
+  '• java? — Java server information',
+  '• bedrock? — Bedrock joining instructions',
+  '• tpa? — Teleport request help',
+  '• rtp? — Random teleport help',
   '',
   'For anything else, just ask naturally and I\'ll do my best to help.',
 ].join('\\n');
@@ -418,14 +424,6 @@ ${SERVER_INFO.voiceChatInfo}
 ${SERVER_INFO.veinminerInfo}
 ${SERVER_INFO.dvcInfo}
 ${SERVER_INFO.rulesReminder}
-
-MAP
-
-The previous live world-map/Squaremap feature has been removed.
-
-Do not claim Squaremap is available.
-
-Do not provide a live map URL.
 
 ACCURACY
 
@@ -1098,7 +1096,9 @@ function getKnownAnswer(message) {
     text === 'server features?' ||
     text === 'server features' ||
     text === 'smp features?' ||
-    text === 'smp features'
+    text === 'smp features' ||
+    text === 'features?' ||
+    text === 'features'
   ) {
     return [
       '**The Cottage★ SMP features:**',
@@ -1194,18 +1194,58 @@ function getKnownAnswer(message) {
   }
 
   // ============================================================
-  // REMOVED MAP FEATURE
+  // INSTANT COMMON QUESTIONS
   // ============================================================
 
-  if (
-    text === 'map?' ||
-    text === 'map' ||
-    /\bserver map\b/.test(text) ||
-    /\bworld map\b/.test(text) ||
-    /\blive map\b/.test(text) ||
-    /\bsquaremap\b/.test(text)
-  ) {
-    return 'The old live world map feature was removed from The Cottage★ SMP.';
+  if (text === 'roles?' || text === 'roles' || text === 'server roles?' || text === 'server roles') {
+    return 'Server roles are here: <#1398624929099812937>';
+  }
+
+  if (text === 'channels?' || text === 'channels' || text === 'server channels?' || text === 'server channels') {
+    return [
+      '**Important Cottage★ channels:**',
+      '• Rules — <#1478166898020585592>',
+      '• Roles — <#1398624929099812937>',
+      '• General — <#1398568017708978258>',
+      '• Minecraft / Status — <#1533883039287873566>',
+      '• Bedrock Voice — <#1533895421988962334>',
+    ].join('\\n');
+  }
+
+  if (text === 'rules?' || text === 'rules' || text === 'discord rules?' || text === 'discord rules') {
+    return 'The main Discord rules are here: <#1478166898020585592>';
+  }
+
+  if (text === 'world download?' || text === 'world download' || text === 'download world?' || text === 'download world') {
+    return `The World Download is here: ${SERVER_INFO.worldDownload}`;
+  }
+
+  if (text === 'join?' || text === 'join') {
+    return 'For Discord joining, use the official Cottage★ website. For the SMP, ask **smp join?** or **how do I join the SMP?**';
+  }
+
+  if (text === 'discord join?' || text === 'discord join' || text === 'join discord?' || text === 'join discord') {
+    return `Join The Cottage★ Discord here: ${SERVER_INFO.invite}`;
+  }
+
+  if (text === 'smp join?' || text === 'smp join' || text === 'join the smp?' || text === 'join the smp' || text === 'how do i join the smp?' || text === 'how do i join the smp') {
+    return `The Cottage★ SMP is invite-only. Start here: ${SERVER_INFO.invite}`;
+  }
+
+  if (text === 'java?' || text === 'java' || text === 'java server?' || text === 'java server') {
+    return `Java: ${SERVER_INFO.javaAddress} • ${SERVER_INFO.javaVersion}`;
+  }
+
+  if (text === 'bedrock?' || text === 'bedrock' || text === 'bedrock join?' || text === 'bedrock joining?') {
+    return SERVER_INFO.bedrockJoiningInfo;
+  }
+
+  if (text === 'tpa?' || text === 'tpa' || text === 'teleport?' || text === 'teleport request?') {
+    return `**Cottage Teleport** — ${FEATURE_TUTORIALS['Cottage Teleport']}`;
+  }
+
+  if (text === 'rtp?' || text === 'rtp' || text === 'random teleport?' || text === 'random teleport') {
+    return `**Wanderer's Way** — ${FEATURE_TUTORIALS["Wanderer's Way"]}`;
   }
 
   // ============================================================
@@ -1215,35 +1255,16 @@ function getKnownAnswer(message) {
   if (
     minecraftContext &&
     (
-      text === 'rules?' ||
-      /\bserver rules\b/.test(text) ||
-      /\bsmp rules\b/.test(text) ||
-      /\bminecraft rules\b/.test(text) ||
-      /\bwhat are the minecraft rules\b/.test(text) ||
-      /\bwhat are the smp rules\b/.test(text) ||
-      /\bwhere are the minecraft rules\b/.test(text) ||
-      /\bwhere are the smp rules\b/.test(text)
+      /\\bserver rules\\b/.test(text) ||
+      /\\bsmp rules\\b/.test(text) ||
+      /\\bminecraft rules\\b/.test(text) ||
+      /\\bwhat are the minecraft rules\\b/.test(text) ||
+      /\\bwhat are the smp rules\\b/.test(text) ||
+      /\\bwhere are the minecraft rules\\b/.test(text) ||
+      /\\bwhere are the smp rules\\b/.test(text)
     )
   ) {
     return `The Cottage★ SMP Code of Conduct is here: ${SERVER_INFO.rulesLink}`;
-  }
-
-  // ============================================================
-  // MINECRAFT / SMP INVITE AND JOINING
-  // ============================================================
-
-  if (
-    minecraftContext &&
-    (
-      text === 'invite?' ||
-      /\bserver invite\b/.test(text) ||
-      /\bhow do i join\b/.test(text) ||
-      /\bhow can i join\b/.test(text) ||
-      /\bhow do i join the server\b/.test(text) ||
-      /\bhow can i join the server\b/.test(text)
-    )
-  ) {
-    return `The Cottage★ SMP is invite-only. Invite: ${SERVER_INFO.invite}`;
   }
 
   // ============================================================
@@ -1251,28 +1272,11 @@ function getKnownAnswer(message) {
   // ============================================================
 
   if (
-    text === 'bedrock join?' ||
     text === 'how do i join on bedrock?' ||
     text === 'how do i join bedrock?' ||
-    text === 'bedrock joining?' ||
-    /\bjoin.*bedrock\b/.test(text)
+    /\\bjoin.*bedrock\\b/.test(text)
   ) {
     return SERVER_INFO.bedrockJoiningInfo;
-  }
-
-  // ============================================================
-  // WORLD DOWNLOAD
-  // ============================================================
-
-  if (
-    minecraftContext &&
-    (
-      text === 'world download?' ||
-      /\bworld download\b/.test(text) ||
-      /\bdownload the world\b/.test(text)
-    )
-  ) {
-    return `The World Download is here: ${SERVER_INFO.worldDownload}`;
   }
 
   return null;
