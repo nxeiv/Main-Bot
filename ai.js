@@ -98,7 +98,7 @@ const FEATURE_GUIDE = {
   'Cottage Protection': 'Lets players protect their builds and belongings.',
   'Cottage Teams': 'Lets players team up with other players.',
   'Cozy Sitting': 'Lets players sit down and relax around the world.',
-  'Cottage Teleport': 'Lets players request teleportation to other players.',
+  'Cottage Teleport': 'Lets players travel to a random location.',
   "Wanderer's Way": 'Lets players travel to a random location.',
   'Lantern Light': 'Held light sources can illuminate the surroundings.',
   'Pure Survival': 'The server is focused on a survival experience.',
@@ -115,16 +115,16 @@ const FEATURE_TUTORIALS = {
     'Open Doors is automatic. It allows players to join without owning a premium Minecraft account, so there is nothing you need to activate in-game.',
 
   'Cottage Boost':
-    'Cottage Boost provides Elytra flight and Spear Lunging. No specific activation command is configured in the bot, so use the server\'s in-game guidance if you need the exact controls.',
+    'Use an Elytra while using a spear with the Lunge enchantment to use Cottage Boost.',
 
   'Grand Arrivals':
     'Grand Arrivals is automatic. The special arrival animations play when players enter the world.',
 
   'Friendly Neighbors':
-    'Friendly Neighbors adds convenient interactions with villagers. The bot does not have a confirmed activation command for this feature.',
+    'Crouch and right-click a villager to place them into your inventory. A golden shovel can be used for the villager claiming system.',
 
   'Cottage Custom':
-    'Cottage Custom lets you customize and pose armor stands. The bot does not have a confirmed command for the customization interface.',
+    'Cottage Custom lets you use a tripwire hook to configure item displays without needing a traditional armor stand.',
 
   'The Cottage Mace':
     'The Cottage Mace is the server\'s special one-of-a-kind Mace setup. The bot does not have a confirmed usage command for it.',
@@ -136,19 +136,19 @@ const FEATURE_TUTORIALS = {
     'Classic Crafting is a server rule rather than a command. Netherite is unavailable on The Cottage★ SMP.',
 
   'Cozy Repairs':
-    'Cozy Repairs provides a more convenient Mending experience. The bot does not have a confirmed command for activating it.',
+    'Crouch and right-click a tool with the Mending enchantment to use Cozy Repairs.',
 
   'Cottage Protection':
-    'Cottage Protection lets players protect their builds and belongings. The bot does not have a confirmed setup command, so use the server\'s in-game protection guidance.',
+    'Hold a golden shovel to create a protected territory claim. Use /claimhelp for more details.',
 
   'Cottage Teams':
-    'Cottage Teams lets players team up with other players. The bot does not have a confirmed command list for team management.',
+    'Create a team with /team create <name>. Use /team for more details about team management.',
 
   'Cozy Sitting':
-    'Cozy Sitting lets players sit down around the world. The bot does not have a confirmed activation command configured.',
+    'Use /sit or right-click stairs, slabs, and players to sit. To disable accidental sitting, use /gsit toggle off.',
 
   'Cottage Teleport':
-    'Cottage Teleport lets players request teleportation to other players. The bot does not have a confirmed command list for requesting a teleport.',
+    'Use /rtp in chat to request a random teleport.',
 
   "Wanderer's Way":
     "Wanderer's Way lets players travel to a random location. The bot does not have a confirmed command configured for this feature.",
@@ -169,13 +169,13 @@ const FEATURE_TUTORIALS = {
     'Steady Stats is automatic. Player attributes work correctly on the server without needing a command.',
 
   'Cottage Displays':
-    'Cottage Displays provides decorative displays for builds. The bot does not have a confirmed setup command for this feature.',
+    'Cottage Displays requires the Dream Displays mod on the Java client.',
 
   'Cottage Harvest':
-    'To use Cottage Harvest, sneak while breaking eligible connected wood or ores. Stripped logs are excluded.',
+    'While mining eligible connected ores or wood, crouch to harvest them together. Stripped logs are excluded.',
 
   'Cottage Voice':
-    'Cottage Voice provides proximity voice chat. Java players need the required voice-chat support installed. Bedrock players can use /dvc start in-game for their dedicated voice connection.',
+    'Java players need the Simple Voice Chat mod on their client. Bedrock players can use /dvc start in-game for their dedicated voice connection.',
 };
 
 const BOT_HELP_MESSAGE = [
