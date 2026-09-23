@@ -63,7 +63,6 @@ const SERVER_INFO = {
     'Cottage Teleport',
     "Wanderer's Way",
     'Lantern Light',
-    'Pure Survival',
     'Fresh Vanilla',
     'True Hardcore',
     'Steady Stats',
@@ -99,9 +98,8 @@ const FEATURE_GUIDE = {
   'Cottage Teams': 'Lets players team up with other players.',
   'Cozy Sitting': 'Lets players sit down and relax around the world.',
   'Cottage Teleport': 'Lets players send teleport requests to other players.',
-  "Wanderer's Way": 'Lets players travel to a random location.',
+  "Wanderer's Way": 'type /rtp in chat to teleport in a random location',
   'Lantern Light': 'Held light sources can illuminate the surroundings.',
-  'Pure Survival': 'The server is focused on a survival experience.',
   'Fresh Vanilla': 'Keeps familiar vanilla gameplay while adding carefully chosen quality-of-life improvements.',
   'True Hardcore': 'The server uses a Hardcore experience where Keep Inventory is disabled and death matters.',
   'Steady Stats': 'Player attributes work correctly on the server.',
@@ -151,14 +149,10 @@ const FEATURE_TUTORIALS = {
     'Use /tpa <player> in chat to send a teleport request to another player.',
 
   "Wanderer's Way":
-    "Wanderer's Way lets players travel to a random location.",
+    "type /rtp in chat to teleport in a random location",
 
   'Lantern Light':
     'Lantern Light is automatic. Held light sources can illuminate the surroundings without needing a separate bot command.',
-
-  'Pure Survival':
-    'Pure Survival is the server\'s survival-focused gameplay setup. There is nothing you need to activate for it.',
-
   'Fresh Vanilla':
     'Fresh Vanilla keeps familiar vanilla gameplay while adding carefully chosen quality-of-life improvements. There is nothing you need to activate for it.',
 
@@ -219,8 +213,6 @@ const BOT_HELP_MESSAGE = [
   '• features? — My bot features\n  • smp features? — Cottage★ SMP features',
   '• java? — Java server information',
   '• bedrock? — Bedrock joining instructions',
-  '• tpa? — Teleport request help',
-  '• rtp? — Random teleport help',
   '',
   'For anything else, just ask naturally and I\'ll do my best to help.',
 ].join('\n');
@@ -241,7 +233,6 @@ const FEATURE_ALIASES = {
   'just tpa': 'Cottage Teleport',
   'simple rtp': "Wanderer's Way",
   'dynamic lights': 'Lantern Light',
-  'strictly survival': 'Pure Survival',
   'vanilla refresh mechanics': 'Fresh Vanilla',
   'keep inventory off': 'True Hardcore',
   'attribute swapping fixed on papermc': 'Steady Stats',
@@ -397,8 +388,7 @@ const USER_COOLDOWN_MS = 5000;
 // Minimum time between ALL Gemini requests.
 const GLOBAL_COOLDOWN_MS = 2000;
 
-// Maximum number of requests waiting in the queue.
-const MAX_QUEUE_SIZE = 10;
+// Maximum number of requests waiting in the queue.const MAX_QUEUE_SIZE = 10;
 
 const userLastRequest = new Map();
 
@@ -797,8 +787,7 @@ async function sendAdminGeminiMessage(message) {
       );
 
       const response =
-        await chat.sendMessage({
-          message,
+        await chat.sendMessage({          message,
         });
 
       activeAdminGeminiKeyIndex = index;
@@ -1005,8 +994,9 @@ function getKnownAnswer(message) {
     text === 'what are your features' ||
     text === 'your features?' ||
     text === 'your features' ||
-    text === 'bot features?' ||
-    text === 'bot features'
+    text === 'bot features?' ||    text === 'bot features' ||
+    text === 'features?' ||
+    text === 'features'
   ) {
     return BOT_FEATURES_MESSAGE;
   }
@@ -1028,8 +1018,6 @@ function getKnownAnswer(message) {
     text === 'what are the smp features' ||
     text === 'what are the minecraft features?' ||
     text === 'what are the minecraft features' ||
-    text === 'features?' ||
-    text === 'features'
   ) {
     return [
       '**The Cottage★ SMP features:**',
@@ -1197,7 +1185,6 @@ function getKnownAnswer(message) {
   ) {
     return `The Cottage★ SMP Code of Conduct is here: ${SERVER_INFO.rulesLink}`;
   }
-
   // ============================================================
   // BEDROCK JOINING
   // ============================================================
