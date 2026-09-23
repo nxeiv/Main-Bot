@@ -1017,7 +1017,7 @@ function getKnownAnswer(message) {
     text === 'what are the smp features?' ||
     text === 'what are the smp features' ||
     text === 'what are the minecraft features?' ||
-    text === 'what are the minecraft features' ||
+    text === 'what are the minecraft features'
   ) {
     return [
       '**The Cottage★ SMP features:**',
