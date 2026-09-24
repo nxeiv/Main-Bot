@@ -644,7 +644,8 @@ The JSON MUST have exactly this structure:
 {
   "action": "start|stop|status|maintenance|restart|scheduled|cancel|none",
   "targetAction": "start|stop|status|maintenance|restart|all|none",
-  "delayMinutes": number
+  "delayMinutes": number,
+  "confidence": number
 }
 
 Rules for delayMinutes:
@@ -658,32 +659,35 @@ Rules for delayMinutes:
 - If action is not "cancel", targetAction must be "none".
 - If action is "cancel", targetAction must be the action the user wants cancelled.
 - Do not interpret ordinary conversation as an admin command.
+- confidence must be between 0 and 1.
+- Use at least 0.9 only when the requested action is unambiguous.
+- Use below 0.85 when the intent is unclear, hypothetical, or conversational.
 
 Examples:
 
 User: restart the server in 10 minutes
 Output:
-{"action":"restart","targetAction":"none","delayMinutes":10}
+{"action":"restart","targetAction":"none","delayMinutes":10,"confidence":0.99}
 
 User: put the server into maintenance after 5 minutes
 Output:
-{"action":"maintenance","targetAction":"none","delayMinutes":5}
+{"action":"maintenance","targetAction":"none","delayMinutes":5,"confidence":0.99}
 
 User: stop the AFK bot
 Output:
-{"action":"stop","targetAction":"none","delayMinutes":0}
+{"action":"stop","targetAction":"none","delayMinutes":0,"confidence":0.99}
 
 User: what's the server status?
 Output:
-{"action":"status","targetAction":"none","delayMinutes":0}
+{"action":"status","targetAction":"none","delayMinutes":0,"confidence":0.98}
 
 User: cancel the scheduled restart
 Output:
-{"action":"cancel","targetAction":"restart","delayMinutes":0}
+{"action":"cancel","targetAction":"restart","delayMinutes":0,"confidence":0.99}
 
 User: what's scheduled?
 Output:
-{"action":"scheduled","targetAction":"none","delayMinutes":0}
+{"action":"scheduled","targetAction":"none","delayMinutes":0,"confidence":0.98}
 
 User: what actions are scheduled?
 Output:
@@ -695,11 +699,11 @@ Output:
 
 User: cancel the maintenance
 Output:
-{"action":"cancel","targetAction":"maintenance","delayMinutes":0}
+{"action":"cancel","targetAction":"maintenance","delayMinutes":0,"confidence":0.99}
 
 User: what's the weather like?
 Output:
-{"action":"none","targetAction":"none","delayMinutes":0}
+{"action":"none","targetAction":"none","delayMinutes":0,"confidence":0.99}
 `;
 
 // Admin AI is intentionally stateless.
@@ -985,6 +989,17 @@ const allowedTargetActions = new Set([
     }
 
     const delayMinutes = Number(parsed.delayMinutes);
+    const confidence = Number(parsed.confidence);
+
+    if (
+      !Number.isFinite(confidence) ||
+      confidence < 0 ||
+      confidence > 1
+    ) {
+      throw new Error(
+        'Gemini returned an invalid administrative confidence.',
+      );
+    }
 
     if (
       !Number.isFinite(delayMinutes) ||
@@ -994,6 +1009,18 @@ const allowedTargetActions = new Set([
       throw new Error(
         'Gemini returned an invalid administrative delay.',
       );
+    }
+
+    if (
+      parsed.action !== 'none' &&
+      confidence < 0.85
+    ) {
+      return {
+        action: 'none',
+        targetAction: 'none',
+        delayMinutes: 0,
+        confidence,
+      };
     }
 
     if (
@@ -1018,6 +1045,7 @@ const allowedTargetActions = new Set([
       action: parsed.action,
       targetAction: parsed.targetAction,
       delayMinutes: Math.floor(delayMinutes),
+      confidence,
     };
   });
 }
