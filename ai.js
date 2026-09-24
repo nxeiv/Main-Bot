@@ -416,6 +416,7 @@ const GLOBAL_COOLDOWN_MS = 2000;
 
 // Maximum number of requests waiting in the queue.
 const MAX_QUEUE_SIZE = 10;
+const MAX_CONTEXT_MESSAGES = 20;
 
 const userLastRequest = new Map();
 
@@ -427,6 +428,62 @@ function wait(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+
+function trimConversationHistory(history) {
+  if (!Array.isArray(history) || history.length <= MAX_CONTEXT_MESSAGES) {
+    return Array.isArray(history) ? history : [];
+  }
+
+  const trimmed = history.slice(-MAX_CONTEXT_MESSAGES);
+  if (trimmed.length > 1 && trimmed[0]?.role === 'model') {
+    trimmed.shift();
+  }
+  return trimmed;
+}
+
+function normalizeAiReply(text) {
+  return String(text || '')
+    .replace(/\r?\n|\r/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function runAiQualityChecks(text, options = {}) {
+  let reply = normalizeAiReply(text);
+  reply = reply.replace(/^(certainly|sure|absolutely|great question|of course)[!,.]?\s+/i, '');
+
+  if (options.platform === 'minecraft') {
+    reply = formatMinecraftReply(reply);
+  }
+
+  const maxLength = options.platform === 'minecraft' ? 240 : 1500;
+  if (reply.length > maxLength) {
+    reply = `${reply.slice(0, maxLength - 3)}...`;
+  }
+
+  return reply.trim();
+}
+
+function getAiDiagnostics() {
+  const now = Date.now();
+  let activeCooldowns = 0;
+
+  for (const timestamp of userLastRequest.values()) {
+    if (now - timestamp < USER_COOLDOWN_MS) activeCooldowns += 1;
+  }
+
+  return {
+    configuredKeys: geminiClients.length,
+    activeNormalKey: activeGeminiKeyIndex + 1,
+    activeAdminKey: activeAdminGeminiKeyIndex + 1,
+    queuedRequests: requestQueue.length,
+    queueLimit: MAX_QUEUE_SIZE,
+    activeCooldowns,
+    conversationSessions: chatSessions.size,
+    contextLimitMessages: MAX_CONTEXT_MESSAGES,
+    model: GEMINI_MODEL,
+  };
+}
 function getUserId(options) {
   if (!options || !options.userId) {
     return 'unknown';
@@ -752,7 +809,7 @@ async function sendGeminiMessage(message, userId) {
 
       // Save Gemini's actual curated conversation history.
       // This is used if the bot needs to fail over to another key.
-      state.history = chat.getHistory(true);
+      state.history = trimConversationHistory(chat.getHistory(true));
       activeGeminiKeyIndex = index;
 
       return response;
@@ -1270,29 +1327,10 @@ async function ask(message, options = {}) {
         throw new Error('Gemini returned an empty response.');
       }
 
-      if (options.platform === 'minecraft') {
-        reply = formatMinecraftReply(reply);
-      } else {
-        reply = reply
-          .replace(/\r?\n|\r/g, ' ')
-          .replace(/\s+/g, ' ')
-          .trim();
-      }
+      reply = runAiQualityChecks(reply, options);
 
       if (reply.startsWith('/')) {
         reply = `• ${reply}`;
-      }
-
-      const maxReplyLength =
-        options.platform === 'minecraft'
-          ? 240
-          : 1500;
-
-      if (reply.length > maxReplyLength) {
-        reply =
-          maxReplyLength <= 3
-            ? reply.slice(0, maxReplyLength)
-            : `${reply.slice(0, maxReplyLength - 3)}...`;
       }
 
       return reply;
@@ -1363,4 +1401,5 @@ module.exports = {
   parseAdminCommand,
   resetConversation,
   resetUserConversation,
+  getAiDiagnostics,
 };
