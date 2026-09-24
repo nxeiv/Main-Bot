@@ -373,10 +373,30 @@ RESPONSE STYLE
 - Give more detail when the question genuinely needs it.
 - For Discord/community topics, natural conversational formatting is fine.
 - For Minecraft topics, prioritize confirmed server information and keep the response concise.
+- Minecraft chat responses must be plain text only: no Markdown, no Markdown headings, no bold or italic markers, no backslash escapes, no Markdown links, and no code fences.
 - Do not unnecessarily mention Minecraft during Discord or general conversations.
 - Do not begin a Minecraft response with "/" unless an official Minecraft command is explicitly relevant.
 `;
 
+
+function formatMinecraftReply(text) {
+  return String(text || '')
+    .trim()
+    // Remove Markdown escaping before stripping Markdown syntax.
+    .replace(/\\([\\`*_{}[\\]()#+.!|>~-])/g, '$1')
+    // Turn Markdown links into their visible text.
+    .replace(/\\[([^\\]]+)\\]\\(([^)]+)\\)/g, '$1')
+    // Remove common Markdown formatting markers.
+    .replace(/\\*\\*|__|~~/g, '')
+    .replace(/[\\*_~`]/g, '')
+    // Remove Markdown headings and convert unordered list markers to plain bullets.
+    .replace(/^\\s{0,3}#{1,6}\\s*/gm, '')
+    .replace(/^\\s*[-+*]\\s+/gm, '• ')
+    // Keep the Minecraft chat response as a single readable line.
+    .replace(/\\r?\\n|\\r/g, ' ')
+    .replace(/\\s+/g, ' ')
+    .trim();
+}
 
 // ============================================================
 // AI RATE LIMITER
@@ -1242,10 +1262,14 @@ async function ask(message, options = {}) {
         throw new Error('Gemini returned an empty response.');
       }
 
-      reply = reply
-        .replace(/\r?\n|\r/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
+      if (options.platform === 'minecraft') {
+        reply = formatMinecraftReply(reply);
+      } else {
+        reply = reply
+          .replace(/\r?\n|\r/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+      }
 
       if (reply.startsWith('/')) {
         reply = `• ${reply}`;
