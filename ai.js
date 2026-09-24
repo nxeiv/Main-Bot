@@ -691,11 +691,11 @@ Output:
 
 User: what actions are scheduled?
 Output:
-{"action":"scheduled","targetAction":"none","delayMinutes":0}
+{"action":"scheduled","targetAction":"none","delayMinutes":0,"confidence":0.98}
 
 User: what do you have scheduled?
 Output:
-{"action":"scheduled","targetAction":"none","delayMinutes":0}
+{"action":"scheduled","targetAction":"none","delayMinutes":0,"confidence":0.98}
 
 User: cancel the maintenance
 Output:
