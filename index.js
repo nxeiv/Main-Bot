@@ -1875,7 +1875,7 @@ client.on(Events.InteractionCreate, async interaction => {
           },
           {
             name: 'Queued Requests',
-            value: \`${diagnostics.queuedRequests}/${diagnostics.queueLimit}\`,
+            value: `${${diagnostics.queuedRequests}/${diagnostics.queueLimit}}`,
             inline: true,
           },
           {
@@ -1890,7 +1890,7 @@ client.on(Events.InteractionCreate, async interaction => {
           },
           {
             name: 'Context Limit',
-            value: \`${diagnostics.contextLimitMessages} messages\`,
+            value: `${${diagnostics.contextLimitMessages} messages}`,
             inline: true,
           },
         ).setDescription(
