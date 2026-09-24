@@ -383,18 +383,18 @@ function formatMinecraftReply(text) {
   return String(text || '')
     .trim()
     // Remove Markdown escaping before stripping Markdown syntax.
-    .replace(/\\([\\`*_{}[\\]()#+.!|>~-])/g, '$1')
+    .replace(/\\([\\`*_{}\[\]()#+.!|>~-])/g, '$1')
     // Turn Markdown links into their visible text.
-    .replace(/\\[([^\\]]+)\\]\\(([^)]+)\\)/g, '$1')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1')
     // Remove common Markdown formatting markers.
-    .replace(/\\*\\*|__|~~/g, '')
-    .replace(/[\\*_~`]/g, '')
+    .replace(/\*\*|__|~~/g, '')
+    .replace(/[*_~`]/g, '')
     // Remove Markdown headings and convert unordered list markers to plain bullets.
-    .replace(/^\\s{0,3}#{1,6}\\s*/gm, '')
-    .replace(/^\\s*[-+*]\\s+/gm, '• ')
+    .replace(/^\s{0,3}#{1,6}\s*/gm, '')
+    .replace(/^\s*[-+*]\s+/gm, '• ')
     // Keep the Minecraft chat response as a single readable line.
-    .replace(/\\r?\\n|\\r/g, ' ')
-    .replace(/\\s+/g, ' ')
+    .replace(/\r?\n|\r/g, ' ')
+    .replace(/\s+/g, ' ')
     .trim();
 }
 
