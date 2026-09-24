@@ -621,7 +621,7 @@ function shorten(text, limit = 1000) {
     : normalized;
 }
 
-async function registerCommands() {
+async function reconcileSlashCommands(source = 'Registrar') {
   const rest = new REST({ version: '10' }).setToken(config.discord.token);
 
   const route = Routes.applicationGuildCommands(
@@ -629,44 +629,121 @@ async function registerCommands() {
     config.discord.guildId,
   );
 
-  try {
-    log('Discord', 'Checking existing slash commands...');
+  const expectedByName = new Map(
+    commands.map(command => [command.name, command]),
+  );
 
-    const existing = await rest.get(route);
+  const existing = await rest.get(route);
 
-    log(
-      'Discord',
-      `Discord currently reports ${existing.length} guild command(s).`,
-    );
+  log(
+    'Discord',
+    `${source}: Discord currently reports ${existing.length} guild command(s).`,
+  );
 
-    for (const command of existing) {
+  const existingByName = new Map(
+    existing.map(command => [command.name, command]),
+  );
+
+  let created = 0;
+  let updated = 0;
+  let removed = 0;
+
+  // Create only genuinely missing commands. This gives them a new Discord
+  // command ID once, while leaving all existing command IDs untouched.
+  for (const command of commands) {
+    const current = existingByName.get(command.name);
+
+    if (!current) {
+      const createdCommand = await rest.post(route, {
+        body: command,
+      });
+
+      created += 1;
+
       log(
         'Discord',
-        `Existing command: /${command.name} (${command.id})`,
+        `${source}: Created missing command /${createdCommand.name} (${createdCommand.id}).`,
       );
+
+      continue;
     }
 
-    log('Discord', 'Registering slash commands...');
-
-    const registered = await rest.put(route, {
-      body: commands,
+    // Update an existing command in place only when its definition changed.
+    // Keeping the command ID is important because Discord stores command-level
+    // Integration permission overrides against that command.
+    const desired = JSON.stringify(command);
+    const actual = JSON.stringify({
+      name: current.name,
+      description: current.description,
+      options: current.options || [],
+      default_member_permissions: current.default_member_permissions ?? null,
+      dm_permission: current.dm_permission ?? null,
+      nsfw: current.nsfw ?? false,
+      type: current.type,
     });
 
-    log(
-      'Discord',
-      `Slash commands registered successfully: ${registered.length} command(s).`,
-    );
+    if (desired !== actual) {
+      const updatedCommand = await rest.patch(
+        Routes.applicationGuildCommand(
+          config.discord.clientId,
+          config.discord.guildId,
+          current.id,
+        ),
+        { body: command },
+      );
 
-    for (const command of registered) {
+      updated += 1;
+
       log(
         'Discord',
-        `Registered command: /${command.name} (${command.id})`,
+        `${source}: Updated command /${updatedCommand.name} in place (${updatedCommand.id}).`,
       );
     }
+  }
+
+  // Remove only commands the bot no longer declares.
+  for (const current of existing) {
+    if (expectedByName.has(current.name)) {
+      continue;
+    }
+
+    await rest.delete(
+      Routes.applicationGuildCommand(
+        config.discord.clientId,
+        config.discord.guildId,
+        current.id,
+      ),
+    );
+
+    removed += 1;
+
+    log(
+      'Discord',
+      `${source}: Removed unexpected command /${current.name} (${current.id}).`,
+    );
+  }
+
+  return {
+    existing: existing.length,
+    expected: commands.length,
+    created,
+    updated,
+    removed,
+  };
+}
+
+async function registerCommands() {
+  try {
+    const result = await reconcileSlashCommands('Registrar');
+
+    log(
+      'Discord',
+      `Slash command reconciliation complete: ${result.created} created, ${result.updated} updated, ${result.removed} removed.`,
+    );
   } catch (error) {
     log(
       'Discord',
-      `Unable to register slash commands: ${error.message}`,
+      `Unable to reconcile slash commands: ${error.message}`,
     );
   }
 }
@@ -679,65 +756,24 @@ async function commandWatchdog() {
   commandWatchdogRunning = true;
 
   try {
-    const rest = new REST({ version: '10' }).setToken(config.discord.token);
+    const result = await reconcileSlashCommands('Watchdog');
 
-    const route = Routes.applicationGuildCommands(
-      config.discord.clientId,
-      config.discord.guildId,
-    );
-
-    const existing = await rest.get(route);
-
-    const existingNames = new Set(
-      existing.map(command => command.name),
-    );
-
-    const expectedNames = new Set(
-      commands.map(command => command.name),
-    );
-
-    const missing = commands.filter(
-      command => !existingNames.has(command.name),
-    );
-
-    const unexpected = existing.filter(
-      command => !expectedNames.has(command.name),
-    );
-
-    if (missing.length === 0 && unexpected.length === 0) {
+    if (
+      result.created === 0 &&
+      result.updated === 0 &&
+      result.removed === 0 &&
+      result.existing === result.expected
+    ) {
       log(
         'Watchdog',
-        `Slash commands OK (${existing.length}/${commands.length}).`,
+        `Slash commands OK (${result.existing}/${result.expected}); no command IDs were replaced.`,
       );
-      return;
-    }
-
-    if (missing.length > 0) {
+    } else {
       log(
         'Watchdog',
-        `Missing commands detected: ${missing
-          .map(command => `/${command.name}`)
-          .join(', ')}`,
+        `Slash command repair complete: ${result.created} created, ${result.updated} updated, ${result.removed} removed.`,
       );
     }
-
-    if (unexpected.length > 0) {
-      log(
-        'Watchdog',
-        `Unexpected commands detected: ${unexpected
-          .map(command => `/${command.name}`)
-          .join(', ')}`,
-      );
-    }
-
-    await rest.put(route, {
-      body: commands,
-    });
-
-    log(
-      'Watchdog',
-      `Slash commands repaired successfully (${commands.length} command(s)).`,
-    );
   } catch (error) {
     log(
       'Watchdog',
@@ -1520,6 +1556,10 @@ client.on(Events.InteractionCreate, async interaction => {
 
     case 'aforget': {
       if (!isAdmin(interaction.user.id)) {
+        log(
+          'Admin',
+          `Rejected /aforget from unauthorized user ${interaction.user.tag} (${interaction.user.id}).`,
+        );
         return interaction.reply({
           content:
             '❌ You are not authorized to use this command.',
@@ -1537,6 +1577,10 @@ client.on(Events.InteractionCreate, async interaction => {
     }
     case 'maintenance': {
       if (!isAdmin(interaction.user.id)) {
+        log(
+          'Admin',
+          `Rejected /maintenance from unauthorized user ${interaction.user.tag} (${interaction.user.id}).`,
+        );
         return interaction.reply({
           content: '❌ You are not authorized to use this command.',
           ephemeral: true,
@@ -1579,6 +1623,23 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 
     case 'start': {
+      if (!isAdmin(interaction.user.id)) {
+        log(
+          'Admin',
+          `Rejected /start from unauthorized user ${interaction.user.tag} (${interaction.user.id}).`,
+        );
+
+        return interaction.reply({
+          content: '❌ You are not authorized to use this command.',
+          ephemeral: true,
+        });
+      }
+
+      log(
+        'Admin',
+        `Verified /start request from ${interaction.user.tag} (${interaction.user.id}).`,
+      );
+
       if (
         status.connected ||
         status.connecting ||
@@ -1627,6 +1688,23 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 
     case 'stop': {
+      if (!isAdmin(interaction.user.id)) {
+        log(
+          'Admin',
+          `Rejected /stop from unauthorized user ${interaction.user.tag} (${interaction.user.id}).`,
+        );
+
+        return interaction.reply({
+          content: '❌ You are not authorized to use this command.',
+          ephemeral: true,
+        });
+      }
+
+      log(
+        'Admin',
+        `Verified /stop request from ${interaction.user.tag} (${interaction.user.id}).`,
+      );
+
       if (
         !status.connected &&
         !status.connecting &&
