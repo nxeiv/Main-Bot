@@ -246,6 +246,15 @@ const commands = [
   new SlashCommandBuilder()
     .setName('aforget')
     .setDescription('Forget all AI conversation contexts (admin only)'),
+
+  new SlashCommandBuilder()
+    .setName('ai')
+    .setDescription('AI diagnostics (admin only)')
+    .addSubcommand(subcommand =>
+      subcommand
+        .setName('status')
+        .setDescription('Shows AI health and queue diagnostics'),
+    ),
 ].map(command => command.toJSON());
 
 function log(tag, message) {
@@ -1506,9 +1515,28 @@ const response = await ai.ask(question, {
         `Unable to answer Discord mention: ${error.message}`,
       );
 
-      await message.reply(
-        '❌ Server could not get an AI response right now.',
-      );
+      try {
+        await message.reply({
+          content: '❌ Server could not get an AI response right now.',
+          failIfNotExists: false,
+        });
+      } catch (replyError) {
+        log(
+          'AI',
+          `Unable to send AI error response: ${replyError.message}`,
+        );
+
+        try {
+          await message.channel.send(
+            '❌ Server could not get an AI response right now.',
+          );
+        } catch (channelError) {
+          log(
+            'AI',
+            `Unable to send AI fallback message: ${channelError.message}`,
+          );
+        }
+      }
     }
 
     return;
@@ -1764,6 +1792,23 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 
     case 'status': {
+      if (!isAdmin(interaction.user.id)) {
+        log(
+          'Admin',
+          `Rejected /status from unauthorized user ${interaction.user.tag} (${interaction.user.id}).`,
+        );
+
+        return interaction.reply({
+          content: '❌ You are not authorized to use this command.',
+          ephemeral: true,
+        });
+      }
+
+      log(
+        'Admin',
+        `Verified /status request from ${interaction.user.tag} (${interaction.user.id}).`,
+      );
+
       const color = status.connected
         ? Colors.Green
         : (
@@ -1780,6 +1825,87 @@ client.on(Events.InteractionCreate, async interaction => {
             color,
           ),
         ],
+      });
+    }
+
+    case 'ai': {
+      if (!isAdmin(interaction.user.id)) {
+        log(
+          'Admin',
+          `Rejected /ai from unauthorized user ${interaction.user.tag} (${interaction.user.id}).`,
+        );
+
+        return interaction.reply({
+          content: '❌ You are not authorized to use this command.',
+          ephemeral: true,
+        });
+      }
+
+      log(
+        'Admin',
+        `Verified /ai request from ${interaction.user.tag} (${interaction.user.id}).`,
+      );
+
+      if (interaction.options.getSubcommand() === 'status') {
+        const diagnostics = ai.getAiDiagnostics();
+
+        const embed = createEmbed(
+          'AI Diagnostics',
+          Colors.Blurple,
+        ).addFields(
+          {
+            name: 'Model',
+            value: `\`${diagnostics.model}\``,
+            inline: true,
+          },
+          {
+            name: 'Configured Keys',
+            value: String(diagnostics.configuredKeys),
+            inline: true,
+          },
+          {
+            name: 'Active Normal Key',
+            value: String(diagnostics.activeNormalKey),
+            inline: true,
+          },
+          {
+            name: 'Active Admin Key',
+            value: String(diagnostics.activeAdminKey),
+            inline: true,
+          },
+          {
+            name: 'Queued Requests',
+            value: \`${diagnostics.queuedRequests}/${diagnostics.queueLimit}\`,
+            inline: true,
+          },
+          {
+            name: 'Active Cooldowns',
+            value: String(diagnostics.activeCooldowns),
+            inline: true,
+          },
+          {
+            name: 'Conversation Sessions',
+            value: String(diagnostics.conversationSessions),
+            inline: true,
+          },
+          {
+            name: 'Context Limit',
+            value: \`${diagnostics.contextLimitMessages} messages\`,
+            inline: true,
+          },
+        ).setDescription(
+          'Admin access confirmed. This view exposes health metadata only; API keys and private conversation contents are never shown.',
+        );
+
+        return interaction.reply({
+          embeds: [embed],
+          ephemeral: true,
+        });
+      }
+
+      return interaction.reply({
+        content: '❌ Unknown AI subcommand.',
+        ephemeral: true,
       });
     }
 
