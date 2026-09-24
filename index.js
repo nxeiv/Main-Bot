@@ -671,15 +671,39 @@ async function reconcileSlashCommands(source = 'Registrar') {
     // Update an existing command in place only when its definition changed.
     // Keeping the command ID is important because Discord stores command-level
     // Integration permission overrides against that command.
-    const desired = JSON.stringify(command);
+    const desired = JSON.stringify({
+      type: command.type,
+      name: command.name,
+      description: command.description,
+      options: command.options || [],
+      ...(command.default_member_permissions !== undefined
+        ? { default_member_permissions: command.default_member_permissions }
+        : {}),
+      ...(command.dm_permission !== undefined
+        ? { dm_permission: command.dm_permission }
+        : {}),
+      ...(command.nsfw !== undefined
+        ? { nsfw: command.nsfw }
+        : {}),
+    });
+
     const actual = JSON.stringify({
+      type: current.type,
       name: current.name,
       description: current.description,
       options: current.options || [],
-      default_member_permissions: current.default_member_permissions ?? null,
-      dm_permission: current.dm_permission ?? null,
-      nsfw: current.nsfw ?? false,
-      type: current.type,
+      ...(command.default_member_permissions !== undefined
+        ? {
+          default_member_permissions:
+            current.default_member_permissions ?? null,
+        }
+        : {}),
+      ...(command.dm_permission !== undefined
+        ? { dm_permission: current.dm_permission ?? null }
+        : {}),
+      ...(command.nsfw !== undefined
+        ? { nsfw: current.nsfw ?? false }
+        : {}),
     });
 
     if (desired !== actual) {
