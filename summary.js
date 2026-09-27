@@ -6,6 +6,7 @@ const {
   ButtonStyle,
   ChannelType,
   Events,
+  MessageFlags,
 } = require('discord.js');
 
 const attachedClients = new WeakSet();
@@ -109,7 +110,7 @@ function attachDismissHandler(client) {
     if (interaction.user.id !== ownerId) {
       await interaction.reply({
         content: 'Only the person who requested this summary can dismiss it.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }
@@ -118,7 +119,7 @@ function attachDismissHandler(client) {
       if (interaction.deferred || interaction.replied) return;
       await interaction.reply({
         content: 'The summary could not be dismissed.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       }).catch(() => {});
     });
   });
