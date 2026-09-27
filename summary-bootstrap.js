@@ -20,8 +20,14 @@ if (!Client.prototype.__cottageSummaryPatched) {
           message.guild &&
           client.user
         ) {
-          const mentionRegex = new RegExp(`<@!?\${client.user.id}>`, 'g');
-          const isDirectMention = mentionRegex.test(String(message.content || ''));
+          const mentionRegex = new RegExp(
+            `<@!?\${client.user.id}>`,
+            'g',
+          );
+
+          const isDirectMention = mentionRegex.test(
+            String(message.content || ''),
+          );
 
           let isReplyToBot = false;
 
@@ -30,7 +36,9 @@ if (!Client.prototype.__cottageSummaryPatched) {
               const referencedMessage = await message.channel.messages.fetch(
                 message.reference.messageId,
               );
-              isReplyToBot = referencedMessage.author.id === client.user.id;
+
+              isReplyToBot =
+                referencedMessage.author.id === client.user.id;
             } catch (error) {
               console.error(
                 '[Summary] Unable to resolve reply target:',
@@ -44,22 +52,31 @@ if (!Client.prototype.__cottageSummaryPatched) {
               .replace(mentionRegex, '')
               .trim();
 
-            if (/^\s*(?:(?:well|okay|ok|please|then|now|just|hey)\s+)*(?:can\s+you\s+)?summar(?:y|ize|ise)\s+/i.test(question)) {
-            const ai = require('./ai');
-            const handled = await summary.handleMention({
-              message,
-              question,
-              client,
-              ai,
-            });
+            if (
+              /^\s*(?:(?:well|okay|ok|please|then|now|just|hey)\s+)*(?:can\s+you\s+)?summar(?:y|ize|ise)\s+/i.test(
+                question,
+              )
+            ) {
+              const ai = require('./ai');
 
-            if (handled) {
-              return;
+              const handled = await summary.handleMention({
+                message,
+                question,
+                client,
+                ai,
+              });
+
+              if (handled) {
+                return;
+              }
             }
           }
         }
       } catch (error) {
-        console.error('[Summary] Unable to intercept summary request:', error?.message || error);
+        console.error(
+          '[Summary] Unable to intercept summary request:',
+          error?.message || error,
+        );
       }
 
       return listener(message);
