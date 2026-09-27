@@ -1091,13 +1091,36 @@ client.on(Events.MessageCreate, async message => {
   // ============================================================
 
   const botDirectMentionRegex = new RegExp(
-    `<@!?${client.user.id}>`,
+    `<@!?\${client.user.id}>`,
   );
+
+  const isDirectBotMention =
+    client.user &&
+    botDirectMentionRegex.test(message.content);
+
+  let isReplyToBot = false;
+
+  if (message.reference?.messageId) {
+    try {
+      const referencedMessage = await message.channel.messages.fetch(
+        message.reference.messageId,
+      );
+
+      isReplyToBot =
+        Boolean(client.user) &&
+        referencedMessage.author.id === client.user.id;
+    } catch (error) {
+      log(
+        'Discord',
+        `Unable to resolve reply target: ${error.message}`,
+      );
+    }
+  }
 
   if (
     message.guild?.id === config.discord.guildId &&
     client.user &&
-    botDirectMentionRegex.test(message.content)
+    (isDirectBotMention || isReplyToBot)
   ) {
 const botMentionRegex = new RegExp(
   `<@!?${client.user.id}>`,
