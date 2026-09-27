@@ -31,8 +31,12 @@ async function timeoutMember(member, reason) {
     return false;
   }
 
-  await member.timeout(BANISH_DURATION_MS, reason);
-  return true;
+  try {
+    await member.timeout(BANISH_DURATION_MS, reason);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 async function handleBanishMessage(message) {
