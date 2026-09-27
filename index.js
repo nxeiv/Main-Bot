@@ -681,58 +681,50 @@ async function reconcileSlashCommands(source = 'Registrar') {
     // Update an existing command in place only when its definition changed.
     // Keeping the command ID is important because Discord stores command-level
     // Integration permission overrides against that command.
-    const normalizeCommandDefinition = value => {
-      if (Array.isArray(value)) {
-        return value.map(normalizeCommandDefinition);
-      }
-
-      if (!value || typeof value !== 'object') {
-        return value;
-      }
-
-      const normalized = {};
-
-      for (const [key, child] of Object.entries(value)) {
+    //
+    // Discord may return additional materialized/default fields that were not
+    // present in the builder's JSON. Compare the fields we actually declare
+    // instead of requiring Discord's response to match byte-for-byte.
+    const commandsMatch = (desiredValue, actualValue) => {
+      if (Array.isArray(desiredValue)) {
         if (
-          key === 'id' ||
-          key === 'application_id' ||
-          key === 'guild_id' ||
-          key === 'version'
+          !Array.isArray(actualValue) ||
+          desiredValue.length !== actualValue.length
         ) {
-          continue;
+          return false;
         }
 
-        if (child === undefined || child === null) {
-          continue;
-        }
-
-        // Discord may materialize default values that were omitted from the
-        // original builder output. Treat those defaults as equivalent.
-        if (
-          (key === 'required' && child === false) ||
-          (key === 'autocomplete' && child === false) ||
-          (key === 'dm_permission' && child === true) ||
-          (key === 'nsfw' && child === false)
-        ) {
-          continue;
-        }
-
-        normalized[key] = normalizeCommandDefinition(child);
+        return desiredValue.every((item, index) =>
+          commandsMatch(item, actualValue[index]),
+        );
       }
 
-      return Object.fromEntries(
-        Object.entries(normalized).sort(([a], [b]) => a.localeCompare(b)),
-      );
+      if (desiredValue && typeof desiredValue === 'object') {
+        if (
+          !actualValue ||
+          typeof actualValue !== 'object' ||
+          Array.isArray(actualValue)
+        ) {
+          return false;
+        }
+
+        return Object.entries(desiredValue).every(([key, child]) => {
+          if (child === undefined) {
+            return true;
+          }
+
+          if (child === null) {
+            return actualValue[key] === null || actualValue[key] === undefined;
+          }
+
+          return commandsMatch(child, actualValue[key]);
+        });
+      }
+
+      return desiredValue === actualValue;
     };
 
-    const desired = JSON.stringify(
-      normalizeCommandDefinition(command),
-    );
-    const actual = JSON.stringify(
-      normalizeCommandDefinition(current),
-    );
-
-    if (desired !== actual) {
+    if (!commandsMatch(command, current)) {
       const updatedCommand = await rest.patch(
         Routes.applicationGuildCommand(
           config.discord.clientId,
