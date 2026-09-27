@@ -693,6 +693,15 @@ async function reconcileSlashCommands(source = 'Registrar') {
       const normalized = {};
 
       for (const [key, child] of Object.entries(value)) {
+        if (
+          key === 'id' ||
+          key === 'application_id' ||
+          key === 'guild_id' ||
+          key === 'version'
+        ) {
+          continue;
+        }
+
         if (child === undefined || child === null) {
           continue;
         }
