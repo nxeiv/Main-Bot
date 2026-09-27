@@ -1380,7 +1380,7 @@ client.on(Events.MessageCreate, async message => {
 
     try {
       mc.chat(text);
-      await message.react('✓');
+      await message.react('✅');
     } catch (error) {
       log(
         'Chat',
