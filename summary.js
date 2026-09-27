@@ -22,6 +22,11 @@ function resolveChannel(message, request) {
   const guild = message.guild;
   if (!guild) return null;
 
+  const normalizedRequest = String(request || '').trim().toLowerCase().replace(/\?+$/, '');
+  if (normalizedRequest === 'this' || normalizedRequest === 'this channel' || normalizedRequest === 'here') {
+    return message.channel || null;
+  }
+
   const mention = request.match(/<#(\d+)>/);
   if (mention) {
     return guild.channels.cache.get(mention[1]) || null;
