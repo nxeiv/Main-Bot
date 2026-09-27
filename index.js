@@ -1395,8 +1395,7 @@ client.on(Events.MessageCreate, async message => {
 
   if (
     message.guild?.id === config.discord.guildId &&
-    normalizedMessageText === 'forget' &&
-    hasFeatureAccess('forget', message.author.id, message.member)
+    normalizedMessageText === 'forget'
   ) {
     await message.reply(
       forgetUserConversation(getDiscordAiSessionId(message)),
@@ -1407,8 +1406,7 @@ client.on(Events.MessageCreate, async message => {
 
   if (
     message.guild?.id === config.discord.guildId &&
-    normalizedMessageText === 'aforget' &&
-    hasFeatureAccess('aforget', message.author.id, message.member)
+    normalizedMessageText === 'aforget'
   ) {
     if (!hasFeatureAccess('aforget', message.author.id, message.member)) {
       await message.reply(
