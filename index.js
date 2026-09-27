@@ -9,6 +9,9 @@ const {
   Client,
   Colors,
   EmbedBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
   Events,
   GatewayIntentBits,
   MessageFlags,
@@ -26,6 +29,15 @@ const { handleBanishMessage, getActiveBanishments, clearActiveBanishment } = req
 const moderation = require('./moderation');
 
 const scheduledAdminActions = new Map();
+
+const runtimeHealth = {
+  startedAt: Date.now(),
+  lastMinecraftConnectedAt: null,
+  lastMinecraftDisconnectedAt: null,
+  lastMinecraftDisconnectReason: null,
+  lastDiscordErrorAt: null,
+  lastDiscordError: null,
+};
 
 // ============================================================
 // BEDROCK JOIN VIDEO FOLLOW-UP
@@ -265,6 +277,10 @@ const commands = [
   new SlashCommandBuilder()
     .setName('dashboard')
     .setDescription('◎ Shows Discord, Minecraft, and AI health'),
+
+  new SlashCommandBuilder()
+    .setName('help')
+    .setDescription('ⓘ Shows Main Bot commands and features'),
 
   new SlashCommandBuilder()
     .setName('summarize')
@@ -874,6 +890,15 @@ function buildDashboardEmbed() {
     );
 }
 
+function buildDashboardComponents() {
+  return new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId('dashboard:refresh')
+      .setLabel('↻ Refresh')
+      .setStyle(ButtonStyle.Secondary),
+  );
+}
+
 async function sendModerationLog(embed) {
   const channelId = config.discord.moderationLogChannelId;
   if (!channelId) return;
@@ -1146,6 +1171,8 @@ function updatePresence() {
 }
 
 mc.emitter.on('connected', ({ version }) => {
+  runtimeHealth.lastMinecraftConnectedAt = Date.now();
+  runtimeHealth.lastMinecraftDisconnectReason = null;
   updatePresence();
   const status = mc.getStatus();
   const embed = buildStatusEmbed(status, 'Bot Connected', Colors.Green)
@@ -1160,7 +1187,9 @@ mc.emitter.on('kicked', reason => {
   void notifyChannel(embed);
 });
 
-mc.emitter.on('disconnected', () => {
+mc.emitter.on('disconnected', reason => {
+  runtimeHealth.lastMinecraftDisconnectedAt = Date.now();
+  runtimeHealth.lastMinecraftDisconnectReason = String(reason || 'unknown');
   updatePresence();
 });
 
@@ -1911,6 +1940,13 @@ const response = await ai.ask(contextualAiQuestion, {
   }
 });
 client.on(Events.InteractionCreate, async interaction => {
+  if (interaction.isButton() && interaction.customId === 'dashboard:refresh') {
+    return interaction.update({
+      embeds: [buildDashboardEmbed()],
+      components: [buildDashboardComponents()],
+    });
+  }
+
   if (interaction.isButton() && interaction.customId.startsWith('summary:dismiss:')) {
     return summary.handleDismissButton(interaction);
   }
@@ -2127,6 +2163,22 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 
     case 'status':
+    case 'help': {
+      return interaction.reply({
+        embeds: [
+          createEmbed('⌘ The Cottage★ Main Bot', Colors.Blurple)
+            .setDescription('Discord and Minecraft companion for The Cottage★ SMP.')
+            .addFields(
+              { name: 'Minecraft', value: '▶ /start  •  ■ /stop  •  ⓘ /status  •  ◎ /dashboard' },
+              { name: 'AI', value: '◉ @The Cottage★  •  ⌫ /forget  •  ⌫ /aforget  •  ⓘ /ai status' },
+              { name: 'Utilities', value: '⌁ /summarize  •  ⓘ /help' },
+              { name: 'Moderation', value: '⚒︎ /timeout  •  ✓ /untimeout  •  ⚠︎ /warn  •  ⓘ /modlog  •  ⚒︎ /banishlist  •  ✓ /unbanish  •  ⌫ /clearwarns' },
+            ),
+        ],
+        flags: MessageFlags.Ephemeral,
+      });
+    }
+
     case 'dashboard': {
       if (!isAdmin(interaction.user.id, interaction.member)) {
         return interaction.reply({
@@ -2137,6 +2189,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
       return interaction.reply({
         embeds: [buildDashboardEmbed()],
+        components: [buildDashboardComponents()],
         flags: MessageFlags.Ephemeral,
       });
     }
@@ -2563,10 +2616,14 @@ client.on(Events.InteractionCreate, async interaction => {
   }
 });
 client.on(Events.Error, error => {
+  runtimeHealth.lastDiscordErrorAt = Date.now();
+  runtimeHealth.lastDiscordError = String(error?.message || error || 'Unknown error');
   void reportErrorToDiscord(error, 'Discord client error');
 });
 
 client.on('shardError', error => {
+  runtimeHealth.lastDiscordErrorAt = Date.now();
+  runtimeHealth.lastDiscordError = String(error?.message || error || 'Unknown error');
   void reportErrorToDiscord(error, 'Discord shard error');
 });
 
