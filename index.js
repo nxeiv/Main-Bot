@@ -1828,6 +1828,7 @@ const executeAt = scheduleAdminAction(
 const response = await ai.ask(contextualAiQuestion, {
   userId: aiSessionId,
   platform: 'discord',
+  skipKnownAnswers: Boolean(replyTargetMessage),
 });
 
       log('AI', `Discord response: ${response}`);
