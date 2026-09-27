@@ -225,37 +225,37 @@ const client = new Client({
 const commands = [
   new SlashCommandBuilder()
     .setName('start')
-    .setDescription('Starts AFK Session'),
+    .setDescription('▶ Starts the Minecraft AFK session'),
 
   new SlashCommandBuilder()
     .setName('stop')
-    .setDescription('Stops AFK Session'),
+    .setDescription('■ Stops the Minecraft AFK session'),
 
   new SlashCommandBuilder()
     .setName('status')
-    .setDescription('Shows AFK Status'),
+    .setDescription('ⓘ Shows Minecraft AFK status'),
 
   new SlashCommandBuilder()
     .setName('maintenance')
     .setDescription(
-      'Announces that the server is under maintenance DO NOT USE IF NOT SMP MODERATOR.',
+      '⚒︎ Announces server maintenance DO NOT USE IF NOT SMP MODERATOR.',
     ),
 
   new SlashCommandBuilder()
     .setName('forget')
-    .setDescription('Forget your AI conversation context'),
+    .setDescription('⌫ Forgets your AI conversation context'),
 
   new SlashCommandBuilder()
     .setName('aforget')
-    .setDescription('Forget all AI conversation contexts (admin only)'),
+    .setDescription('⌫ Forgets all AI conversation contexts (admin only)'),
 
   new SlashCommandBuilder()
     .setName('ai')
-    .setDescription('AI diagnostics (admin only)')
+    .setDescription('◉ AI diagnostics (admin only)')
     .addSubcommand(subcommand =>
       subcommand
         .setName('status')
-        .setDescription('Shows AI health and queue diagnostics'),
+        .setDescription('ⓘ Shows AI health and queue diagnostics'),
     ),
 ].map(command => command.toJSON());
 
