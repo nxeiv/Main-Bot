@@ -205,7 +205,7 @@ async function handleMention({ message, question, client, ai }) {
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId(`summary:dismiss:${message.author.id}:${message.id}`)
-        .setLabel('Dismiss')
+        .setLabel('× Dismiss')
         .setStyle(ButtonStyle.Secondary),
     );
 
