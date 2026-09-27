@@ -26,7 +26,7 @@ const config = {
   // Members with any of these role IDs are also treated as administrators.
   // The current Cottage★ Moderator role is included by default.
   adminRoleIds: [
-    '1495677126693621790',
+    '1398595607853142086',
   ],
 
   server: {
