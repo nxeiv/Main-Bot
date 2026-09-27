@@ -1405,11 +1405,12 @@ const normalizedQuestion = question
 const aiSessionId = getDiscordAiSessionId(message);
 
 const contextualAiQuestion =
-  isReplyToBot && replyTargetMessage?.content
+  replyTargetMessage
     ? [
-      'The user is replying directly to your previous Discord message.',
-      `Previous bot message: ${shorten(replyTargetMessage.content, 1600)}`,
-      `User follow-up: ${question || '(no additional text)'}`,
+      'The user is replying directly to another Discord message.',
+      `Referenced message author: ${replyTargetMessage.member?.displayName || replyTargetMessage.author?.username || 'Unknown'}`,
+      `Referenced message: ${shorten(replyTargetMessage.content || '(no text content)', 2000)}`,
+      `User request: ${question || '(no additional text; infer what the user is asking about from the referenced message)'}`,
     ].join('\\n')
     : question;
 
