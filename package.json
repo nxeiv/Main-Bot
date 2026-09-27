@@ -1,7 +1,7 @@
 {
   "name": "discomine",
   "version": "1.0.0",
-  "description": "DiscoMine — 24/7 Discord AFK bot for Minecraft servers, hosted on WispByte",
+  "description": "The Cottage★ Main Bot — Discord and Minecraft companion bot for The Cottage★ SMP",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
