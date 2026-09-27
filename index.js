@@ -259,7 +259,7 @@ const commands = [
         .setName('status')
         .setDescription('ⓘ Shows AI health and queue diagnostics'),
     ),
-,
+
   new SlashCommandBuilder()
     .setName('dashboard')
     .setDescription('◎ Shows Discord, Minecraft, and AI health'),
@@ -824,6 +824,16 @@ function buildDashboardEmbed() {
       {
         name: 'Active Cooldowns',
         value: String(aiStatus.activeCooldowns),
+        inline: true,
+      },
+      {
+        name: 'AI Requests',
+        value: String(aiStatus.totalRequests),
+        inline: true,
+      },
+      {
+        name: 'AI Errors',
+        value: String(aiStatus.totalErrors),
         inline: true,
       },
     );
@@ -2434,6 +2444,23 @@ client.on(Events.InteractionCreate, async interaction => {
             name: 'Context Limit',
             value: `${diagnostics.contextLimitMessages} messages`,
             inline: true,
+          },
+          {
+            name: 'AI Requests',
+            value: String(diagnostics.totalRequests),
+            inline: true,
+          },
+          {
+            name: 'AI Errors',
+            value: String(diagnostics.totalErrors),
+            inline: true,
+          },
+          {
+            name: 'Last AI Error',
+            value: diagnostics.lastError
+              ? `\`${diagnostics.lastError.slice(0, 900)}\``
+              : 'None recorded',
+            inline: false,
           },
         ).setDescription(
           'Admin access confirmed. This view exposes health metadata only; API keys and private conversation contents are never shown.',
