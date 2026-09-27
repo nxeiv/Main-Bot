@@ -8,56 +8,56 @@ function parsePositiveInteger(value, fallback) {
   return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : fallback;
 }
 
-const reconnectInitialDelayMs = parsePositiveInteger(
-  process.env.RECONNECT_INITIAL_DELAY_MS,
-  60_000,
-);
-const reconnectMaxDelayMs = Math.max(
-  reconnectInitialDelayMs,
-  parsePositiveInteger(process.env.RECONNECT_MAX_DELAY_MS, 300_000),
-);
+// Secrets are loaded from the environment.
+// Keep ordinary server/community configuration in source control.
+const discordToken = String(process.env.DISCORD_TOKEN || '').trim();
+const minecraftPassword = String(process.env.MC_PASSWORD || '');
 
 const config = {
   discord: {
-    token: process.env.DISCORD_TOKEN || '',
-    clientId: process.env.CLIENT_ID || '1501273403615608933',
-    guildId: process.env.GUILD_ID || '1398568016915992667',
-    statusChannelId: process.env.STATUS_CHANNEL_ID || '1551186617635704832',
+    token: discordToken,
+    clientId: '1501273403615608933',
+    guildId: '1398568016915992667',
+    statusChannelId: '1551186617635704832',
     maintenanceChannelId: '1478252152169431134',
     chatChannelId: '1551228249214820483',
   },
-    
-    adminUserIds: [
-  '1235216001260458084',
-],
-    
+
+  adminUserIds: [
+    '1235216001260458084',
+  ],
+
   server: {
-    ip: process.env.MC_SERVER_IP || 'the-cottage-c1-s5.play.hosting',
-    port: parsePositiveInteger(process.env.MC_SERVER_PORT, 25565),
-    version: process.env.MC_SERVER_VERSION === 'auto'
-      ? false
-      : (process.env.MC_SERVER_VERSION || '1.21.11'),
+    ip: 'the-cottage-c1-s5.play.hosting',
+    port: 25565,
+    version: '1.21.11',
   },
 
   bot: {
-    username: process.env.MC_USERNAME || 'Server',
-    password: process.env.MC_PASSWORD || '',
-    auth: process.env.MC_AUTH || 'offline',
+    username: 'Server',
+    password: minecraftPassword,
+    auth: 'offline',
   },
+
   reconnect: {
-    initialDelayMs: reconnectInitialDelayMs,
-    maxDelayMs: reconnectMaxDelayMs,
+    initialDelayMs: parsePositiveInteger('60000', 60_000),
+    maxDelayMs: Math.max(
+      60_000,
+      parsePositiveInteger('300000', 300_000),
+    ),
   },
 };
 
 const missing = [];
-if (!config.discord.token) missing.push('DISCORD_TOKEN');
-if (!config.discord.clientId) missing.push('CLIENT_ID');
-if (!config.discord.guildId) missing.push('GUILD_ID');
-if (!config.server.ip) missing.push('MC_SERVER_IP');
+
+if (!config.discord.token) {
+  missing.push('DISCORD_TOKEN');
+}
 
 if (missing.length > 0) {
-  console.error(`[Config] Missing required environment variables: ${missing.join(', ')}.`);
+  console.error(
+    `[Config] Missing required environment variables: ${missing.join(', ')}.`,
+  );
   console.error('[Config] Add the missing values and restart the bot.');
   process.exit(1);
 }
