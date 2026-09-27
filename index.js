@@ -335,6 +335,17 @@ const commands = [
         .setDescription('Member to release')
         .setRequired(true),
     )
+,
+  new SlashCommandBuilder()
+    .setName('clearwarns')
+    .setDescription('⌫ Clear a member\'s recorded warnings')
+    .addUserOption(option =>
+      option
+        .setName('user')
+        .setDescription('Member whose warnings to clear')
+        .setRequired(true),
+    ),
+
 ].map(command => command.toJSON());
 
 function log(tag, message) {
@@ -2474,6 +2485,37 @@ client.on(Events.InteractionCreate, async interaction => {
 
       return interaction.reply({
         content: '✕ Unknown AI subcommand.',
+        flags: MessageFlags.Ephemeral,
+      });
+    }
+
+    case 'clearwarns': {
+      if (!isAdmin(interaction.user.id)) {
+        return interaction.reply({
+          content: '✕ You are not authorized to use this command.',
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+
+      const targetUser = interaction.options.getUser('user', true);
+      const count = moderation.clearWarnings(targetUser.id);
+
+      await sendModerationLog(
+        createEmbed('⌫ Warnings Cleared', Colors.Blurple)
+          .setDescription(
+            `<@${targetUser.id}>'s recorded warnings were cleared by <@${interaction.user.id}>.`,
+          )
+          .addFields({
+            name: 'Warnings Removed',
+            value: String(count),
+            inline: true,
+          }),
+      );
+
+      return interaction.reply({
+        content: count > 0
+          ? `✓ Cleared ${count} recorded warning${count === 1 ? '' : 's'} for <@${targetUser.id}>.`
+          : `ⓘ <@${targetUser.id}> had no recorded warnings.`,
         flags: MessageFlags.Ephemeral,
       });
     }
