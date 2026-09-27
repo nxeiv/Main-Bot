@@ -1341,7 +1341,7 @@ client.on(Events.MessageCreate, async message => {
   // ============================================================
 
   const botDirectMentionRegex = new RegExp(
-    `<@!?\${client.user.id}>`,
+    `<@!?${client.user.id}>`,
   );
 
   const isDirectBotMention =
