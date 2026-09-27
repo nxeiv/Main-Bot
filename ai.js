@@ -429,6 +429,14 @@ const MAX_CONTEXT_MESSAGES = 40;
 
 const userLastRequest = new Map();
 
+const aiMetrics = {
+  totalRequests: 0,
+  totalErrors: 0,
+  lastRequestAt: null,
+  lastSuccessAt: null,
+  lastError: null,
+};
+
 let requestQueue = [];
 let processingQueue = false;
 let lastGeminiRequest = 0;
@@ -493,6 +501,11 @@ function getAiDiagnostics() {
     conversationSessions: chatSessions.size,
     contextLimitMessages: MAX_CONTEXT_MESSAGES,
     model: GEMINI_MODEL,
+    totalRequests: aiMetrics.totalRequests,
+    totalErrors: aiMetrics.totalErrors,
+    lastRequestAt: aiMetrics.lastRequestAt,
+    lastSuccessAt: aiMetrics.lastSuccessAt,
+    lastError: aiMetrics.lastError,
   };
 }
 function getUserId(options) {
@@ -1330,6 +1343,9 @@ function getKnownAnswer(message) {
 async function ask(message, options = {}) {
   const text = String(message || '').trim();
 
+  aiMetrics.totalRequests += 1;
+  aiMetrics.lastRequestAt = Date.now();
+
   if (!text) {
     throw new Error('Message cannot be empty.');
   }
@@ -1372,8 +1388,19 @@ async function ask(message, options = {}) {
         reply = `• ${reply}`;
       }
 
+      aiMetrics.lastSuccessAt = Date.now();
+      aiMetrics.lastError = null;
+
       return reply;
     } catch (error) {
+      aiMetrics.totalErrors += 1;
+      aiMetrics.lastError = String(
+        error?.message ||
+        error?.error?.message ||
+        error ||
+        'Unknown AI error',
+      ).slice(0, 300);
+
       const errorText = String(
         error?.message ||
         error?.error?.message ||
