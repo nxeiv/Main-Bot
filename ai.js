@@ -5,7 +5,8 @@ const SERVER_INFO = {
   chapter: 'Chapter 1 • Season 5',
 
   // Java
-  javaVersion: '1.21.11 • Paper 26.2',
+  minecraftVersion: '1.21.11',
+  serverSoftware: 'Paper 26.2',
   javaAddress: 'the-cottage-c1-s5.play.hosting',
 
   // Bedrock
@@ -302,7 +303,8 @@ ${SERVER_INFO.name}
 ${SERVER_INFO.chapter}
 
 Java:
-Version: ${SERVER_INFO.javaVersion}
+Minecraft version: ${SERVER_INFO.minecraftVersion}
+Server software: ${SERVER_INFO.serverSoftware}
 Address: ${SERVER_INFO.javaAddress}
 
 Bedrock:
@@ -1315,7 +1317,7 @@ function getKnownAnswer(message) {
   }
 
   if (text === 'java?' || text === 'java' || text === 'java server?' || text === 'java server') {
-    return `Java: ${SERVER_INFO.javaAddress} • ${SERVER_INFO.javaVersion}`;
+    return `Java: Minecraft ${SERVER_INFO.minecraftVersion} • ${SERVER_INFO.serverSoftware} • ${SERVER_INFO.javaAddress}`;
   }
 
   if (text === 'bedrock?' || text === 'bedrock' || text === 'bedrock join?' || text === 'bedrock joining?') {
