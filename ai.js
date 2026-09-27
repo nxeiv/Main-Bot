@@ -5,7 +5,7 @@ const SERVER_INFO = {
   chapter: 'Chapter 1 • Season 5',
 
   // Java
-  javaVersion: '1.21.8+ • Paper 26.2',
+  javaVersion: '1.21.11 • Paper 26.2',
   javaAddress: 'the-cottage-c1-s5.play.hosting',
 
   // Bedrock
@@ -1286,13 +1286,13 @@ function getKnownAnswer(message) {
   if (
     minecraftContext &&
     (
-      /\\bserver rules\\b/.test(text) ||
-      /\\bsmp rules\\b/.test(text) ||
-      /\\bminecraft rules\\b/.test(text) ||
-      /\\bwhat are the minecraft rules\\b/.test(text) ||
-      /\\bwhat are the smp rules\\b/.test(text) ||
-      /\\bwhere are the minecraft rules\\b/.test(text) ||
-      /\\bwhere are the smp rules\\b/.test(text)
+      /\bserver rules\b/.test(text) ||
+      /\bsmp rules\b/.test(text) ||
+      /\bminecraft rules\b/.test(text) ||
+      /\bwhat are the minecraft rules\b/.test(text) ||
+      /\bwhat are the smp rules\b/.test(text) ||
+      /\bwhere are the minecraft rules\b/.test(text) ||
+      /\bwhere are the smp rules\b/.test(text)
     )
   ) {
     return `The Cottage★ SMP Code of Conduct is here: ${SERVER_INFO.rulesLink}`;
@@ -1304,7 +1304,7 @@ function getKnownAnswer(message) {
   if (
     text === 'how do i join on bedrock?' ||
     text === 'how do i join bedrock?' ||
-    /\\bjoin.*bedrock\\b/.test(text)
+    /\bjoin.*bedrock\b/.test(text)
   ) {
     return SERVER_INFO.bedrockJoiningInfo;
   }
