@@ -106,17 +106,11 @@ async function collectSummary({ interaction, target, ai }) {
   });
 }
 
-async function handleSlashCommand({ interaction, ai, ephemeral = true }) {
+async function handleSlashCommand({ interaction, ai }) {
   const target = interaction.options.getChannel('channel', true);
 
   try {
-    if (ephemeral) {
-      await interaction.deferReply({
-        flags: MessageFlags.Ephemeral,
-      });
-    } else {
-      await interaction.deferReply();
-    }
+    await interaction.deferReply();
 
     const generatedSummary = await collectSummary({
       interaction,
@@ -146,10 +140,24 @@ async function handleSlashCommand({ interaction, ai, ephemeral = true }) {
       })
       .setTimestamp();
 
-    return interaction.editReply({
+    const reply = await interaction.editReply({
       embeds: [embed],
       allowedMentions: { parse: [] },
     });
+
+    // Public summaries are intentionally temporary.
+    setTimeout(async () => {
+      try {
+        await interaction.deleteReply();
+      } catch (error) {
+        console.error(
+          '[Summary] Unable to expire public summary:',
+          error?.message || error,
+        );
+      }
+    }, 10 * 60 * 1000);
+
+    return reply;
   } catch (error) {
     console.error(
       `[Summary] Unable to summarize #${target?.name || 'unknown'}:`,
@@ -176,15 +184,6 @@ async function handleSlashCommand({ interaction, ai, ephemeral = true }) {
 }
 
 
-async function handlePublicSlashCommand({ interaction, ai }) {
-  return handleSlashCommand({
-    interaction,
-    ai,
-    ephemeral: false,
-  });
-}
-
 module.exports = {
   handleSlashCommand,
-  handlePublicSlashCommand,
 };
