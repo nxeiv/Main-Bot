@@ -20,7 +20,8 @@ const config = require('./config');
 const mc = require('./minecraft');
 const ai = require('./ai');
 const { applyUnicodeTheme } = require('./unicode');
-const { handleBanishMessage } = require('./banish');
+const { handleBanishMessage, getActiveBanishments, clearActiveBanishment } = require('./banish');
+const moderation = require('./moderation');
 
 const scheduledAdminActions = new Map();
 
@@ -258,6 +259,82 @@ const commands = [
         .setName('status')
         .setDescription('ⓘ Shows AI health and queue diagnostics'),
     ),
+,
+  new SlashCommandBuilder()
+    .setName('dashboard')
+    .setDescription('◎ Shows Discord, Minecraft, and AI health'),
+
+  new SlashCommandBuilder()
+    .setName('timeout')
+    .setDescription('⚒︎ Temporarily timeout a member')
+    .addUserOption(option =>
+      option
+        .setName('user')
+        .setDescription('Member to timeout')
+        .setRequired(true),
+    )
+    .addStringOption(option =>
+      option
+        .setName('duration')
+        .setDescription('Duration such as 10s, 5m, 1h, or 1d')
+        .setRequired(true),
+    )
+    .addStringOption(option =>
+      option
+        .setName('reason')
+        .setDescription('Reason for the timeout')
+        .setRequired(false),
+    ),
+
+  new SlashCommandBuilder()
+    .setName('untimeout')
+    .setDescription('✓ Remove a member timeout')
+    .addUserOption(option =>
+      option
+        .setName('user')
+        .setDescription('Member to untimeout')
+        .setRequired(true),
+    ),
+
+  new SlashCommandBuilder()
+    .setName('warn')
+    .setDescription('⚠︎ Record a moderation warning')
+    .addUserOption(option =>
+      option
+        .setName('user')
+        .setDescription('Member to warn')
+        .setRequired(true),
+    )
+    .addStringOption(option =>
+      option
+        .setName('reason')
+        .setDescription('Reason for the warning')
+        .setRequired(true),
+    ),
+
+  new SlashCommandBuilder()
+    .setName('modlog')
+    .setDescription('ⓘ View recent moderation history')
+    .addUserOption(option =>
+      option
+        .setName('user')
+        .setDescription('Member whose history to view')
+        .setRequired(true),
+    ),
+
+  new SlashCommandBuilder()
+    .setName('banishlist')
+    .setDescription('⚒︎ Show active banishments'),
+
+  new SlashCommandBuilder()
+    .setName('unbanish')
+    .setDescription('✓ Release a member from banishment')
+    .addUserOption(option =>
+      option
+        .setName('user')
+        .setDescription('Member to release')
+        .setRequired(true),
+    )
 ].map(command => command.toJSON());
 
 function log(tag, message) {
@@ -267,6 +344,72 @@ function log(tag, message) {
 
 function isAdmin(userId) {
   return config.adminUserIds?.includes(userId);
+}
+
+function getDiscordAiSessionId(message) {
+  const guildId = message.guild?.id || 'dm';
+  const channelId = message.channel?.id || 'unknown-channel';
+  return `discord:${guildId}:${channelId}:${message.author.id}`;
+}
+
+function getInteractionAiSessionId(interaction) {
+  const guildId = interaction.guildId || 'dm';
+  const channelId = interaction.channelId || 'unknown-channel';
+  return `discord:${guildId}:${channelId}:${interaction.user.id}`;
+}
+
+function shortenStack(error, limit = 1200) {
+  const stack = String(error?.stack || error?.message || error || 'Unknown error');
+  return stack.length > limit
+    ? `${stack.slice(0, limit - 3)}...`
+    : stack;
+}
+
+async function reportErrorToDiscord(error, context = 'Main Bot') {
+  const channelId = config.discord.errorChannelId;
+
+  log(
+    'Error',
+    `${context}: ${error?.stack || error?.message || error || 'Unknown error'}`,
+  );
+
+  if (!channelId) return;
+
+  try {
+    const channel = await client.channels.fetch(channelId);
+
+    if (!channel?.isTextBased()) return;
+
+    await channel.send({
+      embeds: [{
+        color: Colors.Red,
+        title: '✕ Main Bot Error',
+        fields: [
+          {
+            name: 'Component',
+            value: shorten(context, 256),
+          },
+          {
+            name: 'Error',
+            value: shortenStack(error),
+          },
+        ],
+        footer: { text: 'The Cottage★ Diagnostics' },
+        timestamp: new Date().toISOString(),
+      }],
+      allowedMentions: { parse: [] },
+    });
+  } catch (reportError) {
+    console.error(
+      '[Error] Unable to send Discord error report:',
+      reportError?.message || reportError,
+    );
+  }
+}
+
+function getDiscordConnectionState() {
+  if (!client.isReady()) return 'Starting';
+  return client.ws.status === 0 ? 'Connected' : 'Reconnecting / unavailable';
 }
 
 function isLikelyAdminRequest(text) {
@@ -624,6 +767,79 @@ function buildStatusEmbed(status, title, color) {
       },
       { name: 'Bot Name', value: `\`${config.bot.username}\``, inline: true },
     );
+}
+
+function buildDashboardEmbed() {
+  const mcStatus = mc.getStatus();
+  const aiStatus = ai.getAiDiagnostics();
+  const readyAt = client.readyAt || new Date();
+  const botUptime = Math.max(
+    0,
+    Math.floor((Date.now() - readyAt.getTime()) / 1000),
+  );
+
+  const mcState = mcStatus.connected
+    ? '✓ Online'
+    : mcStatus.connecting || mcStatus.reconnecting
+      ? '⚠︎ Reconnecting'
+      : '✕ Offline';
+
+  const aiState = aiStatus.configuredKeys > 0
+    ? '✓ Configured'
+    : '✕ Unconfigured';
+
+  return createEmbed(
+    'The Cottage★ Main Bot',
+    mcStatus.connected ? Colors.Green : Colors.Blurple,
+  )
+    .setDescription('◎ Unified Discord, Minecraft, and AI health')
+    .addFields(
+      {
+        name: 'Discord',
+        value: `${getDiscordConnectionState()}\nUptime: ${formatUptime(botUptime)}`,
+        inline: true,
+      },
+      {
+        name: 'Minecraft',
+        value:
+          `${mcState}\nPlayers: ${mcStatus.playerCount}\nReconnects: ${mcStatus.reconnectAttempts}`,
+        inline: true,
+      },
+      {
+        name: 'AI',
+        value:
+          `${aiState}\nQueue: ${aiStatus.queuedRequests}/${aiStatus.queueLimit}\nSessions: ${aiStatus.conversationSessions}`,
+        inline: true,
+      },
+      {
+        name: 'AI Model',
+        value: `\`${aiStatus.model}\`\nContext: ${aiStatus.contextLimitMessages} messages`,
+        inline: true,
+      },
+      {
+        name: 'Minecraft Uptime',
+        value: mcStatus.connected ? formatUptime(mcStatus.uptime) : 'Not connected',
+        inline: true,
+      },
+      {
+        name: 'Active Cooldowns',
+        value: String(aiStatus.activeCooldowns),
+        inline: true,
+      },
+    );
+}
+
+async function sendModerationLog(embed) {
+  const channelId = config.discord.moderationLogChannelId;
+  if (!channelId) return;
+
+  try {
+    const channel = await client.channels.fetch(channelId);
+    if (!channel?.isTextBased()) return;
+    await channel.send({ embeds: [embed], allowedMentions: { parse: [] } });
+  } catch (error) {
+    await reportErrorToDiscord(error, 'Moderation log');
+  }
 }
 
 function shorten(text, limit = 1000) {
@@ -1033,9 +1249,7 @@ client.on(Events.MessageCreate, async message => {
     message.guild?.id === config.discord.guildId &&
     normalizedMessageText === 'forget'
   ) {
-    ai.resetUserConversation(
-      `discord:${message.author.id}`,
-    );
+    ai.resetUserConversation(aiSessionId || getDiscordAiSessionId(message));
 
     await message.reply(
       '⌫ Your AI conversation context has been forgotten. You can start fresh now.',
@@ -1106,16 +1320,17 @@ client.on(Events.MessageCreate, async message => {
     botDirectMentionRegex.test(message.content);
 
   let isReplyToBot = false;
+  let replyTargetMessage = null;
 
   if (message.reference?.messageId) {
     try {
-      const referencedMessage = await message.channel.messages.fetch(
+      replyTargetMessage = await message.channel.messages.fetch(
         message.reference.messageId,
       );
 
       isReplyToBot =
         Boolean(client.user) &&
-        referencedMessage.author.id === client.user.id;
+        replyTargetMessage.author.id === client.user.id;
     } catch (error) {
       log(
         'Discord',
@@ -1142,14 +1357,23 @@ const normalizedQuestion = question
   .toLowerCase()
   .trim();
 
+const aiSessionId = getDiscordAiSessionId(message);
+
+const contextualAiQuestion =
+  isReplyToBot && replyTargetMessage?.content
+    ? [
+      'The user is replying directly to your previous Discord message.',
+      `Previous bot message: ${shorten(replyTargetMessage.content, 1600)}`,
+      `User follow-up: ${question || '(no additional text)'}`,
+    ].join('\\n')
+    : question;
+
     // ========================================================
     // AI FORGET
     // ========================================================
 
     if (normalizedQuestion === 'forget') {
-      ai.resetUserConversation(
-        `discord:${message.author.id}`,
-      );
+      ai.resetUserConversation(getDiscordAiSessionId(message));
 
       await message.reply(
         '⌫ Your AI conversation context has been forgotten. You can start fresh now.',
@@ -1555,8 +1779,8 @@ const executeAt = scheduleAdminAction(
         `Discord ${message.author.username} in #${message.channel.name}: ${question}`,
       );
 
-const response = await ai.ask(question, {
-  userId: `discord:${message.author.id}`,
+const response = await ai.ask(contextualAiQuestion, {
+  userId: aiSessionId,
   platform: 'discord',
 });
 
@@ -1649,9 +1873,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
   switch (interaction.commandName) {
     case 'forget': {
-      ai.resetUserConversation(
-        `discord:${interaction.user.id}`,
-      );
+      ai.resetUserConversation(getInteractionAiSessionId(interaction));
 
       return interaction.reply({
         content:
@@ -1845,41 +2067,307 @@ client.on(Events.InteractionCreate, async interaction => {
       });
     }
 
-    case 'status': {
+    case 'status':
+    case 'dashboard': {
       if (!isAdmin(interaction.user.id)) {
-        log(
-          'Admin',
-          `Rejected /status from unauthorized user ${interaction.user.tag} (${interaction.user.id}).`,
-        );
-
         return interaction.reply({
           content: '✕ You are not authorized to use this command.',
           flags: MessageFlags.Ephemeral,
         });
       }
 
-      log(
-        'Admin',
-        `Verified /status request from ${interaction.user.tag} (${interaction.user.id}).`,
+      return interaction.reply({
+        embeds: [buildDashboardEmbed()],
+        flags: MessageFlags.Ephemeral,
+      });
+    }
+
+    case 'timeout': {
+      if (!isAdmin(interaction.user.id)) {
+        return interaction.reply({
+          content: '✕ You are not authorized to use this command.',
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+
+      const targetUser = interaction.options.getUser('user', true);
+      const durationText = interaction.options.getString('duration', true);
+      const reason = interaction.options.getString('reason') || 'No reason provided.';
+      const durationMs = moderation.parseDuration(durationText);
+
+      if (!durationMs) {
+        return interaction.reply({
+          content: '✕ Invalid duration. Use values such as **10s**, **5m**, **1h**, or **1d**.',
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+
+      const targetMember = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
+
+      if (!targetMember || targetUser.bot) {
+        return interaction.reply({
+          content: '✕ That user cannot be moderated.',
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+
+      if (!targetMember.moderatable) {
+        return interaction.reply({
+          content: '✕ I cannot timeout that member. Check my permissions and role hierarchy.',
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+
+      try {
+        await targetMember.timeout(
+          durationMs,
+          `Timeout by ${interaction.user.tag}: ${reason}`,
+        );
+
+        const event = moderation.recordEvent({
+          type: 'timeout',
+          targetId: targetUser.id,
+          targetTag: targetUser.tag,
+          moderatorId: interaction.user.id,
+          moderatorTag: interaction.user.tag,
+          durationMs,
+          reason,
+        });
+
+        await sendModerationLog(
+          createEmbed('⚒︎ Member Timed Out', Colors.Orange)
+            .setDescription(
+              `<@${targetUser.id}> was timed out by <@${interaction.user.id}>.`,
+            )
+            .addFields(
+              { name: 'Duration', value: moderation.formatDuration(durationMs), inline: true },
+              { name: 'Reason', value: reason.slice(0, 1024), inline: true },
+              { name: 'Event', value: `\`${event.id}\``, inline: true },
+            ),
+        );
+
+        return interaction.reply({
+          content: `✓ Timed out <@${targetUser.id}> for ${moderation.formatDuration(durationMs)}.`,
+          flags: MessageFlags.Ephemeral,
+        });
+      } catch (error) {
+        await reportErrorToDiscord(error, 'Manual timeout');
+        return interaction.reply({
+          content: '✕ I could not apply that timeout.',
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+    }
+
+    case 'untimeout': {
+      if (!isAdmin(interaction.user.id)) {
+        return interaction.reply({
+          content: '✕ You are not authorized to use this command.',
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+
+      const targetUser = interaction.options.getUser('user', true);
+      const targetMember = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
+
+      if (!targetMember || !targetMember.moderatable) {
+        return interaction.reply({
+          content: '✕ I cannot modify that member.',
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+
+      try {
+        await targetMember.timeout(
+          null,
+          `Manual untimeout by ${interaction.user.tag}.`,
+        );
+
+        moderation.recordEvent({
+          type: 'untimeout',
+          targetId: targetUser.id,
+          targetTag: targetUser.tag,
+          moderatorId: interaction.user.id,
+          moderatorTag: interaction.user.tag,
+          reason: 'Manual untimeout.',
+        });
+
+        clearActiveBanishment(targetUser.id);
+
+        await sendModerationLog(
+          createEmbed('✓ Member Untimed Out', Colors.Green)
+            .setDescription(
+              `<@${targetUser.id}> was untimed out by <@${interaction.user.id}>.`,
+            ),
+        );
+
+        return interaction.reply({
+          content: `✓ Removed the timeout from <@${targetUser.id}>.`,
+          flags: MessageFlags.Ephemeral,
+        });
+      } catch (error) {
+        await reportErrorToDiscord(error, 'Manual untimeout');
+        return interaction.reply({
+          content: '✕ I could not remove that timeout.',
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+    }
+
+    case 'warn': {
+      if (!isAdmin(interaction.user.id)) {
+        return interaction.reply({
+          content: '✕ You are not authorized to use this command.',
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+
+      const targetUser = interaction.options.getUser('user', true);
+      const reason = interaction.options.getString('reason', true).trim();
+
+      if (targetUser.bot) {
+        return interaction.reply({
+          content: '✕ Bots cannot receive moderation warnings.',
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+
+      const warning = moderation.recordWarning({
+        targetId: targetUser.id,
+        targetTag: targetUser.tag,
+        moderatorId: interaction.user.id,
+        moderatorTag: interaction.user.tag,
+        reason,
+      });
+
+      await sendModerationLog(
+        createEmbed('⚠︎ Member Warned', Colors.Yellow)
+          .setDescription(
+            `<@${targetUser.id}> was warned by <@${interaction.user.id}>.`,
+          )
+          .addFields({ name: 'Reason', value: reason.slice(0, 1024) }),
       );
 
-      const color = status.connected
-        ? Colors.Green
-        : (
-          status.connecting || status.reconnecting
-            ? Colors.Yellow
-            : Colors.DarkGrey
+      return interaction.reply({
+        content: `⚠︎ Warning recorded for <@${targetUser.id}>. Warning #${moderation.getWarnings(targetUser.id).length}.`,
+        flags: MessageFlags.Ephemeral,
+      });
+    }
+
+    case 'modlog': {
+      if (!isAdmin(interaction.user.id)) {
+        return interaction.reply({
+          content: '✕ You are not authorized to use this command.',
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+
+      const targetUser = interaction.options.getUser('user', true);
+      const warnings = moderation.getWarnings(targetUser.id);
+      const events = moderation.getEvents(targetUser.id, 8);
+
+      const embed = createEmbed(
+        `ⓘ Moderation History: ${targetUser.tag}`,
+        Colors.Blurple,
+      )
+        .setDescription(
+          `Warnings recorded: **${warnings.length}**`,
         );
+
+      if (events.length === 0) {
+        embed.addFields({
+          name: 'Recent Events',
+          value: 'No moderation events recorded.',
+        });
+      } else {
+        embed.addFields(
+          ...events.slice(0, 8).map(event => ({
+            name: `${event.type} • ${new Date(event.timestamp).toLocaleString('en-PH')}`,
+            value: event.reason || 'No reason recorded.',
+            inline: false,
+          })),
+        );
+      }
+
+      return interaction.reply({
+        embeds: [embed],
+        flags: MessageFlags.Ephemeral,
+      });
+    }
+
+    case 'banishlist': {
+      if (!isAdmin(interaction.user.id)) {
+        return interaction.reply({
+          content: '✕ You are not authorized to use this command.',
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+
+      const active = getActiveBanishments();
+
+      if (active.length === 0) {
+        return interaction.reply({
+          content: 'ⓘ No active banishments.',
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+
+      const lines = [];
+      for (const entry of active) {
+        const member = await interaction.guild.members.fetch(entry.userId).catch(() => null);
+        lines.push(
+          `<@${entry.userId}> • since <t:${Math.floor(entry.startedAt / 1000)}:R>`,
+        );
+        if (!member) continue;
+      }
 
       return interaction.reply({
         embeds: [
-          buildStatusEmbed(
-            status,
-            `Bot Status: ${getBotState(status)}`,
-            color,
-          ),
+          createEmbed('⚒︎ Active Banishments', Colors.Orange)
+            .setDescription(lines.join('\\n')),
         ],
+        flags: MessageFlags.Ephemeral,
       });
+    }
+
+    case 'unbanish': {
+      if (!isAdmin(interaction.user.id)) {
+        return interaction.reply({
+          content: '✕ You are not authorized to use this command.',
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+
+      const targetUser = interaction.options.getUser('user', true);
+      const targetMember = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
+
+      clearActiveBanishment(targetUser.id);
+
+      try {
+        if (targetMember?.moderatable && targetMember.communicationDisabledUntilTimestamp) {
+          await targetMember.timeout(null, `Banish release by ${interaction.user.tag}.`);
+        }
+
+        moderation.recordEvent({
+          type: 'banish_release',
+          targetId: targetUser.id,
+          targetTag: targetUser.tag,
+          moderatorId: interaction.user.id,
+          moderatorTag: interaction.user.tag,
+          reason: 'Manual banishment release.',
+        });
+
+        return interaction.reply({
+          content: `✓ Released <@${targetUser.id}> from banishment.`,
+          flags: MessageFlags.Ephemeral,
+        });
+      } catch (error) {
+        await reportErrorToDiscord(error, 'Manual banish release');
+        return interaction.reply({
+          content: '✕ I could not release that member.',
+          flags: MessageFlags.Ephemeral,
+        });
+      }
     }
 
     case 'ai': {
@@ -1967,6 +2455,14 @@ client.on(Events.InteractionCreate, async interaction => {
       return undefined;
   }
 });
+client.on(Events.Error, error => {
+  void reportErrorToDiscord(error, 'Discord client error');
+});
+
+client.on('shardError', error => {
+  void reportErrorToDiscord(error, 'Discord shard error');
+});
+
 client.once(Events.ClientReady, async readyClient => {
   log('Discord', `Logged in as ${readyClient.user.tag}.`);
 
@@ -1989,10 +2485,15 @@ client.once(Events.ClientReady, async readyClient => {
 
 process.on('uncaughtException', error => {
   console.error('[Fatal] Uncaught exception:', error.stack || error.message);
+  void reportErrorToDiscord(error, 'Uncaught exception');
 });
 
 process.on('unhandledRejection', reason => {
   console.error('[Fatal] Unhandled rejection:', reason);
+  void reportErrorToDiscord(
+    reason instanceof Error ? reason : new Error(String(reason)),
+    'Unhandled rejection',
+  );
 });
 
 log('Discord', 'Starting Discord bot.');
