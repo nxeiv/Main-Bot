@@ -1119,6 +1119,29 @@ async function commandWatchdog() {
   commandWatchdogRunning = true;
 
   try {
+    const rest = new REST({ version: '10' }).setToken(config.discord.token);
+    const route = Routes.applicationGuildCommands(
+      config.discord.clientId,
+      config.discord.guildId,
+    );
+
+    const existing = await rest.get(route);
+
+    log(
+      'Discord',
+      `Watchdog: Discord currently reports ${existing.length} guild command(s).`,
+    );
+
+    // Never recreate every command because Discord unexpectedly reports zero.
+    // A transient/incomplete API response should not replace command IDs.
+    if (existing.length === 0 && commands.length > 0) {
+      log(
+        'Watchdog',
+        'Discord returned 0 guild commands. Skipping repair to avoid destructive recreation after a transient API response.',
+      );
+      return;
+    }
+
     const result = await reconcileSlashCommands('Watchdog');
 
     if (
