@@ -5,6 +5,7 @@ const path = require('node:path');
 
 const {
   ActivityType,
+  ChannelType,
   Client,
   Colors,
   EmbedBuilder,
