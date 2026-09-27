@@ -1379,15 +1379,18 @@ async function ask(message, options = {}) {
     throw new Error('Message cannot be empty.');
   }
 
-  // Known server questions NEVER use Gemini.
-  const knownAnswer = getKnownAnswer(text);
+  // Known server questions NEVER use Gemini,
+  // unless this request explicitly needs the normal Gemini path.
+  if (!options.skipKnownAnswers) {
+    const knownAnswer = getKnownAnswer(text);
 
-  if (knownAnswer) {
-    const reply = normalizeChatReply(knownAnswer);
+    if (knownAnswer) {
+      const reply = normalizeChatReply(knownAnswer);
 
-    return options.platform === 'minecraft'
-      ? formatMinecraftReply(reply)
-      : reply;
+      return options.platform === 'minecraft'
+        ? formatMinecraftReply(reply)
+        : reply;
+    }
   }
 
   const userId = getUserId(options);
