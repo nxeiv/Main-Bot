@@ -33,7 +33,7 @@ function buildTranscript(messages) {
         message.author?.username ||
         'Unknown';
 
-      return \`\${author}: \${content}\`;
+      return `${author}: ${content}`;
     })
     .filter(Boolean);
 
@@ -41,7 +41,7 @@ function buildTranscript(messages) {
   let transcript = '';
 
   for (let index = lines.length - 1; index >= 0; index -= 1) {
-    const next = lines[index] + (transcript ? \`\\n\${transcript}\` : '');
+    const next = lines[index] + (transcript ? `\n${transcript}` : '');
 
     if (next.length > maxCharacters) {
       break;
@@ -75,7 +75,7 @@ async function collectSummary({ interaction, target, ai }) {
 
   if (usableMessages.length === 0) {
     throw new Error(
-      \`The channel <#\${target.id}> does not have any recent messages to summarize.\`,
+      `The channel <#${target.id}> does not have any recent messages to summarize.`,
     );
   }
 
@@ -83,12 +83,12 @@ async function collectSummary({ interaction, target, ai }) {
 
   if (!transcript) {
     throw new Error(
-      \`The channel <#\${target.id}> does not have readable recent messages to summarize.\`,
+      `The channel <#${target.id}> does not have readable recent messages to summarize.`,
     );
   }
 
   const prompt = [
-    \`Summarize the recent conversation from Discord channel #\${target.name}.\`,
+    `Summarize the recent conversation from Discord channel #${target.name}.`,
     'Use only the transcript below. Do not invent details.',
     'Keep the summary concise and useful for someone who missed the conversation.',
     'Keep the final answer under 1200 characters.',
@@ -99,10 +99,10 @@ async function collectSummary({ interaction, target, ai }) {
     '',
     'TRANSCRIPT:',
     transcript,
-  ].join('\\n');
+  ].join('\n');
 
   return ai.ask(prompt, {
-    userId: \`summary:\${interaction.id}\`,
+    userId: `summary:${interaction.id}`,
     platform: 'discord',
     skipKnownAnswers: true,
   });
@@ -134,17 +134,17 @@ async function handleSlashCommand({ interaction, ai }) {
       .setDescription(summaryText)
       .addFields({
         name: 'Channel',
-        value: \`<#\${target.id}>\`,
+        value: `<#${target.id}>`,
         inline: true,
       })
       .setFooter({
-        text: \`Requested by \${interaction.user.displayName || interaction.user.username}\`,
+        text: `Requested by ${interaction.user.displayName || interaction.user.username}`,
       })
       .setTimestamp();
 
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
-        .setCustomId(\`summary:dismiss:\${interaction.user.id}:\${interaction.id}\`)
+        .setCustomId(`summary:dismiss:${interaction.user.id}:${interaction.id}`)
         .setLabel('Dismiss summary')
         .setStyle(ButtonStyle.Secondary),
     );
@@ -156,7 +156,7 @@ async function handleSlashCommand({ interaction, ai }) {
     });
   } catch (error) {
     console.error(
-      \`[Summary] Unable to summarize #\${target?.name || 'unknown'}:\`,
+      `[Summary] Unable to summarize #${target?.name || 'unknown'}:`,
       error?.message || error,
     );
 
