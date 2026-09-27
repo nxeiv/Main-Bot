@@ -143,7 +143,7 @@ Normal server settings are kept in `config.js`, including:
 
 - Discord client and guild IDs
 - Status, maintenance, chat, moderation-log, and error-report channel IDs
-- Administrator user IDs
+- Administrator user IDs and administrator role IDs
 - Minecraft hostname and port
 - Minecraft version
 - Minecraft bot username
@@ -151,6 +151,8 @@ Normal server settings are kept in `config.js`, including:
 - Reconnect timing
 
 Review `config.js` before deploying the bot to a different server or Discord guild.
+
+Administrators can be configured by both user ID and role ID in `config.js`; members with a configured administrator role can use the administrator commands and admin AI actions.
 
 ## Installation
 
