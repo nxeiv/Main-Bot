@@ -1,7 +1,5 @@
 'use strict';
 
-const { applyUnicodeTheme } = require('./unicode');
-
 const SERVER_INFO = {
   name: 'The Cottage★ SMP',
   chapter: 'Chapter 1 • Season 5',
@@ -244,7 +242,7 @@ const FEATURE_ALIASES = {
 };
 
 const SYSTEM_PROMPT = `
-You are The Cottage★ Main Bot, the official AI-powered assistant for The Cottage★ Discord community.
+You are The Cottage★, the community assistant for The Cottage★ Discord community.
 
 ROLE AND PRIORITY
 
@@ -253,7 +251,7 @@ ROLE AND PRIORITY
 - Help with community questions, navigation, roles, channels, bot features, newcomers, casual conversation, and general questions.
 - Help with Minecraft only when the user's question is actually Minecraft/SMP-related.
 - Do not force Discord or Minecraft context into unrelated conversations.
-- These priorities describe your identity, not literal probabilities.
+- Your identity is simply the Cottage★ community assistant. Do not call yourself "The Cottage★ Main Bot", "Main Bot", "the Main Bot", or "the official AI-powered assistant".
 
 PERSONALITY
 
@@ -375,8 +373,9 @@ Stay focused on what the user is asking now.
 RESPONSE STYLE
 
 - Answer the actual question first.
-- Unicode Theme: use Unicode symbols and typographic characters for the bot's visual language. Prefer symbols such as ✓, ✕, ⓘ, ⚠︎, ⚒︎, ⌂, ⌁, ◆, ◇, ◌, ⌘, ◷, ◎, ⌫, and → instead of pictographic emoji.
-- Do not use pictographic emoji in AI responses. Keep the interface's symbols consistent and text-friendly.
+- Use normal, plain chat punctuation. Do not use decorative Unicode symbols, pictographic emoji, or a special "Unicode theme" in conversational replies.
+- Prefer ordinary ASCII punctuation and characters such as "-", "->", and parentheses when formatting text.
+- The official server name "The Cottage★" may remain exactly as written when referring to the community or server.
 
 - Keep simple questions simple.
 - Do not pad answers with generic openings such as "Certainly!", "Great question!", "Here are a few...", or "Sure!" unless the user genuinely needs that tone.
@@ -459,12 +458,40 @@ function trimConversationHistory(history) {
 }
 
 function normalizeAiReply(text) {
-  return applyUnicodeTheme(
-    String(text || '')
-      .replace(/\r?\n|\r/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim(),
-  );
+  const symbolReplacements = [
+    [/•/g, '-'],
+    [/◆|◇/g, '-'],
+    [/⌁|→/g, '->'],
+    [/✓/g, 'yes'],
+    [/✕/g, 'x'],
+    [/ⓘ/g, 'info:'],
+    [/⚠︎|⚠️|⚠/g, 'warning:'],
+    [/⚒︎|⚒️|⚒/g, 'tools:'],
+    [/⌂/g, 'home'],
+    [/⌫/g, 'delete'],
+    [/◌|◷|◎|⌘/g, ''],
+    [/\uFE0F|\uFE0E|\u200D/g, ''],
+  ];
+
+  let reply = String(text || '');
+
+  for (const [pattern, replacement] of symbolReplacements) {
+    reply = reply.replace(pattern, replacement);
+  }
+
+  return reply
+    .replace(/\r?\n|\r/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function normalizeChatReply(text) {
+  return normalizeAiReply(text)
+    .replace(/[“”]/g, '"')
+    .replace(/[‘’]/g, "'")
+    .replace(/[–—]/g, '-')
+    .replace(/…/g, '...')
+    .trim();
 }
 
 function runAiQualityChecks(text, options = {}) {
@@ -1354,9 +1381,11 @@ async function ask(message, options = {}) {
   const knownAnswer = getKnownAnswer(text);
 
   if (knownAnswer) {
+    const reply = normalizeChatReply(knownAnswer);
+
     return options.platform === 'minecraft'
-      ? formatMinecraftReply(knownAnswer)
-      : knownAnswer;
+      ? formatMinecraftReply(reply)
+      : reply;
   }
 
   const userId = getUserId(options);
@@ -1385,8 +1414,10 @@ async function ask(message, options = {}) {
       reply = runAiQualityChecks(reply, options);
 
       if (reply.startsWith('/')) {
-        reply = `• ${reply}`;
+        reply = `- ${reply}`;
       }
+
+      reply = normalizeChatReply(reply);
 
       aiMetrics.lastSuccessAt = Date.now();
       aiMetrics.lastError = null;
