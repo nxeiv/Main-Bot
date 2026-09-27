@@ -28,7 +28,7 @@ function resolveChannel(message, request) {
   }
 
   const cleaned = request
-    .replace(/\b(?:please|can you|could you|would you)\b/gi, ' ')
+    .replace(/\b(?:please|can you|could you|would you|the|channel)\b/gi, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 
@@ -63,7 +63,7 @@ function cleanMessageContent(message) {
 }
 
 function buildTranscript(messages) {
-  return messages
+  const lines = messages
     .reverse()
     .map(message => {
       const content = cleanMessageContent(message);
@@ -72,8 +72,20 @@ function buildTranscript(messages) {
       const author = message.member?.displayName || message.author?.username || 'Unknown';
       return `${author}: ${content}`;
     })
-    .filter(Boolean)
-    .join('\n');
+    .filter(Boolean);
+
+  // Keep the prompt comfortably below Discord/Gemini limits while retaining
+  // the newest conversation when a channel is especially busy.
+  const maxCharacters = 18000;
+  let transcript = '';
+
+  for (let index = lines.length - 1; index >= 0; index -= 1) {
+    const next = lines[index] + (transcript ? `\n${transcript}` : '');
+    if (next.length > maxCharacters) break;
+    transcript = next;
+  }
+
+  return transcript;
 }
 
 function attachDismissHandler(client) {
@@ -121,8 +133,7 @@ async function handleMention({ message, question, client, ai }) {
 
   if (
     target.type !== ChannelType.GuildText &&
-    target.type !== ChannelType.GuildAnnouncement &&
-    target.type !== ChannelType.GuildForum
+    target.type !== ChannelType.GuildAnnouncement
   ) {
     await message.reply('I can only summarize text-based Discord channels.');
     return true;
@@ -157,6 +168,7 @@ async function handleMention({ message, question, client, ai }) {
       `Summarize the recent conversation from Discord channel #${target.name}.`,
       'Use only the transcript below. Do not invent details.',
       'Keep the summary concise and useful for someone who missed the conversation.',
+      'Keep the final answer under 1200 characters.',
       'Use a short heading followed by 3 to 7 bullet points when appropriate.',
       'Mention important decisions, questions, announcements, plans, or unresolved topics.',
       'Do not include a generic introduction or conclusion.',
@@ -166,12 +178,15 @@ async function handleMention({ message, question, client, ai }) {
       transcript,
     ].join('\n');
 
-    const summary = await ai.ask(prompt, {
-      userId: `summary:${message.guild.id}:${message.author.id}:${target.id}`,
+    const generatedSummary = await ai.ask(prompt, {
+      userId: `summary:${message.id}`,
       platform: 'discord',
     });
 
-    const safeSummary = String(summary || '').trim();
+    const safeSummary = String(generatedSummary || '')
+      .trim()
+      .slice(0, 1800);
+
     if (!safeSummary) {
       throw new Error('AI returned an empty summary.');
     }
