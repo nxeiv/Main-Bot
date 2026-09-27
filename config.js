@@ -28,6 +28,28 @@ const config = {
     '1398595607853142086',
   ],
 
+  // Central feature access policy.
+  // Change a feature here instead of editing permission checks throughout the bot.
+  featureAccess: {
+    help: 'public',
+    status: 'admin',
+    dashboard: 'admin',
+    start: 'admin',
+    stop: 'admin',
+    maintenance: 'admin',
+    forget: 'public',
+    aforeget: 'admin',
+    ai: 'admin',
+    summarize: 'public',
+    timeout: 'admin',
+    untimeout: 'admin',
+    warn: 'admin',
+    modlog: 'admin',
+    banishlist: 'admin',
+    unbanish: 'admin',
+    clearwarns: 'admin',
+  },
+
   server: {
     ip: 'the-cottage-c1-s5.play.hosting',
     port: 25565,
