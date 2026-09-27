@@ -1,7 +1,6 @@
 'use strict';
 
 require('dotenv').config();
-require('./summary-bootstrap');
 
 const discordToken = String(process.env.DISCORD_TOKEN || '').trim();
 const minecraftPassword = String(process.env.MC_PASSWORD || '');
