@@ -28,7 +28,10 @@ function resolveChannel(message, request) {
   }
 
   const cleaned = request
-    .replace(/\b(?:please|can you|could you|would you|the|channel)\b/gi, ' ')
+    .replace(/<#[^>]+>/g, '')
+    .replace(/^.*?╭╴/u, '')
+    .replace(/\b(?:please|can you|could you|would you|the|channel|text|voice)\b/gi, ' ')
+    .replace(/[^\p{L}\p{N}\s_-]/gu, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 
