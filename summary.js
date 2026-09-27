@@ -1,9 +1,6 @@
 'use strict';
 
 const {
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
   ChannelType,
   EmbedBuilder,
   MessageFlags,
@@ -113,7 +110,9 @@ async function handleSlashCommand({ interaction, ai }) {
   const target = interaction.options.getChannel('channel', true);
 
   try {
-    await interaction.deferReply();
+    await interaction.deferReply({
+      flags: MessageFlags.Ephemeral,
+    });
 
     const generatedSummary = await collectSummary({
       interaction,
@@ -143,16 +142,8 @@ async function handleSlashCommand({ interaction, ai }) {
       })
       .setTimestamp();
 
-    const row = new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setCustomId(`summary:dismiss:${interaction.user.id}:${interaction.id}`)
-        .setLabel('Dismiss')
-        .setStyle(ButtonStyle.Secondary),
-    );
-
     return interaction.editReply({
       embeds: [embed],
-      components: [row],
       allowedMentions: { parse: [] },
     });
   } catch (error) {
@@ -180,61 +171,7 @@ async function handleSlashCommand({ interaction, ai }) {
   }
 }
 
-async function handleDismissButton(interaction) {
-  const parts = String(interaction.customId).split(':');
-  const ownerId = parts[2];
-
-  if (!ownerId || interaction.user.id !== ownerId) {
-    return interaction.reply({
-      content: 'Only the person who requested this summary can dismiss it.',
-      flags: MessageFlags.Ephemeral,
-    });
-  }
-
-  try {
-    // Acknowledge the button and remove the control immediately.
-    await interaction.update({
-      components: [],
-    });
-  } catch (error) {
-    console.error(
-      '[Summary] Unable to acknowledge dismiss interaction:',
-      error?.message || error,
-    );
-
-    try {
-      await interaction.deferUpdate();
-    } catch (fallbackError) {
-      console.error(
-        '[Summary] Unable to defer dismiss interaction:',
-        fallbackError?.message || fallbackError,
-      );
-    }
-  }
-
-  try {
-    await interaction.message.delete();
-  } catch (error) {
-    // If deletion fails, at least leave the summary without an active button.
-    console.error(
-      '[Summary] Unable to delete dismissed summary:',
-      error?.message || error,
-    );
-
-    try {
-      await interaction.message.edit({
-        components: [],
-      });
-    } catch (fallbackError) {
-      console.error(
-        '[Summary] Unable to disable dismissed summary button:',
-        fallbackError?.message || fallbackError,
-      );
-    }
-  }
-}
 
 module.exports = {
   handleSlashCommand,
-  handleDismissButton,
 };
