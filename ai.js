@@ -1107,6 +1107,21 @@ function getKnownAnswer(message) {
     /\bnetherite\b/.test(text);
 
   // ============================================================
+  // SUMMARIZATION
+  // ============================================================
+
+  const summarizeChannelMatch = text.match(
+    /^summarize\s+<\#(\d+)>$/,
+  );
+
+  if (summarizeChannelMatch) {
+    return [
+      'ⓘ To summarize a channel, use `/summarize <channel>` for a private summary.',
+      'Use `/summarize-public <channel>` when you want everyone to see the summary.',
+    ].join('\n');
+  }
+
+  // ============================================================
   // BOT HELP
   // ============================================================
 
