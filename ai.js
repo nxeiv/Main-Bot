@@ -173,34 +173,21 @@ const FEATURE_TUTORIALS = {
     'Java players need the Simple Voice Chat mod on their client. Bedrock players can use /dvc start in-game for their dedicated voice connection.',
 };
 
-const BOT_FEATURES_MESSAGE = [
-  '**The Cottage★ Bot Features**',
-  '',
-  '• ◆ **AI Chat** — Have natural conversations and ask questions.',
-  '• ⌖ **Discord Help** — Get help finding channels, roles, rules, and server information.',
-  '• ▣ **SMP Help** — Get confirmed Minecraft server information and joining guidance.',
-  '• ◇ **Feature Help** — Ask about individual Cottage★ SMP features and how they work.',
-  '• ◌ **Minecraft Status** — Check whether the Minecraft bot is online and whether players are detected.',
-  '• ⌁ **AFK System** — Keeps the Minecraft bot connected when needed.',
-  '• ⌘ **Server Controls** — Supports administrative start, stop, status, and maintenance controls.',
-  '• ◷ **Scheduling** — Supports scheduled administrative actions.',
-  '• ◎ **Conversation Memory** — Remembers relevant context during a conversation.',
-  '• ⌫ **Forget Controls** — Supports forgetting a user conversation or all conversations.',
-  '• ◉ **Command Watchdog** — Monitors the bot\'s registered slash commands.',
-  '• → **Instant Answers** — Handles common Cottage★ questions without needing an AI request.',
-].join('\n');
-
 const BOT_HELP_MESSAGE = [
-  '**The Cottage★ Bot Help**',
+  '**The Cottage★ Help**',
+  '',
+  '**⌘ Commands**',
+  '• Minecraft — /status, /dashboard (admin), /start (admin), /stop (admin), /maintenance (admin)',
+  '• AI — @The Cottage★, /forget, /aforget (admin), /ai status (admin)',
+  '• Utilities — /summarize <channel>, /help',
+  '• Moderation — /timeout, /untimeout, /warn, /modlog, /banishlist, /unbanish, /clearwarns (admin)',
   '',
   '**◇ Discord & Community**',
-  '• Ask me about Discord channels, roles, server navigation, and community information.',
-  '• Ask general questions or have a normal conversation with me.',
+  '• Ask me about channels, roles, server navigation, rules, new-member help, or general questions.',
+  '• Mention me directly or reply to one of my messages when you want a conversational answer.',
   '',
   '**▣ The Cottage★ SMP**',
-  '• Ask about joining the SMP, Java, Bedrock, server addresses, rules, and world downloads.',
-  '• Ask **"what are your features?"** or **"what can you do?"** for my bot features.',
-  '• Ask **"what are the SMP features?"** or **"server features?"** for the full Cottage★ SMP feature list.',
+  '• Ask about joining, Java, Bedrock, server addresses, SMP rules, world downloads, or any public server feature.',
   '• Ask **"what is Cottage Harvest?"** or **"how do I use Cottage Voice?"** for feature help and tutorials.',
   '',
   '**⌖ Useful questions**',
@@ -211,12 +198,15 @@ const BOT_HELP_MESSAGE = [
   '• roles? — Server roles',
   '• channels? — Important channels',
   '• world download? — World download',
-  '• features? — My bot features\n  • smp features? — Cottage★ SMP features',
+  '• features? — This help page',
   '• java? — Java server information',
   '• bedrock? — Bedrock joining instructions',
   '',
   'For anything else, just ask naturally and I\'ll do my best to help.',
-].join('\n');
+].join('\\n');
+
+// Single canonical help response. Feature/help aliases resolve to it.
+const BOT_FEATURES_MESSAGE = BOT_HELP_MESSAGE;
 
 const FEATURE_ALIASES = {
   cracked: 'Open Doors',
@@ -1153,6 +1143,7 @@ function getKnownAnswer(message) {
 
   // ============================================================
   // BOT FEATURE QUESTIONS
+  // These are aliases for the canonical help response.
   // ============================================================
 
   if (
@@ -1160,11 +1151,12 @@ function getKnownAnswer(message) {
     text === 'what are your features' ||
     text === 'your features?' ||
     text === 'your features' ||
-    text === 'bot features?' ||    text === 'bot features' ||
+    text === 'bot features?' ||
+    text === 'bot features' ||
     text === 'features?' ||
     text === 'features'
   ) {
-    return BOT_FEATURES_MESSAGE;
+    return BOT_HELP_MESSAGE;
   }
 
   // ============================================================
@@ -1251,6 +1243,26 @@ function getKnownAnswer(message) {
     /\bwhere is the server ip\b/.test(text)
   ) {
     return `The Cottage★ SMP IP information is here: ${SERVER_INFO.ipMessage}`;
+  }
+
+  if (
+    text === 'invite?' ||
+    text === 'invite' ||
+    text === 'discord invite?' ||
+    text === 'discord invite' ||
+    text === 'join discord?' ||
+    text === 'join discord'
+  ) {
+    return `Join The Cottage★ Discord here: ${SERVER_INFO.invite}`;
+  }
+
+  if (
+    text === 'mcrules?' ||
+    text === 'mcrules' ||
+    text === 'smp code of conduct?' ||
+    text === 'smp code of conduct'
+  ) {
+    return `The Cottage★ SMP Code of Conduct is here: ${SERVER_INFO.rulesLink}`;
   }
 
   // ============================================================
@@ -1366,6 +1378,19 @@ function getKnownAnswer(message) {
   return null;
 }
 
+function getInstantAnswer(message) {
+  const knownAnswer = getKnownAnswer(message);
+
+  return knownAnswer
+    ? normalizeChatReply(knownAnswer)
+    : null;
+}
+
+function getHelpMessage() {
+  return getInstantAnswer('help');
+}
+
+
 // ============================================================
 // ASK
 // ============================================================
@@ -1383,10 +1408,10 @@ async function ask(message, options = {}) {
   // Known server questions NEVER use Gemini,
   // unless this request explicitly needs the normal Gemini path.
   if (!options.skipKnownAnswers) {
-    const knownAnswer = getKnownAnswer(text);
+    const knownAnswer = getInstantAnswer(text);
 
     if (knownAnswer) {
-      const reply = normalizeChatReply(knownAnswer);
+      const reply = knownAnswer;
 
       return options.platform === 'minecraft'
         ? formatMinecraftReply(reply)
@@ -1505,4 +1530,7 @@ module.exports = {
   resetConversation,
   resetUserConversation,
   getAiDiagnostics,
+  getKnownAnswer,
+  getInstantAnswer,
+  getHelpMessage,
 };
