@@ -529,7 +529,7 @@ async function executeAdministrativeAction(action) {
       }
 
       await maintenanceChannel.send(
-        '# ⚒︎ **Server is under maintenance** <@&1447218476795166791>',
+        '# 🛠️ **Server is under maintenance** <@&1447218476795166791>',
       );
 
       return 'maintenance announced';
@@ -1677,7 +1677,7 @@ client.on(Events.InteractionCreate, async interaction => {
         }
 
         await maintenanceChannel.send(
-          '# ⚒︎ **Server is under maintenance** <@&1447218476795166791>',
+          '# 🛠️ **Server is under maintenance** <@&1447218476795166791>',
         );
 
         return interaction.reply({
