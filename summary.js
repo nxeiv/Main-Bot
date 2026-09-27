@@ -106,13 +106,17 @@ async function collectSummary({ interaction, target, ai }) {
   });
 }
 
-async function handleSlashCommand({ interaction, ai }) {
+async function handleSlashCommand({ interaction, ai, ephemeral = true }) {
   const target = interaction.options.getChannel('channel', true);
 
   try {
-    await interaction.deferReply({
-      flags: MessageFlags.Ephemeral,
-    });
+    if (ephemeral) {
+      await interaction.deferReply({
+        flags: MessageFlags.Ephemeral,
+      });
+    } else {
+      await interaction.deferReply();
+    }
 
     const generatedSummary = await collectSummary({
       interaction,
@@ -172,6 +176,15 @@ async function handleSlashCommand({ interaction, ai }) {
 }
 
 
+async function handlePublicSlashCommand({ interaction, ai }) {
+  return handleSlashCommand({
+    interaction,
+    ai,
+    ephemeral: false,
+  });
+}
+
 module.exports = {
   handleSlashCommand,
+  handlePublicSlashCommand,
 };
