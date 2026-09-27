@@ -1619,7 +1619,7 @@ client.on(Events.InteractionCreate, async interaction => {
       return interaction.reply({
         content:
           '🧹 Your AI conversation context has been forgotten. You can start fresh now.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -1632,7 +1632,7 @@ client.on(Events.InteractionCreate, async interaction => {
         return interaction.reply({
           content:
             '❌ You are not authorized to use this command.',
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
 
@@ -1641,7 +1641,7 @@ client.on(Events.InteractionCreate, async interaction => {
       return interaction.reply({
         content:
           '🧹 All AI conversation contexts have been forgotten.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
     case 'maintenance': {
@@ -1652,7 +1652,7 @@ client.on(Events.InteractionCreate, async interaction => {
         );
         return interaction.reply({
           content: '❌ You are not authorized to use this command.',
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
 
@@ -1665,7 +1665,7 @@ client.on(Events.InteractionCreate, async interaction => {
           return interaction.reply({
             content:
               '❌ The configured maintenance channel is not a text channel.',
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
           });
         }
 
@@ -1675,7 +1675,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
         return interaction.reply({
           content: '✅ Maintenance announcement sent.',
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       } catch (error) {
         log(
@@ -1686,7 +1686,7 @@ client.on(Events.InteractionCreate, async interaction => {
         return interaction.reply({
           content:
             '❌ Failed to send the maintenance announcement.',
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
     }
@@ -1700,7 +1700,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
         return interaction.reply({
           content: '❌ You are not authorized to use this command.',
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
 
@@ -1723,7 +1723,7 @@ client.on(Events.InteractionCreate, async interaction => {
               'The bot is already connected or waiting to reconnect.',
             ),
           ],
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
 
@@ -1765,7 +1765,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
         return interaction.reply({
           content: '❌ You are not authorized to use this command.',
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
 
@@ -1788,7 +1788,7 @@ client.on(Events.InteractionCreate, async interaction => {
               'There is no active AFK session to stop.',
             ),
           ],
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
 
@@ -1817,7 +1817,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
         return interaction.reply({
           content: '❌ You are not authorized to use this command.',
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
 
@@ -1854,7 +1854,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
         return interaction.reply({
           content: '❌ You are not authorized to use this command.',
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
 
@@ -1916,13 +1916,13 @@ client.on(Events.InteractionCreate, async interaction => {
 
         return interaction.reply({
           embeds: [embed],
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
 
       return interaction.reply({
         content: '❌ Unknown AI subcommand.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
