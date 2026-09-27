@@ -353,8 +353,16 @@ function log(tag, message) {
   console.log(`[${timestamp}] [${tag}] ${message}`);
 }
 
-function isAdmin(userId) {
-  return config.adminUserIds?.includes(userId);
+function isAdmin(userId, member = null) {
+  if (config.adminUserIds?.includes(userId)) {
+    return true;
+  }
+
+  return Boolean(
+    member?.roles?.cache?.some(role =>
+      config.adminRoleIds?.includes(role.id),
+    ),
+  );
 }
 
 function getDiscordAiSessionId(message) {
@@ -1283,7 +1291,7 @@ client.on(Events.MessageCreate, async message => {
     message.guild?.id === config.discord.guildId &&
     normalizedMessageText === 'aforget'
   ) {
-    if (!isAdmin(message.author.id)) {
+    if (!isAdmin(message.author.id, message.member)) {
       await message.reply(
         '✕ You are not authorized to use **aforget**.',
       );
@@ -1408,7 +1416,7 @@ const contextualAiQuestion =
     // ========================================================
 
     if (normalizedQuestion === 'aforget') {
-      if (!isAdmin(message.author.id)) {
+      if (!isAdmin(message.author.id, message.member)) {
         await message.reply(
           '✕ You are not authorized to use **aforget**.',
         );
@@ -1504,7 +1512,7 @@ If you want a simpler way to join on Bedrock, just say **yes** and I'll send you
     // ========================================================
 
 if (
-  isAdmin(message.author.id) &&
+  isAdmin(message.author.id, message.member) &&
   isLikelyAdminRequest(question)
 ) {
       try {
@@ -1904,7 +1912,7 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 
     case 'aforget': {
-      if (!isAdmin(interaction.user.id)) {
+      if (!isAdmin(interaction.user.id, interaction.member)) {
         log(
           'Admin',
           `Rejected /aforget from unauthorized user ${interaction.user.tag} (${interaction.user.id}).`,
@@ -1925,7 +1933,7 @@ client.on(Events.InteractionCreate, async interaction => {
       });
     }
     case 'maintenance': {
-      if (!isAdmin(interaction.user.id)) {
+      if (!isAdmin(interaction.user.id, interaction.member)) {
         log(
           'Admin',
           `Rejected /maintenance from unauthorized user ${interaction.user.tag} (${interaction.user.id}).`,
@@ -1972,7 +1980,7 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 
     case 'start': {
-      if (!isAdmin(interaction.user.id)) {
+      if (!isAdmin(interaction.user.id, interaction.member)) {
         log(
           'Admin',
           `Rejected /start from unauthorized user ${interaction.user.tag} (${interaction.user.id}).`,
@@ -2037,7 +2045,7 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 
     case 'stop': {
-      if (!isAdmin(interaction.user.id)) {
+      if (!isAdmin(interaction.user.id, interaction.member)) {
         log(
           'Admin',
           `Rejected /stop from unauthorized user ${interaction.user.tag} (${interaction.user.id}).`,
@@ -2090,7 +2098,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
     case 'status':
     case 'dashboard': {
-      if (!isAdmin(interaction.user.id)) {
+      if (!isAdmin(interaction.user.id, interaction.member)) {
         return interaction.reply({
           content: '✕ You are not authorized to use this command.',
           flags: MessageFlags.Ephemeral,
@@ -2104,7 +2112,7 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 
     case 'timeout': {
-      if (!isAdmin(interaction.user.id)) {
+      if (!isAdmin(interaction.user.id, interaction.member)) {
         return interaction.reply({
           content: '✕ You are not authorized to use this command.',
           flags: MessageFlags.Ephemeral,
@@ -2181,7 +2189,7 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 
     case 'untimeout': {
-      if (!isAdmin(interaction.user.id)) {
+      if (!isAdmin(interaction.user.id, interaction.member)) {
         return interaction.reply({
           content: '✕ You are not authorized to use this command.',
           flags: MessageFlags.Ephemeral,
@@ -2236,7 +2244,7 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 
     case 'warn': {
-      if (!isAdmin(interaction.user.id)) {
+      if (!isAdmin(interaction.user.id, interaction.member)) {
         return interaction.reply({
           content: '✕ You are not authorized to use this command.',
           flags: MessageFlags.Ephemeral,
@@ -2276,7 +2284,7 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 
     case 'modlog': {
-      if (!isAdmin(interaction.user.id)) {
+      if (!isAdmin(interaction.user.id, interaction.member)) {
         return interaction.reply({
           content: '✕ You are not authorized to use this command.',
           flags: MessageFlags.Ephemeral,
@@ -2317,7 +2325,7 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 
     case 'banishlist': {
-      if (!isAdmin(interaction.user.id)) {
+      if (!isAdmin(interaction.user.id, interaction.member)) {
         return interaction.reply({
           content: '✕ You are not authorized to use this command.',
           flags: MessageFlags.Ephemeral,
@@ -2352,7 +2360,7 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 
     case 'unbanish': {
-      if (!isAdmin(interaction.user.id)) {
+      if (!isAdmin(interaction.user.id, interaction.member)) {
         return interaction.reply({
           content: '✕ You are not authorized to use this command.',
           flags: MessageFlags.Ephemeral,
@@ -2392,7 +2400,7 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 
     case 'ai': {
-      if (!isAdmin(interaction.user.id)) {
+      if (!isAdmin(interaction.user.id, interaction.member)) {
         log(
           'Admin',
           `Rejected /ai from unauthorized user ${interaction.user.tag} (${interaction.user.id}).`,
@@ -2490,7 +2498,7 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 
     case 'clearwarns': {
-      if (!isAdmin(interaction.user.id)) {
+      if (!isAdmin(interaction.user.id, interaction.member)) {
         return interaction.reply({
           content: '✕ You are not authorized to use this command.',
           flags: MessageFlags.Ephemeral,
