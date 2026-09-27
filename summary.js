@@ -5,59 +5,9 @@ const {
   ButtonBuilder,
   ButtonStyle,
   ChannelType,
-  Events,
+  EmbedBuilder,
   MessageFlags,
 } = require('discord.js');
-
-const attachedClients = new WeakSet();
-
-function normalizeChannelName(name) {
-  return String(name || '')
-    .trim()
-    .replace(/^#/, '')
-    .toLowerCase()
-    .replace(/\s+/g, '-');
-}
-
-function resolveChannel(message, request) {
-  const guild = message.guild;
-  if (!guild) return null;
-
-  const normalizedRequest = String(request || '').trim().toLowerCase().replace(/\?+$/, '');
-  if (normalizedRequest === 'this' || normalizedRequest === 'this channel' || normalizedRequest === 'here') {
-    return message.channel || null;
-  }
-
-  const mention = request.match(/<#(\d+)>/);
-  if (mention) {
-    return guild.channels.cache.get(mention[1]) || null;
-  }
-
-  const cleaned = request
-    .replace(/<#[^>]+>/g, '')
-    .replace(/^.*?╭╴/u, '')
-    .replace(/\b(?:please|can you|could you|would you|the|channel|text|voice)\b/gi, ' ')
-    .replace(/[^\p{L}\p{N}\s_-]/gu, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-
-  const channelName = normalizeChannelName(cleaned);
-  if (!channelName) return null;
-
-  return guild.channels.cache.find(channel => (
-    channel &&
-    typeof channel.name === 'string' &&
-    normalizeChannelName(channel.name) === channelName
-  )) || null;
-}
-
-function extractChannelRequest(question) {
-  const match = String(question || '').match(
-    /^\s*(?:can\s+you\s+)?summar(?:y|ize|ise)\s+(?:the\s+)?(?:channel\s+)?(.+?)\s*\??\s*$/i,
-  );
-
-  return match ? match[1].trim() : null;
-}
 
 function cleanMessageContent(message) {
   const content = String(message.content || '').trim();
@@ -73,157 +23,177 @@ function cleanMessageContent(message) {
 
 function buildTranscript(messages) {
   const lines = messages
-    .reverse()
+    .sort((a, b) => a.createdTimestamp - b.createdTimestamp)
     .map(message => {
       const content = cleanMessageContent(message);
       if (!content) return null;
 
-      const author = message.member?.displayName || message.author?.username || 'Unknown';
-      return `${author}: ${content}`;
+      const author =
+        message.member?.displayName ||
+        message.author?.username ||
+        'Unknown';
+
+      return \`\${author}: \${content}\`;
     })
     .filter(Boolean);
 
-  // Keep the prompt comfortably below Discord/Gemini limits while retaining
-  // the newest conversation when a channel is especially busy.
-  const maxCharacters = 18000;
+  const maxCharacters = 18_000;
   let transcript = '';
 
   for (let index = lines.length - 1; index >= 0; index -= 1) {
-    const next = lines[index] + (transcript ? `\n${transcript}` : '');
-    if (next.length > maxCharacters) break;
+    const next = lines[index] + (transcript ? \`\\n\${transcript}\` : '');
+
+    if (next.length > maxCharacters) {
+      break;
+    }
+
     transcript = next;
   }
 
   return transcript;
 }
 
-function attachDismissHandler(client) {
-  if (attachedClients.has(client)) return;
-  attachedClients.add(client);
-
-  client.on(Events.InteractionCreate, async interaction => {
-    if (!interaction.isButton()) return;
-    if (!interaction.customId.startsWith('summary:dismiss:')) return;
-
-    const [, , ownerId] = interaction.customId.split(':');
-
-    if (interaction.user.id !== ownerId) {
-      await interaction.reply({
-        content: 'Only the person who requested this summary can dismiss it.',
-        flags: MessageFlags.Ephemeral,
-      });
-      return;
-    }
-
-    await interaction.message.delete().catch(async () => {
-      if (interaction.deferred || interaction.replied) return;
-      await interaction.reply({
-        content: 'The summary could not be dismissed.',
-        flags: MessageFlags.Ephemeral,
-      }).catch(() => {});
-    });
-  });
-}
-
-async function handleMention({ message, question, client, ai }) {
-  const channelRequest = extractChannelRequest(question);
-  if (!channelRequest) return false;
-
-  attachDismissHandler(client);
-
-  const target = resolveChannel(message, channelRequest);
-
-  if (!target) {
-    await message.reply(
-      'I could not find that channel. Try mentioning it directly, like `@Main Bot summarize <#123456789012345678>`.',
-    );
-    return true;
-  }
-
+async function collectSummary({ interaction, target, ai }) {
   if (
     target.type !== ChannelType.GuildText &&
     target.type !== ChannelType.GuildAnnouncement
   ) {
-    await message.reply('I can only summarize text-based Discord channels.');
-    return true;
+    throw new Error('I can only summarize text-based Discord channels.');
   }
 
-  if (!target.isTextBased() || typeof target.messages?.fetch !== 'function') {
-    await message.reply('I cannot read that channel right now.');
-    return true;
+  if (
+    !target.isTextBased() ||
+    typeof target.messages?.fetch !== 'function'
+  ) {
+    throw new Error('I cannot read that channel right now.');
   }
 
-  await message.channel.sendTyping().catch(() => {});
+  const fetched = await target.messages.fetch({ limit: 100 });
+
+  const usableMessages = [...fetched.values()]
+    .filter(message => !message.system);
+
+  if (usableMessages.length === 0) {
+    throw new Error(
+      \`The channel <#\${target.id}> does not have any recent messages to summarize.\`,
+    );
+  }
+
+  const transcript = buildTranscript(usableMessages);
+
+  if (!transcript) {
+    throw new Error(
+      \`The channel <#\${target.id}> does not have readable recent messages to summarize.\`,
+    );
+  }
+
+  const prompt = [
+    \`Summarize the recent conversation from Discord channel #\${target.name}.\`,
+    'Use only the transcript below. Do not invent details.',
+    'Keep the summary concise and useful for someone who missed the conversation.',
+    'Keep the final answer under 1200 characters.',
+    'Use a short heading followed by 3 to 7 bullet points when appropriate.',
+    'Mention important decisions, questions, announcements, plans, or unresolved topics.',
+    'Do not include a generic introduction or conclusion.',
+    'Do not use emojis or decorative Unicode symbols.',
+    '',
+    'TRANSCRIPT:',
+    transcript,
+  ].join('\\n');
+
+  return ai.ask(prompt, {
+    userId: \`summary:\${interaction.id}\`,
+    platform: 'discord',
+    skipKnownAnswers: true,
+  });
+}
+
+async function handleSlashCommand({ interaction, ai }) {
+  const target = interaction.options.getChannel('channel', true);
 
   try {
-    const fetched = await target.messages.fetch({ limit: 100 });
-    const usableMessages = [...fetched.values()]
-      .filter(item => !item.system)
-      .sort((a, b) => a.createdTimestamp - b.createdTimestamp);
+    await interaction.deferReply();
 
-    if (usableMessages.length === 0) {
-      await message.reply(`The channel <#${target.id}> does not have any recent messages to summarize.`);
-      return true;
-    }
-
-    const transcript = buildTranscript(usableMessages);
-
-    if (!transcript) {
-      await message.reply(`The channel <#${target.id}> does not have readable recent messages to summarize.`);
-      return true;
-    }
-
-    const prompt = [
-      `Summarize the recent conversation from Discord channel #${target.name}.`,
-      'Use only the transcript below. Do not invent details.',
-      'Keep the summary concise and useful for someone who missed the conversation.',
-      'Keep the final answer under 1200 characters.',
-      'Use a short heading followed by 3 to 7 bullet points when appropriate.',
-      'Mention important decisions, questions, announcements, plans, or unresolved topics.',
-      'Do not include a generic introduction or conclusion.',
-      'Do not use emojis or decorative Unicode symbols.',
-      '',
-      'TRANSCRIPT:',
-      transcript,
-    ].join('\n');
-
-    const generatedSummary = await ai.ask(prompt, {
-      userId: `summary:${message.id}`,
-      platform: 'discord',
-      skipKnownAnswers: true,
+    const generatedSummary = await collectSummary({
+      interaction,
+      target,
+      ai,
     });
 
-    const safeSummary = String(generatedSummary || '')
+    const summaryText = String(generatedSummary || '')
+      .replace(/[⌁◆◇✓✕ⓘ⚠︎⚒︎⌂⌫→]/g, '')
       .trim()
       .slice(0, 1800);
 
-    if (!safeSummary) {
+    if (!summaryText) {
       throw new Error('AI returned an empty summary.');
     }
 
+    const embed = new EmbedBuilder()
+      .setTitle('Channel Summary')
+      .setDescription(summaryText)
+      .addFields({
+        name: 'Channel',
+        value: \`<#\${target.id}>\`,
+        inline: true,
+      })
+      .setFooter({
+        text: \`Requested by \${interaction.user.displayName || interaction.user.username}\`,
+      })
+      .setTimestamp();
+
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
-        .setCustomId(`summary:dismiss:${message.author.id}:${message.id}`)
-        .setLabel('Dismiss')
+        .setCustomId(\`summary:dismiss:\${interaction.user.id}:\${interaction.id}\`)
+        .setLabel('Dismiss summary')
         .setStyle(ButtonStyle.Secondary),
     );
 
-    await message.reply({
-      content: `**Summary of <#${target.id}>**\n\n${safeSummary}`,
+    return interaction.editReply({
+      embeds: [embed],
       components: [row],
       allowedMentions: { parse: [] },
     });
   } catch (error) {
-    console.error(`[Summary] Unable to summarize #${target.name}:`, error?.message || error);
-    await message.reply({
-      content: 'I could not summarize that channel right now. Please try again in a moment.',
+    console.error(
+      \`[Summary] Unable to summarize #\${target?.name || 'unknown'}:\`,
+      error?.message || error,
+    );
+
+    const content =
+      error?.message ||
+      'I could not summarize that channel right now. Please try again in a moment.';
+
+    if (interaction.deferred || interaction.replied) {
+      return interaction.editReply({
+        content,
+        allowedMentions: { parse: [] },
+      });
+    }
+
+    return interaction.reply({
+      content,
+      flags: MessageFlags.Ephemeral,
       allowedMentions: { parse: [] },
     });
   }
+}
 
-  return true;
+async function handleDismissButton(interaction) {
+  const [, , ownerId] = String(interaction.customId).split(':');
+
+  if (interaction.user.id !== ownerId) {
+    return interaction.reply({
+      content: 'Only the person who requested this summary can dismiss it.',
+      flags: MessageFlags.Ephemeral,
+    });
+  }
+
+  await interaction.deferUpdate();
+  return interaction.message.delete().catch(() => {});
 }
 
 module.exports = {
-  handleMention,
+  handleSlashCommand,
+  handleDismissButton,
 };
