@@ -1494,7 +1494,7 @@ const executeAt = scheduleAdminAction(
 );
 
           await message.reply(
-            `✅ Scheduled **${adminCommand.action}** for <t:${Math.floor(
+            `✓ Scheduled **${adminCommand.action}** for <t:${Math.floor(
               executeAt / 1000,
             )}:F> (<t:${Math.floor(executeAt / 1000)}:R>).`,
           );
