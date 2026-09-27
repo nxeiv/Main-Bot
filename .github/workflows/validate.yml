@@ -1,0 +1,31 @@
+name: Validate Main Bot
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Validate JavaScript syntax
+        run: |
+          node --check index.js
+          node --check ai.js
+          node --check minecraft.js
+          node --check summary.js
+          node --check summary-bootstrap.js
+          node --check unicode.js
+          node --check banish.js
+          node --check moderation.js
+          node --check config.js
