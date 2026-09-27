@@ -71,7 +71,7 @@ async function collectSummary({ interaction, target, ai }) {
   const fetched = await target.messages.fetch({ limit: 100 });
 
   const usableMessages = [...fetched.values()]
-    .filter(message => !message.system);
+    .filter(message => !message.system && !message.author?.bot);
 
   if (usableMessages.length === 0) {
     throw new Error(
@@ -94,6 +94,7 @@ async function collectSummary({ interaction, target, ai }) {
     'Keep the final answer under 1200 characters.',
     'Use a short heading followed by 3 to 7 bullet points when appropriate.',
     'Mention important decisions, questions, announcements, plans, or unresolved topics.',
+    'Ignore bot-generated chatter, command spam, and repetitive low-value messages.',
     'Do not include a generic introduction or conclusion.',
     'Do not use emojis or decorative Unicode symbols.',
     '',
