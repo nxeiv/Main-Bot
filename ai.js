@@ -173,28 +173,27 @@ const FEATURE_TUTORIALS = {
     'Java players need the Simple Voice Chat mod on their client. Bedrock players can use /dvc start in-game for their dedicated voice connection.',
 };
 
-const BOT_HELP_MESSAGE = [
-  '**The Cottage★ Help**',
-  '',
-  'Mention me or reply to one of my messages when you want an AI answer.',
-  '',
-  '**Commands**',
-  '• \`/status\` — Minecraft status',
-  '• \`/summarize <channel>\` — private channel summary',
-  '• \`/summarize-public <channel>\` — public channel summary',
-  '',
-  '**Admin**',
-  '• \`/start\` \`/stop\` \`/maintenance\` \`/dashboard\`',
-  '• \`/aforget\` \`/ai status\`',
-  '',
-  '**Moderation**',
-  '• \`/timeout\` \`/untimeout\` \`/warn\` \`/modlog\`',
-  '• \`/banishlist\` \`/unbanish\` \`/clearwarns\`',
-  '',
-  '**Try asking**',
-  '• \`ip?\` · \`bedrock join?\` · \`rules?\` · \`channels?\` · \`roles?\` · \`features?\`',
-  '• Ask about Java, Bedrock, joining, SMP features, or the world download.',
-].join('\\n');
+const BOT_HELP_MESSAGE = `**The Cottage★ Help**
+
+Mention me or reply to one of my messages when you want an AI answer.
+
+**Commands**
+• \`/status\` — Minecraft status
+• \`/summarize <channel>\` — private channel summary
+• \`/summarize-public <channel>\` — public channel summary
+
+**Admin**
+• \`/start\` \`/stop\` \`/maintenance\` \`/dashboard\`
+• \`/aforget\` \`/ai status\`
+
+**Moderation**
+• \`/timeout\` \`/untimeout\` \`/warn\` \`/modlog\`
+• \`/banishlist\` \`/unbanish\` \`/clearwarns\`
+
+**Try asking**
+• \`ip?\` · \`bedrock join?\` · \`rules?\` · \`channels?\` · \`roles?\` · \`features?\`
+• Ask about Java, Bedrock, joining, SMP features, or the world download.`;
+
 
 
 const FEATURE_ALIASES = {
