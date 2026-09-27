@@ -203,10 +203,8 @@ const BOT_HELP_MESSAGE = [
   '• bedrock? — Bedrock joining instructions',
   '',
   'For anything else, just ask naturally and I\'ll do my best to help.',
-].join('\\n');
+].join('\n');
 
-// Single canonical help response. Feature/help aliases resolve to it.
-const BOT_FEATURES_MESSAGE = BOT_HELP_MESSAGE;
 
 const FEATURE_ALIASES = {
   cracked: 'Open Doors',
