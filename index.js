@@ -1278,6 +1278,14 @@ mc.emitter.on('minecraftPlayerJoined', async ({ username }) => {
   }
 });
 
+mc.emitter.on('minecraftPlayerLeft', async ({ username }) => {
+  if (!username) return;
+
+  const embed = createEmbed('Player Left', Colors.Blurple)
+    .setDescription(`⌂ **${username}** left The Cottage★ SMP.`);
+  void notifyChannel(embed);
+});
+
 client.on(Events.MessageCreate, async message => {
   if (message.author.bot) {
     return;
@@ -2026,6 +2034,7 @@ client.on(Events.InteractionCreate, async interaction => {
         await maintenanceChannel.send(
           '# 🛠️ **Server is under maintenance** <@&1447218476795166791>',
         );
+        runtimeHealth.maintenance = true;
 
         return interaction.reply({
           content: '✓ Maintenance announcement sent.',
@@ -2062,6 +2071,14 @@ client.on(Events.InteractionCreate, async interaction => {
         'Admin',
         `Verified /start request from ${interaction.user.tag} (${interaction.user.id}).`,
       );
+
+      moderation.recordEvent({
+        type: 'admin_action',
+        action: interaction.commandName,
+        moderatorId: interaction.user.id,
+        moderatorTag: interaction.user.tag,
+        result: 'requested',
+      });
 
       if (
         status.connected ||
@@ -2127,6 +2144,14 @@ client.on(Events.InteractionCreate, async interaction => {
         'Admin',
         `Verified /stop request from ${interaction.user.tag} (${interaction.user.id}).`,
       );
+
+      moderation.recordEvent({
+        type: 'admin_action',
+        action: interaction.commandName,
+        moderatorId: interaction.user.id,
+        moderatorTag: interaction.user.tag,
+        result: 'requested',
+      });
 
       if (
         !status.connected &&
@@ -2638,6 +2663,20 @@ client.once(Events.ClientReady, async readyClient => {
   setInterval(() => {
     void commandWatchdog();
   }, 5 * 60 * 1000);
+
+  // Runtime watchdog: recover an unexpectedly inactive Minecraft session.
+  setInterval(() => {
+    const status = mc.getStatus();
+
+    if (
+      !status.connected &&
+      !status.connecting &&
+      !status.reconnecting
+    ) {
+      log('Watchdog', 'Minecraft session is inactive; attempting recovery.');
+      mc.start();
+    }
+  }, 10 * 60 * 1000);
 
   updatePresence();
 
