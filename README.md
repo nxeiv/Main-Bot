@@ -59,12 +59,6 @@ Normal server settings such as channel IDs, role IDs, server addresses, ports, t
 
 Do not commit `.env`, runtime state files, logs, or `node_modules/`.
 
-Configuration is loaded through environment variables.
-
-At minimum, the bot requires credentials and connection settings for Discord, Minecraft, and Gemini.
-
-Keep API keys, bot tokens, passwords, and other private credentials outside the repository.
-
 ## ⌘ Running the Bot
 
 Install the project dependencies:
