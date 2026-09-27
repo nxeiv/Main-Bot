@@ -1832,7 +1832,7 @@ const response = await ai.ask(contextualAiQuestion, {
 
       log('AI', `Discord response: ${response}`);
 
-      await message.reply(applyUnicodeTheme(response));
+      await message.reply(response);
     } catch (error) {
       log(
         'AI',
