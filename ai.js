@@ -1114,10 +1114,7 @@ function getKnownAnswer(message) {
   );
 
   if (summarizeChannelMatch) {
-    return [
-      'ⓘ To summarize a channel, use `/summarize <channel>` for a private summary.',
-      'Use `/summarize-public <channel>` when you want everyone to see the summary.',
-    ].join('\n');
+    return 'ⓘ Use `/summarize <channel>` to post a public channel summary. Summaries expire after 10 minutes.';
   }
 
   // ============================================================
