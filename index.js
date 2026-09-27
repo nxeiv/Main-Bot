@@ -1342,7 +1342,7 @@ client.on(Events.MessageCreate, async message => {
     normalizedMessageText === 'forget'
   ) {
     await message.reply(
-      forgetUserConversation(aiSessionId || getDiscordAiSessionId(message)),
+      forgetUserConversation(getDiscordAiSessionId(message)),
     );
 
     return;
