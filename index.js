@@ -1931,10 +1931,6 @@ client.on(Events.InteractionCreate, async interaction => {
     });
   }
 
-  if (interaction.isButton() && interaction.customId.startsWith('summary:dismiss:')) {
-    return summary.handleDismissButton(interaction);
-  }
-
   if (!interaction.isChatInputCommand()) {
     return;
   }
