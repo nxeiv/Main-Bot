@@ -680,40 +680,47 @@ async function reconcileSlashCommands(source = 'Registrar') {
     // Update an existing command in place only when its definition changed.
     // Keeping the command ID is important because Discord stores command-level
     // Integration permission overrides against that command.
-    const desired = JSON.stringify({
-      type: command.type,
-      name: command.name,
-      description: command.description,
-      options: command.options || [],
-      ...(command.default_member_permissions !== undefined
-        ? { default_member_permissions: command.default_member_permissions }
-        : {}),
-      ...(command.dm_permission !== undefined
-        ? { dm_permission: command.dm_permission }
-        : {}),
-      ...(command.nsfw !== undefined
-        ? { nsfw: command.nsfw }
-        : {}),
-    });
+    const normalizeCommandDefinition = value => {
+      if (Array.isArray(value)) {
+        return value.map(normalizeCommandDefinition);
+      }
 
-    const actual = JSON.stringify({
-      type: current.type,
-      name: current.name,
-      description: current.description,
-      options: current.options || [],
-      ...(command.default_member_permissions !== undefined
-        ? {
-          default_member_permissions:
-            current.default_member_permissions ?? null,
+      if (!value || typeof value !== 'object') {
+        return value;
+      }
+
+      const normalized = {};
+
+      for (const [key, child] of Object.entries(value)) {
+        if (child === undefined || child === null) {
+          continue;
         }
-        : {}),
-      ...(command.dm_permission !== undefined
-        ? { dm_permission: current.dm_permission ?? null }
-        : {}),
-      ...(command.nsfw !== undefined
-        ? { nsfw: current.nsfw ?? false }
-        : {}),
-    });
+
+        // Discord may materialize default values that were omitted from the
+        // original builder output. Treat those defaults as equivalent.
+        if (
+          (key === 'required' && child === false) ||
+          (key === 'autocomplete' && child === false) ||
+          (key === 'dm_permission' && child === true) ||
+          (key === 'nsfw' && child === false)
+        ) {
+          continue;
+        }
+
+        normalized[key] = normalizeCommandDefinition(child);
+      }
+
+      return Object.fromEntries(
+        Object.entries(normalized).sort(([a], [b]) => a.localeCompare(b)),
+      );
+    };
+
+    const desired = JSON.stringify(
+      normalizeCommandDefinition(command),
+    );
+    const actual = JSON.stringify(
+      normalizeCommandDefinition(current),
+    );
 
     if (desired !== actual) {
       const updatedCommand = await rest.patch(
