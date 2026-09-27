@@ -1915,7 +1915,7 @@ const response = await ai.ask(contextualAiQuestion, {
   // Reuse the same deterministic answer router used by AI.
   // ============================================================
 
-  const instantAnswer = ai.getInstantAnswer(text);
+  const instantAnswer = ai.getInstantAnswer(message.content.trim());
 
   if (instantAnswer) {
     await message.reply(instantAnswer);
