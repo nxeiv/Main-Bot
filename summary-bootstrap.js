@@ -19,7 +19,12 @@ if (!Client.prototype.__cottageSummaryPatched) {
           !message.author?.bot &&
           message.guild &&
           client.user &&
-          message.mentions?.has(client.user)
+          (() => {
+            const botDirectMentionRegex = new RegExp(
+              `<@!?${client.user.id}>`,
+            );
+            return botDirectMentionRegex.test(String(message.content || ''));
+          })()
         ) {
           const mentionRegex = new RegExp(`<@!?${client.user.id}>`, 'g');
           const question = String(message.content || '')
