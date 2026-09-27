@@ -9,6 +9,8 @@ const {
   MessageFlags,
 } = require('discord.js');
 
+const { applyUnicodeTheme } = require('./unicode');
+
 const attachedClients = new WeakSet();
 
 function normalizeChannelName(name) {
@@ -109,7 +111,7 @@ function attachDismissHandler(client) {
 
     if (interaction.user.id !== ownerId) {
       await interaction.reply({
-        content: 'Only the person who requested this summary can dismiss it.',
+        content: 'ⓘ Only the person who requested this summary can dismiss it.',
         flags: MessageFlags.Ephemeral,
       });
       return;
@@ -118,7 +120,7 @@ function attachDismissHandler(client) {
     await interaction.message.delete().catch(async () => {
       if (interaction.deferred || interaction.replied) return;
       await interaction.reply({
-        content: 'The summary could not be dismissed.',
+        content: '✕ The summary could not be dismissed.',
         flags: MessageFlags.Ephemeral,
       }).catch(() => {});
     });
@@ -135,7 +137,7 @@ async function handleMention({ message, question, client, ai }) {
 
   if (!target) {
     await message.reply(
-      'I could not find that channel. Try mentioning it directly, like `@Main Bot summarize <#123456789012345678>`.',
+      '✕ I could not find that channel. Try mentioning it directly, like `@Main Bot summarize <#123456789012345678>`.',
     );
     return true;
   }
@@ -144,12 +146,12 @@ async function handleMention({ message, question, client, ai }) {
     target.type !== ChannelType.GuildText &&
     target.type !== ChannelType.GuildAnnouncement
   ) {
-    await message.reply('I can only summarize text-based Discord channels.');
+    await message.reply('ⓘ I can only summarize text-based Discord channels.');
     return true;
   }
 
   if (!target.isTextBased() || typeof target.messages?.fetch !== 'function') {
-    await message.reply('I cannot read that channel right now.');
+    await message.reply('✕ I cannot read that channel right now.');
     return true;
   }
 
@@ -192,9 +194,9 @@ async function handleMention({ message, question, client, ai }) {
       platform: 'discord',
     });
 
-    const safeSummary = String(generatedSummary || '')
+    const safeSummary = applyUnicodeTheme(String(generatedSummary || '')
       .trim()
-      .slice(0, 1800);
+      .slice(0, 1800));
 
     if (!safeSummary) {
       throw new Error('AI returned an empty summary.');
@@ -215,7 +217,7 @@ async function handleMention({ message, question, client, ai }) {
   } catch (error) {
     console.error(`[Summary] Unable to summarize #${target.name}:`, error?.message || error);
     await message.reply({
-      content: 'I could not summarize that channel right now. Please try again in a moment.',
+      content: '✕ I could not summarize that channel right now. Please try again in a moment.',
       allowedMentions: { parse: [] },
     });
   }
