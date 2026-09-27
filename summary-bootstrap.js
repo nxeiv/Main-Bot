@@ -26,7 +26,7 @@ if (!Client.prototype.__cottageSummaryPatched) {
             .replace(mentionRegex, '')
             .trim();
 
-          if (/^\s*(?:can\s+you\s+)?summar(?:y|ize|ise)\s+/i.test(question)) {
+          if (/^\s*(?:(?:well|okay|ok|please|then|now|just|hey)\s+)*(?:can\s+you\s+)?summar(?:y|ize|ise)\s+/i.test(question)) {
             const ai = require('./ai');
             const handled = await summary.handleMention({
               message,
