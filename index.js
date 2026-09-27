@@ -19,6 +19,7 @@ const {
 const config = require('./config');
 const mc = require('./minecraft');
 const ai = require('./ai');
+const { applyUnicodeTheme } = require('./unicode');
 
 const scheduledAdminActions = new Map();
 
@@ -528,7 +529,7 @@ async function executeAdministrativeAction(action) {
       }
 
       await maintenanceChannel.send(
-        '# 🛠️ **Server is under maintenance** <@&1447218476795166791>',
+        '# ⚒︎ **Server is under maintenance** <@&1447218476795166791>',
       );
 
       return 'maintenance announced';
@@ -557,7 +558,7 @@ async function notifyScheduledActionCompletion(task) {
     }
 
 await channel.send(
-  `✅ Scheduled **${task.action}** action completed.`,
+  `✓ Scheduled **${task.action}** action completed.`,
 );
       
   } catch (error) {
@@ -867,7 +868,7 @@ function updatePresence() {
       ? {
         status: 'idle',
         activities: [{
-          name: `Watching #minecraft-server⛏️`,
+          name: `Watching #minecraft-server⛏︎`,
           type: ActivityType.Watching,
         }],
       }
@@ -1030,7 +1031,7 @@ client.on(Events.MessageCreate, async message => {
     );
 
     await message.reply(
-      '🧹 Your AI conversation context has been forgotten. You can start fresh now.',
+      '⌫ Your AI conversation context has been forgotten. You can start fresh now.',
     );
 
     return;
@@ -1042,7 +1043,7 @@ client.on(Events.MessageCreate, async message => {
   ) {
     if (!isAdmin(message.author.id)) {
       await message.reply(
-        '❌ You are not authorized to use **aforget**.',
+        '✕ You are not authorized to use **aforget**.',
       );
 
       return;
@@ -1051,7 +1052,7 @@ client.on(Events.MessageCreate, async message => {
     ai.resetConversation();
 
     await message.reply(
-      '🧹 All AI conversation contexts have been forgotten.',
+      '⌫ All AI conversation contexts have been forgotten.',
     );
 
     return;
@@ -1070,7 +1071,7 @@ client.on(Events.MessageCreate, async message => {
 
     try {
       mc.chat(text);
-      await message.react('✅');
+      await message.react('✓');
     } catch (error) {
       log(
         'Chat',
@@ -1078,7 +1079,7 @@ client.on(Events.MessageCreate, async message => {
       );
 
       await message.reply(
-        '❌ The AFK bot is currently not connected to Minecraft.',
+        '✕ The AFK bot is currently not connected to Minecraft.',
       );
     }
 
@@ -1121,7 +1122,7 @@ const normalizedQuestion = question
       );
 
       await message.reply(
-        '🧹 Your AI conversation context has been forgotten. You can start fresh now.',
+        '⌫ Your AI conversation context has been forgotten. You can start fresh now.',
       );
 
       return;
@@ -1134,7 +1135,7 @@ const normalizedQuestion = question
     if (normalizedQuestion === 'aforget') {
       if (!isAdmin(message.author.id)) {
         await message.reply(
-          '❌ You are not authorized to use **aforget**.',
+          '✕ You are not authorized to use **aforget**.',
         );
 
         return;
@@ -1143,7 +1144,7 @@ const normalizedQuestion = question
       ai.resetConversation();
 
       await message.reply(
-        '🧹 All AI conversation contexts have been forgotten.',
+        '⌫ All AI conversation contexts have been forgotten.',
       );
 
       return;
@@ -1161,11 +1162,11 @@ const normalizedQuestion = question
 
     if (isNewMemberRequest) {
       await message.reply(
-        `Hello <@${message.author.id}>! Welcome to The Cottage★! 🏡
+        `Hello <@${message.author.id}>! Welcome to The Cottage★! ⌂
 
 Please read <#1478166898020585592>, pick some roles in <#1398624929099812937>, and say hi in <#1398568017708978258>!
 
-We hope you have fun here and love being part of The Cottage★! 💙`,
+We hope you have fun here and love being part of The Cottage★! ♥︎`,
       );
 
       return;
@@ -1262,7 +1263,7 @@ if (adminCommand.action === 'cancel') {
 
     if (cancelledTasks.length === 0) {
       await message.reply(
-        'ℹ️ There are currently no scheduled administrative actions to cancel.',
+        'ⓘ There are currently no scheduled administrative actions to cancel.',
       );
 
       return;
@@ -1273,7 +1274,7 @@ if (adminCommand.action === 'cancel') {
     );
 
     await message.reply(
-      `✅ Cancelled ${cancelledTasks.length} scheduled administrative action${
+      `✓ Cancelled ${cancelledTasks.length} scheduled administrative action${
         cancelledTasks.length === 1 ? '' : 's'
       }: ${cancelledNames.join(', ')}.`,
     );
@@ -1291,7 +1292,7 @@ if (adminCommand.action === 'cancel') {
 
   if (scheduledTasks.length === 0) {
     await message.reply(
-      `❌ There is no scheduled **${adminCommand.targetAction}** action.`,
+      `✕ There is no scheduled **${adminCommand.targetAction}** action.`,
     );
 
     return;
@@ -1307,7 +1308,7 @@ saveScheduledAdminActions();
 const timestamp = Math.floor(task.executeAt / 1000);
 
   await message.reply(
-    `✅ Cancelled the scheduled **${task.action}** for <t:${timestamp}:F> (<t:${timestamp}:R>).`,
+    `✓ Cancelled the scheduled **${task.action}** for <t:${timestamp}:F> (<t:${timestamp}:R>).`,
   );
 
   return;
@@ -1319,7 +1320,7 @@ const timestamp = Math.floor(task.executeAt / 1000);
 
 if (adminCommand.action === 'restart') {
   await message.reply(
-    '⚠️ I can understand restart requests, but The Cottage★ SMP is hosted on Play Hosting, which does not provide the public server-control API needed for the Main Bot to restart the actual server.',
+    '⚠︎ I can understand restart requests, but The Cottage★ SMP is hosted on Play Hosting, which does not provide the public server-control API needed for the Main Bot to restart the actual server.',
   );
 
   return;
@@ -1336,7 +1337,7 @@ if (adminCommand.action === 'restart') {
 if (adminCommand.action === 'scheduled') {
   if (scheduledAdminActions.size === 0) {
     await message.reply(
-      'ℹ️ There are currently no scheduled administrative actions.',
+      'ⓘ There are currently no scheduled administrative actions.',
     );
 
     return;
@@ -1393,7 +1394,7 @@ if (adminCommand.action === 'scheduled') {
 if (adminCommand.action === 'status') {
   if (adminCommand.delayMinutes > 0) {
     await message.reply(
-      '❌ Status checks cannot be scheduled. Ask me for the status now.',
+      '✕ Status checks cannot be scheduled. Ask me for the status now.',
     );
 
     return;
@@ -1432,18 +1433,18 @@ if (adminCommand.delayMinutes === 0) {
     if (adminCommand.action === 'start') {
       await message.reply(
         result === 'already active'
-          ? 'ℹ️ The Minecraft AFK bot is already running.'
-          : '✅ Minecraft AFK bot started.',
+          ? 'ⓘ The Minecraft AFK bot is already running.'
+          : '✓ Minecraft AFK bot started.',
       );
     } else if (adminCommand.action === 'stop') {
       await message.reply(
         result === 'already stopped'
-          ? 'ℹ️ The Minecraft AFK bot is already stopped.'
-          : '✅ Minecraft AFK bot stopped.',
+          ? 'ⓘ The Minecraft AFK bot is already stopped.'
+          : '✓ Minecraft AFK bot stopped.',
       );
     } else if (adminCommand.action === 'maintenance') {
       await message.reply(
-        '✅ Maintenance announcement sent.',
+        '✓ Maintenance announcement sent.',
       );
     }
 
@@ -1456,7 +1457,7 @@ if (adminCommand.delayMinutes === 0) {
     );
 
     await message.reply(
-      `❌ Unable to execute **${adminCommand.action}**: ${error.message}`,
+      `✕ Unable to execute **${adminCommand.action}**: ${error.message}`,
     );
 
     return;
@@ -1507,7 +1508,7 @@ const executeAt = scheduleAdminAction(
         );
 
         await message.reply(
-          `❌ I couldn't process that administrative request: ${error.message}`,
+          `✕ I couldn't process that administrative request: ${error.message}`,
         );
 
         return;
@@ -1531,7 +1532,7 @@ const response = await ai.ask(question, {
 
       log('AI', `Discord response: ${response}`);
 
-      await message.reply(response);
+      await message.reply(applyUnicodeTheme(response));
     } catch (error) {
       log(
         'AI',
@@ -1540,7 +1541,7 @@ const response = await ai.ask(question, {
 
       try {
         await message.reply({
-          content: '❌ Server could not get an AI response right now.',
+          content: applyUnicodeTheme('✕ Server could not get an AI response right now.'),
           failIfNotExists: false,
         });
       } catch (replyError) {
@@ -1551,7 +1552,7 @@ const response = await ai.ask(question, {
 
         try {
           await message.channel.send(
-            '❌ Server could not get an AI response right now.',
+            applyUnicodeTheme('✕ Server could not get an AI response right now.'),
           );
         } catch (channelError) {
           log(
@@ -1624,7 +1625,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
       return interaction.reply({
         content:
-          '🧹 Your AI conversation context has been forgotten. You can start fresh now.',
+          '⌫ Your AI conversation context has been forgotten. You can start fresh now.',
         flags: MessageFlags.Ephemeral,
       });
     }
@@ -1637,7 +1638,7 @@ client.on(Events.InteractionCreate, async interaction => {
         );
         return interaction.reply({
           content:
-            '❌ You are not authorized to use this command.',
+            '✕ You are not authorized to use this command.',
           flags: MessageFlags.Ephemeral,
         });
       }
@@ -1646,7 +1647,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
       return interaction.reply({
         content:
-          '🧹 All AI conversation contexts have been forgotten.',
+          '⌫ All AI conversation contexts have been forgotten.',
         flags: MessageFlags.Ephemeral,
       });
     }
@@ -1657,7 +1658,7 @@ client.on(Events.InteractionCreate, async interaction => {
           `Rejected /maintenance from unauthorized user ${interaction.user.tag} (${interaction.user.id}).`,
         );
         return interaction.reply({
-          content: '❌ You are not authorized to use this command.',
+          content: '✕ You are not authorized to use this command.',
           flags: MessageFlags.Ephemeral,
         });
       }
@@ -1670,17 +1671,17 @@ client.on(Events.InteractionCreate, async interaction => {
         if (!maintenanceChannel?.isTextBased()) {
           return interaction.reply({
             content:
-              '❌ The configured maintenance channel is not a text channel.',
+              '✕ The configured maintenance channel is not a text channel.',
             flags: MessageFlags.Ephemeral,
           });
         }
 
         await maintenanceChannel.send(
-          '# 🛠️ **Server is under maintenance** <@&1447218476795166791>',
+          '# ⚒︎ **Server is under maintenance** <@&1447218476795166791>',
         );
 
         return interaction.reply({
-          content: '✅ Maintenance announcement sent.',
+          content: '✓ Maintenance announcement sent.',
           flags: MessageFlags.Ephemeral,
         });
       } catch (error) {
@@ -1691,7 +1692,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
         return interaction.reply({
           content:
-            '❌ Failed to send the maintenance announcement.',
+            '✕ Failed to send the maintenance announcement.',
           flags: MessageFlags.Ephemeral,
         });
       }
@@ -1705,7 +1706,7 @@ client.on(Events.InteractionCreate, async interaction => {
         );
 
         return interaction.reply({
-          content: '❌ You are not authorized to use this command.',
+          content: '✕ You are not authorized to use this command.',
           flags: MessageFlags.Ephemeral,
         });
       }
@@ -1770,7 +1771,7 @@ client.on(Events.InteractionCreate, async interaction => {
         );
 
         return interaction.reply({
-          content: '❌ You are not authorized to use this command.',
+          content: '✕ You are not authorized to use this command.',
           flags: MessageFlags.Ephemeral,
         });
       }
@@ -1822,7 +1823,7 @@ client.on(Events.InteractionCreate, async interaction => {
         );
 
         return interaction.reply({
-          content: '❌ You are not authorized to use this command.',
+          content: '✕ You are not authorized to use this command.',
           flags: MessageFlags.Ephemeral,
         });
       }
@@ -1859,7 +1860,7 @@ client.on(Events.InteractionCreate, async interaction => {
         );
 
         return interaction.reply({
-          content: '❌ You are not authorized to use this command.',
+          content: '✕ You are not authorized to use this command.',
           flags: MessageFlags.Ephemeral,
         });
       }
@@ -1927,7 +1928,7 @@ client.on(Events.InteractionCreate, async interaction => {
       }
 
       return interaction.reply({
-        content: '❌ Unknown AI subcommand.',
+        content: '✕ Unknown AI subcommand.',
         flags: MessageFlags.Ephemeral,
       });
     }
