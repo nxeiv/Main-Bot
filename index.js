@@ -20,6 +20,7 @@ const config = require('./config');
 const mc = require('./minecraft');
 const ai = require('./ai');
 const { applyUnicodeTheme } = require('./unicode');
+const { handleBanishMessage } = require('./banish');
 
 const scheduledAdminActions = new Map();
 
@@ -989,6 +990,12 @@ mc.emitter.on('minecraftPlayerJoined', async ({ username }) => {
 
 client.on(Events.MessageCreate, async message => {
   if (message.author.bot) {
+    return;
+  }
+
+  const banishResult = await handleBanishMessage(message);
+
+  if (banishResult.handled) {
     return;
   }
     
