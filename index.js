@@ -2011,7 +2011,7 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 
     case 'aforget': {
-      if (!isAdmin(interaction.user.id, interaction.member)) {
+      if (!hasFeatureAccess('aforget', interaction.user.id, interaction.member)) {
         log(
           'Admin',
           `Rejected /aforget from unauthorized user ${interaction.user.tag} (${interaction.user.id}).`,
@@ -2029,7 +2029,7 @@ client.on(Events.InteractionCreate, async interaction => {
       });
     }
     case 'maintenance': {
-      if (!isAdmin(interaction.user.id, interaction.member)) {
+      if (!hasFeatureAccess('maintenance', interaction.user.id, interaction.member)) {
         log(
           'Admin',
           `Rejected /maintenance from unauthorized user ${interaction.user.tag} (${interaction.user.id}).`,
@@ -2063,7 +2063,7 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 
     case 'start': {
-      if (!isAdmin(interaction.user.id, interaction.member)) {
+      if (!hasFeatureAccess('start', interaction.user.id, interaction.member)) {
         log(
           'Admin',
           `Rejected /start from unauthorized user ${interaction.user.tag} (${interaction.user.id}).`,
@@ -2136,7 +2136,7 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 
     case 'stop': {
-      if (!isAdmin(interaction.user.id, interaction.member)) {
+      if (!hasFeatureAccess('stop', interaction.user.id, interaction.member)) {
         log(
           'Admin',
           `Rejected /stop from unauthorized user ${interaction.user.tag} (${interaction.user.id}).`,
