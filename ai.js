@@ -179,8 +179,8 @@ Mention me or reply to one of my messages when you want an AI answer.
 
 **Commands**
 • \`/status\` — Minecraft status
-• \`/summarize <channel>\` — private channel summary
-• \`/summarize-public <channel>\` — public channel summary
+• \`/status\` — Minecraft status (admin)
+• \`/summarize <channel>\` — public channel summary, expires after 10 minutes
 
 **Admin**
 • \`/start\` \`/stop\` \`/maintenance\` \`/dashboard\`
