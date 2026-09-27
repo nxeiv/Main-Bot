@@ -183,7 +183,7 @@ async function handleMention({ message, question, client, ai }) {
       'Use a short heading followed by 3 to 7 bullet points when appropriate.',
       'Mention important decisions, questions, announcements, plans, or unresolved topics.',
       'Do not include a generic introduction or conclusion.',
-      'Do not use emojis.',
+      'Do not use emojis or decorative Unicode symbols.',
       '',
       'TRANSCRIPT:',
       transcript,
@@ -192,11 +192,13 @@ async function handleMention({ message, question, client, ai }) {
     const generatedSummary = await ai.ask(prompt, {
       userId: `summary:${message.id}`,
       platform: 'discord',
+      skipKnownAnswers: true,
     });
 
-    const safeSummary = applyUnicodeTheme(String(generatedSummary || '')
+    const safeSummary = String(generatedSummary || '')
+      .replace(/[⌁◆◇✓✕ⓘ⚠︎⚒︎⌂⌫→]/g, '')
       .trim()
-      .slice(0, 1800));
+      .slice(0, 1800);
 
     if (!safeSummary) {
       throw new Error('AI returned an empty summary.');
@@ -205,19 +207,19 @@ async function handleMention({ message, question, client, ai }) {
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId(`summary:dismiss:${message.author.id}:${message.id}`)
-        .setLabel('× Dismiss')
+        .setLabel('Dismiss')
         .setStyle(ButtonStyle.Secondary),
     );
 
     await message.reply({
-      content: `⌁ **Summary of <#${target.id}>**\n\n${safeSummary}`,
+      content: `**Summary of <#${target.id}>**\n\n${safeSummary}`,
       components: [row],
       allowedMentions: { parse: [] },
     });
   } catch (error) {
     console.error(`[Summary] Unable to summarize #${target.name}:`, error?.message || error);
     await message.reply({
-      content: '✕ I could not summarize that channel right now. Please try again in a moment.',
+      content: 'I could not summarize that channel right now. Please try again in a moment.',
       allowedMentions: { parse: [] },
     });
   }
