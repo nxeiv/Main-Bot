@@ -146,7 +146,7 @@ async function handleSlashCommand({ interaction, ai }) {
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId(`summary:dismiss:${interaction.user.id}:${interaction.id}`)
-        .setLabel('Dismiss summary')
+        .setLabel('Dismiss')
         .setStyle(ButtonStyle.Secondary),
     );
 
