@@ -800,6 +800,16 @@ function createEmbed(title, color) {
     .setTimestamp();
 }
 
+function forgetUserConversation(userId) {
+  ai.resetUserConversation(userId);
+  return '⌫ Your AI conversation context has been forgotten. You can start fresh now.';
+}
+
+function forgetAllConversations() {
+  ai.resetConversation();
+  return '⌫ All AI conversation contexts have been forgotten.';
+}
+
 function buildStatusEmbed(status, title, color) {
   return createEmbed(title, color)
     .addFields(
@@ -1331,10 +1341,8 @@ client.on(Events.MessageCreate, async message => {
     message.guild?.id === config.discord.guildId &&
     normalizedMessageText === 'forget'
   ) {
-    ai.resetUserConversation(aiSessionId || getDiscordAiSessionId(message));
-
     await message.reply(
-      '⌫ Your AI conversation context has been forgotten. You can start fresh now.',
+      forgetUserConversation(aiSessionId || getDiscordAiSessionId(message)),
     );
 
     return;
@@ -1352,10 +1360,8 @@ client.on(Events.MessageCreate, async message => {
       return;
     }
 
-    ai.resetConversation();
-
     await message.reply(
-      '⌫ All AI conversation contexts have been forgotten.',
+      forgetAllConversations(),
     );
 
     return;
@@ -1460,10 +1466,8 @@ const contextualAiQuestion =
     // ========================================================
 
     if (normalizedQuestion === 'forget') {
-      ai.resetUserConversation(getDiscordAiSessionId(message));
-
       await message.reply(
-        '⌫ Your AI conversation context has been forgotten. You can start fresh now.',
+        forgetUserConversation(getDiscordAiSessionId(message)),
       );
 
       return;
@@ -1482,10 +1486,8 @@ const contextualAiQuestion =
         return;
       }
 
-      ai.resetConversation();
-
       await message.reply(
-        '⌫ All AI conversation contexts have been forgotten.',
+        forgetAllConversations(),
       );
 
       return;
@@ -1909,43 +1911,17 @@ const response = await ai.ask(contextualAiQuestion, {
   }
 
   // ============================================================
-  // AUTORESPONDERS
+  // INSTANT ANSWERS
+  // Reuse the same deterministic answer router used by AI.
   // ============================================================
 
-  const text = message.content.trim().toLowerCase();
+  const instantAnswer = ai.getInstantAnswer(text);
 
-  if (text === 'invite?') {
-    await message.reply('https://the-cottage.onrender.com/');
+  if (instantAnswer) {
+    await message.reply(instantAnswer);
     return;
   }
 
-  if (text === 'ip?') {
-    await message.reply(
-      'https://discord.com/channels/1398568016915992667/1478252152169431134/1545519313606287390',
-    );
-    return;
-  }
-
-  if (text === 'mcrules?') {
-    await message.reply(
-      'https://discord.com/channels/1398568016915992667/1477236505465327626/1545520572652453980',
-    );
-    return;
-  }
-
-  if (text === 'world download?') {
-    await message.reply(
-      'https://discord.com/channels/1398568016915992667/1478252152169431134/1507948745122381824',
-    );
-    return;
-  }
-
-  if (text === 'rules?') {
-    await message.reply(
-      'Here are the rules! <#1478166898020585592>',
-    );
-    return;
-  }
 });
 client.on(Events.InteractionCreate, async interaction => {
   if (interaction.isButton() && interaction.customId === 'dashboard:refresh') {
@@ -1976,11 +1952,8 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 
     case 'forget': {
-      ai.resetUserConversation(getInteractionAiSessionId(interaction));
-
       return interaction.reply({
-        content:
-          '⌫ Your AI conversation context has been forgotten. You can start fresh now.',
+        content: forgetUserConversation(getInteractionAiSessionId(interaction)),
         flags: MessageFlags.Ephemeral,
       });
     }
@@ -1998,11 +1971,8 @@ client.on(Events.InteractionCreate, async interaction => {
         });
       }
 
-      ai.resetConversation();
-
       return interaction.reply({
-        content:
-          '⌫ All AI conversation contexts have been forgotten.',
+        content: forgetAllConversations(),
         flags: MessageFlags.Ephemeral,
       });
     }
@@ -2187,19 +2157,22 @@ client.on(Events.InteractionCreate, async interaction => {
       });
     }
 
-    case 'status':
-    case 'help': {
+    case 'status': {
       return interaction.reply({
         embeds: [
-          createEmbed('⌘ The Cottage★ Main Bot', Colors.Blurple)
-            .setDescription('Discord and Minecraft companion for The Cottage★ SMP.')
-            .addFields(
-              { name: 'Minecraft', value: '▶ /start  •  ■ /stop  •  ⓘ /status  •  ◎ /dashboard' },
-              { name: 'AI', value: '◉ @The Cottage★  •  ⌫ /forget  •  ⌫ /aforget  •  ⓘ /ai status' },
-              { name: 'Utilities', value: '⌁ /summarize  •  ⓘ /help' },
-              { name: 'Moderation', value: '⚒︎ /timeout  •  ✓ /untimeout  •  ⚠︎ /warn  •  ⓘ /modlog  •  ⚒︎ /banishlist  •  ✓ /unbanish  •  ⌫ /clearwarns' },
-            ),
+          buildStatusEmbed(
+            status,
+            'Status Check',
+            status.connected ? Colors.Green : Colors.Blurple,
+          ),
         ],
+        flags: MessageFlags.Ephemeral,
+      });
+    }
+
+    case 'help': {
+      return interaction.reply({
+        content: ai.getHelpMessage(),
         flags: MessageFlags.Ephemeral,
       });
     }
