@@ -297,6 +297,20 @@ const commands = [
   ),
 
   new SlashCommandBuilder()
+    .setName('summarize-public')
+    .setDescription('Post a public summary of recent messages')
+    .addChannelOption(option =>
+      option
+        .setName('channel')
+        .setDescription('Channel to summarize')
+        .addChannelTypes(
+          ChannelType.GuildText,
+          ChannelType.GuildAnnouncement,
+        )
+        .setRequired(true),
+  ),
+
+  new SlashCommandBuilder()
     .setName('timeout')
     .setDescription('⚒︎ Temporarily timeout a member')
     .addUserOption(option =>
@@ -1945,6 +1959,10 @@ client.on(Events.InteractionCreate, async interaction => {
   switch (interaction.commandName) {
     case 'summarize': {
       return summary.handleSlashCommand({ interaction, ai });
+    }
+
+    case 'summarize-public': {
+      return summary.handlePublicSlashCommand({ interaction, ai });
     }
 
     case 'forget': {
