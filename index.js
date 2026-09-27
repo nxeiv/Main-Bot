@@ -1088,9 +1088,14 @@ client.on(Events.MessageCreate, async message => {
   // MAIN BOT MENTION
   // ============================================================
 
+  const botDirectMentionRegex = new RegExp(
+    `<@!?${client.user.id}>`,
+  );
+
   if (
     message.guild?.id === config.discord.guildId &&
-    message.mentions.has(client.user)
+    client.user &&
+    botDirectMentionRegex.test(message.content)
   ) {
 const botMentionRegex = new RegExp(
   `<@!?${client.user.id}>`,
