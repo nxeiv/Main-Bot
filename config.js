@@ -1,6 +1,7 @@
 'use strict';
 
 require('dotenv').config();
+require('./summary-bootstrap');
 
 function parsePositiveInteger(value, fallback) {
   const parsed = Number.parseInt(value, 10);
