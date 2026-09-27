@@ -687,6 +687,15 @@ async function reconcileSlashCommands(source = 'Registrar') {
     // instead of requiring Discord's response to match byte-for-byte.
     const commandsMatch = (desiredValue, actualValue) => {
       if (Array.isArray(desiredValue)) {
+        // Discord may omit empty arrays such as `options: []` from GET
+        // responses. Treat an omitted empty collection as equivalent.
+        if (
+          desiredValue.length === 0 &&
+          (actualValue === undefined || actualValue === null)
+        ) {
+          return true;
+        }
+
         if (
           !Array.isArray(actualValue) ||
           desiredValue.length !== actualValue.length
