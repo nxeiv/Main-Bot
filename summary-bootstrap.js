@@ -21,7 +21,7 @@ if (!Client.prototype.__cottageSummaryPatched) {
           client.user
         ) {
           const mentionRegex = new RegExp(
-            `<@!?\${client.user.id}>`,
+            `<@!?${client.user.id}>`,
             'g',
           );
 
