@@ -301,6 +301,16 @@ function createBot() {
       username: player.username,
     });
   });
+
+  bot.on('playerLeft', player => {
+    if (state.bot !== bot) return;
+    if (!player?.username) return;
+    if (player.username === bot.username) return;
+
+    emitter.emit('minecraftPlayerLeft', {
+      username: player.username,
+    });
+  });
     
 }
 
