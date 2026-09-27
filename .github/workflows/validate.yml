@@ -24,7 +24,6 @@ jobs:
           node --check ai.js
           node --check minecraft.js
           node --check summary.js
-          node --check summary-bootstrap.js
           node --check unicode.js
           node --check banish.js
           node --check moderation.js
