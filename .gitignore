@@ -1,0 +1,29 @@
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Dependencies
+node_modules/
+
+# Runtime state
+daily-welcomes.json
+scheduled-actions.json
+logs/
+*.log
+*.log.*
+
+# Caches / generated data
+.cache/
+cache/
+coverage/
+
+# Local tooling
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# OS / editor temp files
+*.swp
+*.swo
