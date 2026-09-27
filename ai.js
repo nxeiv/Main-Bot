@@ -1249,7 +1249,9 @@ function getKnownAnswer(message) {
     text === 'discord invite?' ||
     text === 'discord invite' ||
     text === 'join discord?' ||
-    text === 'join discord'
+    text === 'join discord' ||
+    text === 'discord join?' ||
+    text === 'discord join'
   ) {
     return `Join The Cottage★ Discord here: ${SERVER_INFO.invite}`;
   }
@@ -1317,10 +1319,6 @@ function getKnownAnswer(message) {
 
   if (text === 'join?' || text === 'join') {
     return 'For Discord joining, use the official Cottage★ website. For the SMP, ask **smp join?** or **how do I join the SMP?**';
-  }
-
-  if (text === 'discord join?' || text === 'discord join' || text === 'join discord?' || text === 'join discord') {
-    return `Join The Cottage★ Discord here: ${SERVER_INFO.invite}`;
   }
 
   if (text === 'smp join?' || text === 'smp join' || text === 'join the smp?' || text === 'join the smp' || text === 'how do i join the smp?' || text === 'how do i join the smp') {
