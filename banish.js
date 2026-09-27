@@ -6,7 +6,7 @@ const BANISH_DURATION_MS = 5 * 1000;
 const BANISH_COMMAND = /^banish\?$/i;
 
 const ESCAPE_PHRASES = [
-  'I am no longer banished.',
+  'I am sorry for what I did and I will never do it again.',
   'The Cottage★ welcomes me back.',
   'I have returned from banishment.',
   'I respectfully request release.',
