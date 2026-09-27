@@ -18,8 +18,15 @@ const config = {
     errorChannelId: String(process.env.ERROR_CHANNEL_ID || '').trim(),
   },
 
+  // User IDs remain as a fallback for emergency/admin access.
   adminUserIds: [
     '1235216001260458084',
+  ],
+
+  // Members with any of these role IDs are also treated as administrators.
+  // The current Cottage★ Moderator role is included by default.
+  adminRoleIds: [
+    '1495677126693621790',
   ],
 
   server: {
