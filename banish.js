@@ -54,8 +54,16 @@ function normalizePhrase(value) {
     .trim();
 }
 
-function isAdmin(userId) {
-  return config.adminUserIds?.includes(userId);
+function isAdmin(userId, member = null) {
+  if (config.adminUserIds?.includes(userId)) {
+    return true;
+  }
+
+  return Boolean(
+    member?.roles?.cache?.some(role =>
+      config.adminRoleIds?.includes(role.id),
+    ),
+  );
 }
 
 async function logModerationEvent(client, description, color = 0x8f8f8f) {
@@ -187,7 +195,7 @@ async function handleBanishMessage(message) {
     return { handled: false };
   }
 
-  if (!isAdmin(message.author.id)) {
+  if (!isAdmin(message.author.id, message.member)) {
     return { handled: true, authorized: false };
   }
 
