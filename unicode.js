@@ -28,7 +28,12 @@ function applyUnicodeTheme(text) {
   return String(text ?? '')
     .replace(/🛠️|🛠|⛏️|⛏|❌|✅|⚠️|⚠|ℹ️|ℹ|🧹|🏡|💙/gu, match => (
       SYMBOL_REPLACEMENTS.get(match) || match
-    ));
+    ))
+    // Convert any remaining default emoji presentation into a neutral
+    // Unicode bullet, while keeping ordinary text symbols such as ★ and ✓.
+    .replace(/\p{Emoji_Presentation}/gu, '•')
+    .replace(/\p{Emoji_Modifier}/gu, '')
+    .replace(/\uFE0F|\u200D/gu, '');
 }
 
 module.exports = {
