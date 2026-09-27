@@ -19,18 +19,24 @@ This is a presentation layer only; it does not change the bot's underlying comma
 
 ### Discord
 
-- AI chat with conversation memory
+- AI chat with channel-aware conversation memory
+- Reply-aware AI follow-ups that use the referenced bot message as context
+- Unified Discord, Minecraft, and AI health dashboard
 - Deterministic answers for confirmed Cottage★ information
 - Discord/community help
 - Minecraft/SMP help
 - Feature descriptions and tutorials
 - Minecraft connection and player-count status
-- Administrative `/start`, `/stop`, `/status`, and `/maintenance` controls
+- Administrative `/start`, `/stop`, `/status`, `/dashboard`, and `/maintenance` controls
+- Administrator moderation tools: `/timeout`, `/untimeout`, `/warn`, `/modlog`, `/banishlist`, and `/unbanish`
+- Reply-to-message `banish?` moderation with a configurable 5-second timeout and escape phrase
+- Persistent banishment and moderation event state
 - AI-assisted administrative requests with admin verification
 - Scheduled administrative actions with persistence across restarts
 - `/forget` for clearing one user's AI conversation
 - `/aforget` for clearing all AI conversations
-- `/ai status` for administrator-only AI diagnostics
+- `/ai status` for administrator-only AI diagnostics, including request/error counters
+- Discord error reporting through an optional private error channel
 - Slash-command watchdog and automatic reconciliation
 - Daily Minecraft player welcomes
 - Discord-to-Minecraft and Minecraft-to-Discord integration
@@ -81,11 +87,15 @@ The current server configuration targets **The Cottage★ SMP** on Minecraft **1
 | `ai.js` | Gemini clients, conversation memory, deterministic answers, AI requests, rate limiting, and administrative request parsing |
 | `summary.js` | Channel-summary generation and dismiss-button handling |
 | `summary-bootstrap.js` | Hooks the summary request handler into Discord message processing |
-| `config.js` | Server, Discord, bot, administrator, and reconnect configuration |
+| `config.js` | Server, Discord, bot, administrator, reconnect, moderation, and banish configuration |
+| `banish.js` | Configurable reply-to-message banishment system and persistent banish state |
+| `moderation.js` | Persistent warnings, moderation events, duration parsing, and moderation history |
 | `.env.example` | Template for required secrets |
 | `.gitignore` | Prevents secrets, dependencies, runtime state, logs, and local files from being committed |
 | `daily-welcomes.json` | Runtime state for daily Minecraft welcomes; created locally and ignored by Git |
 | `scheduled-actions.json` | Runtime state for persistent scheduled actions; created locally and ignored by Git |
+| `banish-state.json` | Runtime state for active banishments; created locally and ignored by Git |
+| `moderation-state.json` | Runtime moderation history and warnings; created locally and ignored by Git |
 
 ## Requirements
 
@@ -113,6 +123,10 @@ GEMINI_API_KEY_3=your_third_gemini_api_key
 GEMINI_API_KEY_4=your_fourth_gemini_api_key
 
 MC_PASSWORD=
+
+# Optional private Discord channels
+MODERATION_LOG_CHANNEL_ID=
+ERROR_CHANNEL_ID=
 ```
 
 At minimum, `DISCORD_TOKEN` and `GEMINI_API_KEY` should be configured for the full bot feature set.
@@ -128,7 +142,7 @@ Do **not** commit `.env` or any real credentials to GitHub.
 Normal server settings are kept in `config.js`, including:
 
 - Discord client and guild IDs
-- Status, maintenance, chat, and other channel IDs
+- Status, maintenance, chat, moderation-log, and error-report channel IDs
 - Administrator user IDs
 - Minecraft hostname and port
 - Minecraft version
@@ -178,6 +192,13 @@ On successful startup, the bot should log into Discord, reconcile the guild slas
 | `/forget` | General | Clears the requesting user's AI conversation |
 | `/aforget` | Administrator | Clears all normal AI conversations |
 | `/ai status` | Administrator | Shows AI health and queue diagnostics |
+| `/dashboard` | Administrator | Shows Discord, Minecraft, and AI health |
+| `/timeout <user> <duration> [reason]` | Administrator | Applies a Discord timeout |
+| `/untimeout <user>` | Administrator | Removes a Discord timeout |
+| `/warn <user> <reason>` | Administrator | Records a persistent moderation warning |
+| `/modlog <user>` | Administrator | Shows recent moderation history |
+| `/banishlist` | Administrator | Shows active banishments |
+| `/unbanish <user>` | Administrator | Releases a member from banishment |
 
 Administrative requests made through the AI system are independently checked against the configured administrator IDs before an administrative action is executed.
 
@@ -375,3 +396,25 @@ Official repository:
 https://github.com/nxeiv/Main-Bot
 
 The project is maintained for The Cottage★ SMP.
+
+### Banish
+
+The Cottage★ banish mechanic is deliberately admin-only and reply-based.
+
+Reply directly to the member's message with:
+
+`banish?`
+
+The bot applies the configured timeout, records the action, and gives the member the configured escape phrase. After the timeout ends, another non-matching message resets the timeout. Active banishments survive bot restarts, and stale state is automatically discarded after the configured retention period.
+
+The default escape phrase is:
+
+`I am sorry for what I did and I will never do it again.`
+
+The duration, command, escape phrase, persistence file, and stale-state window are configured in `config.js`.
+
+### Moderation logging
+
+When `MODERATION_LOG_CHANNEL_ID` is configured, banishments and administrator moderation actions are sent to that channel.
+
+When `ERROR_CHANNEL_ID` is configured, uncaught exceptions, unhandled rejections, Discord client errors, and other explicitly reported failures are sent there as private diagnostic embeds.
