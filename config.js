@@ -3,13 +3,6 @@
 require('dotenv').config();
 require('./summary-bootstrap');
 
-function parsePositiveInteger(value, fallback) {
-  const parsed = Number.parseInt(value, 10);
-  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : fallback;
-}
-
-// Secrets are loaded from the environment.
-// Keep ordinary server/community configuration in source control.
 const discordToken = String(process.env.DISCORD_TOKEN || '').trim();
 const minecraftPassword = String(process.env.MC_PASSWORD || '');
 
@@ -40,11 +33,8 @@ const config = {
   },
 
   reconnect: {
-    initialDelayMs: parsePositiveInteger('60000', 60_000),
-    maxDelayMs: Math.max(
-      60_000,
-      parsePositiveInteger('300000', 300_000),
-    ),
+    initialDelayMs: 60_000,
+    maxDelayMs: 300_000,
   },
 };
 
