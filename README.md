@@ -187,7 +187,7 @@ On successful startup, the bot should log into Discord, reconcile the guild slas
 | --- | --- | --- |
 | `/start` | Administrator | Starts the Minecraft AFK session |
 | `/stop` | Administrator | Stops the Minecraft AFK session |
-| `/status` | General | Shows Minecraft AFK status |
+| `/status` | Administrator | Shows the unified Discord, Minecraft, and AI dashboard |
 | `/maintenance` | Administrator | Sends the configured maintenance announcement |
 | `/forget` | General | Clears the requesting user's AI conversation |
 | `/aforget` | Administrator | Clears all normal AI conversations |
@@ -199,6 +199,7 @@ On successful startup, the bot should log into Discord, reconcile the guild slas
 | `/modlog <user>` | Administrator | Shows recent moderation history |
 | `/banishlist` | Administrator | Shows active banishments |
 | `/unbanish <user>` | Administrator | Releases a member from banishment |
+| `/clearwarns <user>` | Administrator | Clears recorded moderation warnings |
 
 Administrative requests made through the AI system are independently checked against the configured administrator IDs before an administrative action is executed.
 
