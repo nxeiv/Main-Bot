@@ -19,6 +19,7 @@ const {
 const config = require('./config');
 const mc = require('./minecraft');
 const ai = require('./ai');
+const summary = require('./summary');
 const { applyUnicodeTheme } = require('./unicode');
 const { handleBanishMessage, getActiveBanishments, clearActiveBanishment } = require('./banish');
 const moderation = require('./moderation');
@@ -263,6 +264,20 @@ const commands = [
   new SlashCommandBuilder()
     .setName('dashboard')
     .setDescription('◎ Shows Discord, Minecraft, and AI health'),
+
+  new SlashCommandBuilder()
+    .setName('summarize')
+    .setDescription('Summarize recent messages from a channel')
+    .addChannelOption(option =>
+      option
+        .setName('channel')
+        .setDescription('Channel to summarize')
+        .addChannelTypes(
+          ChannelType.GuildText,
+          ChannelType.GuildAnnouncement,
+        )
+        .setRequired(true),
+  ),
 
   new SlashCommandBuilder()
     .setName('timeout')
@@ -1889,6 +1904,10 @@ const response = await ai.ask(contextualAiQuestion, {
   }
 });
 client.on(Events.InteractionCreate, async interaction => {
+  if (interaction.isButton() && interaction.customId.startsWith('summary:dismiss:')) {
+    return summary.handleDismissButton(interaction);
+  }
+
   if (!interaction.isChatInputCommand()) {
     return;
   }
@@ -1901,6 +1920,10 @@ client.on(Events.InteractionCreate, async interaction => {
   const status = mc.getStatus();
 
   switch (interaction.commandName) {
+    case 'summarize': {
+      return summary.handleSlashCommand({ interaction, ai });
+    }
+
     case 'forget': {
       ai.resetUserConversation(getInteractionAiSessionId(interaction));
 
