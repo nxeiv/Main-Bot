@@ -41,6 +41,24 @@ It connects the Cottage★ Discord community with the Minecraft server, provides
 
 ## ◈ Configuration
 
+The repository keeps credentials outside tracked source code.
+
+For local development, create a `.env` file from `.env.example`. The bot loads it with `dotenv` before the other modules access `process.env`.
+
+Required secret:
+- `DISCORD_TOKEN`
+- At least one Gemini API key: `GEMINI_API_KEY`
+
+Optional secrets:
+- `GEMINI_API_KEY_2`
+- `GEMINI_API_KEY_3`
+- `GEMINI_API_KEY_4`
+- `MC_PASSWORD` (only needed if Minecraft authentication is changed from the current offline mode)
+
+Normal server settings such as channel IDs, role IDs, server addresses, ports, the Minecraft username, and reconnect timings remain in `config.js`.
+
+Do not commit `.env`, runtime state files, logs, or `node_modules/`.
+
 Configuration is loaded through environment variables.
 
 At minimum, the bot requires credentials and connection settings for Discord, Minecraft, and Gemini.
