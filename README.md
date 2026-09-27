@@ -4,6 +4,17 @@ The main Discord and Minecraft companion bot for **The Cottage★ SMP**.
 
 It connects the Cottage★ Discord community with the Minecraft server, provides server information and help, manages the Minecraft AFK session, and provides Gemini-powered AI features.
 
+## Unicode theme
+
+The bot uses a consistent Unicode-first visual theme across user-facing responses.
+
+- Pictographic emoji are replaced with text-friendly Unicode symbols where an appropriate symbol exists.
+- AI-generated Discord and Minecraft responses pass through the same Unicode theme layer.
+- Common interface states use symbols such as ✓, ✕, ⓘ, ⚠︎, ⚒︎, ⌂, ⌫, and ⌁.
+- The theme preserves Discord mentions, channel references, URLs, commands, and the Cottage★ branding.
+- The Unicode layer also catches remaining default emoji presentation characters so AI output does not unexpectedly switch back to pictographic emoji.
+
+This is a presentation layer only; it does not change the bot's underlying command behavior.
 ## Features
 
 ### Discord
