@@ -2198,7 +2198,7 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 
     case 'status': {
-      if (!requireFeatureAccess(interaction, 'status')) {
+      if (!(await requireFeatureAccess(interaction, 'status'))) {
         return;
       }
 
