@@ -1,5 +1,7 @@
 'use strict';
 
+const { applyUnicodeTheme } = require('./unicode');
+
 const SERVER_INFO = {
   name: 'The Cottage★ SMP',
   chapter: 'Chapter 1 • Season 5',
@@ -369,6 +371,9 @@ Stay focused on what the user is asking now.
 RESPONSE STYLE
 
 - Answer the actual question first.
+- Unicode Theme: use Unicode symbols and typographic characters for the bot's visual language. Prefer symbols such as ✓, ✕, ⓘ, ⚠︎, ⚒︎, ⌂, ⌁, ◆, ◇, ◌, ⌘, ◷, ◎, ⌫, and → instead of pictographic emoji.
+- Do not use pictographic emoji in AI responses. Keep the interface's symbols consistent and text-friendly.
+
 - Keep simple questions simple.
 - Do not pad answers with generic openings such as "Certainly!", "Great question!", "Here are a few...", or "Sure!" unless the user genuinely needs that tone.
 - Avoid sounding like a formal customer-support agent. Talk like a helpful member of the Cottage★ community.
@@ -442,10 +447,12 @@ function trimConversationHistory(history) {
 }
 
 function normalizeAiReply(text) {
-  return String(text || '')
-    .replace(/\r?\n|\r/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+  return applyUnicodeTheme(
+    String(text || '')
+      .replace(/\r?\n|\r/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim(),
+  );
 }
 
 function runAiQualityChecks(text, options = {}) {
