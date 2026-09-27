@@ -28,6 +28,7 @@ This is a presentation layer only; it does not change the bot's underlying comma
 - Feature descriptions and tutorials
 - Minecraft connection and player-count status
 - Administrative `/start`, `/stop`, `/status`, `/dashboard`, and `/maintenance` controls
+- `/summarize <channel>` for a dismissable channel summary
 - Administrator moderation tools: `/timeout`, `/untimeout`, `/warn`, `/modlog`, `/banishlist`, and `/unbanish`
 - Reply-to-message `banish?` moderation with a configurable 5-second timeout and escape phrase
 - Persistent banishment and moderation event state
@@ -43,24 +44,18 @@ This is a presentation layer only; it does not change the bot's underlying comma
 
 ### Channel summaries
 
-Users can mention the bot and ask it to summarize a channel, for example:
+Use the slash command:
 
-`@Main Bot can you summarize this channel?`
+`/summarize channel:#general`
 
-or:
-
-`@Main Bot summarize #general`
-
-The summary system:
-
+The command:
+- Uses Discord's channel picker to select the target channel
 - Reads up to the latest 100 messages it can access
-- Removes empty/system messages
-- Resolves channel names, channel mentions, and "this channel"/"here"
 - Limits the transcript sent to Gemini
 - Generates a concise summary focused on decisions, questions, announcements, plans, and unresolved topics
-- Adds a dismiss button
+- Returns the result in a dedicated embed with a `Dismiss summary` button
 - Allows only the person who requested the summary to dismiss it
-- Does not use emojis in the generated summary prompt
+- Does not use emojis or decorative Unicode in the generated summary
 
 ### Minecraft
 
@@ -86,7 +81,6 @@ The current server configuration targets **The Cottage★ SMP** on Minecraft **1
 | `minecraft.js` | Mineflayer connection, reconnect logic, player detection, chat, and anti-AFK behavior |
 | `ai.js` | Gemini clients, conversation memory, deterministic answers, AI requests, rate limiting, and administrative request parsing |
 | `summary.js` | Channel-summary generation and dismiss-button handling |
-| `summary-bootstrap.js` | Hooks the summary request handler into Discord message processing |
 | `config.js` | Server, Discord, bot, administrator, reconnect, moderation, and banish configuration |
 | `banish.js` | Configurable reply-to-message banishment system and persistent banish state |
 | `moderation.js` | Persistent warnings, moderation events, duration parsing, and moderation history |
@@ -195,6 +189,7 @@ On successful startup, the bot should log into Discord, reconcile the guild slas
 | `/aforget` | Administrator | Clears all normal AI conversations |
 | `/ai status` | Administrator | Shows AI health and queue diagnostics |
 | `/dashboard` | Administrator | Shows Discord, Minecraft, and AI health |
+| `/summarize <channel>` | General | Summarizes recent messages from a selected channel |
 | `/timeout <user> <duration> [reason]` | Administrator | Applies a Discord timeout |
 | `/untimeout <user>` | Administrator | Removes a Discord timeout |
 | `/warn <user> <reason>` | Administrator | Records a persistent moderation warning |
