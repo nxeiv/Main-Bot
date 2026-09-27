@@ -30,3 +30,6 @@ Thumbs.db
 # OS / editor temp files
 *.swp
 *.swo
+
+moderation-state.json
+banish-state.json
