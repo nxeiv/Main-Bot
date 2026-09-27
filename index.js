@@ -1364,7 +1364,10 @@ client.on(Events.MessageCreate, async message => {
     client.user &&
     botDirectMentionRegex.test(message.content);
 
-  let isReplyToBot = false;
+  let isReplyToBot =
+    Boolean(client.user) &&
+    message.mentions.repliedUser?.id === client.user.id;
+
   let replyTargetMessage = null;
 
   if (message.reference?.messageId) {
@@ -1374,8 +1377,9 @@ client.on(Events.MessageCreate, async message => {
       );
 
       isReplyToBot =
-        Boolean(client.user) &&
-        replyTargetMessage.author.id === client.user.id;
+        isReplyToBot ||
+        (Boolean(client.user) &&
+          replyTargetMessage.author.id === client.user.id);
     } catch (error) {
       log(
         'Discord',
