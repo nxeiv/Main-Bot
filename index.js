@@ -1989,21 +1989,7 @@ client.on(Events.InteractionCreate, async interaction => {
       }
 
       try {
-        const maintenanceChannel = await client.channels.fetch(
-          config.discord.maintenanceChannelId,
-        );
-
-        if (!maintenanceChannel?.isTextBased()) {
-          return interaction.reply({
-            content:
-              '✕ The configured maintenance channel is not a text channel.',
-            flags: MessageFlags.Ephemeral,
-          });
-        }
-
-        await maintenanceChannel.send(
-          '# 🛠️ **Server is under maintenance** <@&1447218476795166791>',
-        );
+        await executeAdministrativeAction('maintenance');
         runtimeHealth.maintenance = true;
 
         return interaction.reply({
@@ -2070,7 +2056,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
       await interaction.deferReply();
 
-      mc.start();
+      await executeAdministrativeAction('start');
 
       return interaction.editReply({
         embeds: [
@@ -2143,7 +2129,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
       await interaction.deferReply();
 
-      mc.stop();
+      await executeAdministrativeAction('stop');
 
       return interaction.editReply({
         embeds: [
