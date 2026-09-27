@@ -284,21 +284,7 @@ const commands = [
 
   new SlashCommandBuilder()
     .setName('summarize')
-    .setDescription('Summarize recent messages from a channel')
-    .addChannelOption(option =>
-      option
-        .setName('channel')
-        .setDescription('Channel to summarize')
-        .addChannelTypes(
-          ChannelType.GuildText,
-          ChannelType.GuildAnnouncement,
-        )
-        .setRequired(true),
-  ),
-
-  new SlashCommandBuilder()
-    .setName('summarize-public')
-    .setDescription('Post a public summary of recent messages')
+    .setDescription('Post a public summary of recent messages (expires after 10 minutes)')
     .addChannelOption(option =>
       option
         .setName('channel')
@@ -409,6 +395,39 @@ function isAdmin(userId, member = null) {
       config.adminRoleIds?.includes(role.id),
     ),
   );
+}
+
+function hasFeatureAccess(feature, userId, member = null) {
+  const access = config.featureAccess?.[feature] || 'admin';
+
+  if (access === 'public') {
+    return true;
+  }
+
+  if (access === 'admin' || access === 'moderator') {
+    return isAdmin(userId, member);
+  }
+
+  if (access === 'owner') {
+    return config.adminUserIds?.includes(userId);
+  }
+
+  return false;
+}
+
+function requireFeatureAccess(interaction, feature) {
+  if (hasFeatureAccess(
+    feature,
+    interaction.user.id,
+    interaction.member,
+  )) {
+    return true;
+  }
+
+  return interaction.reply({
+    content: '✕ You are not authorized to use this command.',
+    flags: MessageFlags.Ephemeral,
+  });
 }
 
 function getDiscordAiSessionId(message) {
@@ -1376,7 +1395,8 @@ client.on(Events.MessageCreate, async message => {
 
   if (
     message.guild?.id === config.discord.guildId &&
-    normalizedMessageText === 'forget'
+    normalizedMessageText === 'forget' &&
+    hasFeatureAccess('forget', message.author.id, message.member)
   ) {
     await message.reply(
       forgetUserConversation(getDiscordAiSessionId(message)),
@@ -1387,9 +1407,10 @@ client.on(Events.MessageCreate, async message => {
 
   if (
     message.guild?.id === config.discord.guildId &&
-    normalizedMessageText === 'aforget'
+    normalizedMessageText === 'aforget' &&
+    hasFeatureAccess('aforget', message.author.id, message.member)
   ) {
-    if (!isAdmin(message.author.id, message.member)) {
+    if (!hasFeatureAccess('aforget', message.author.id, message.member)) {
       await message.reply(
         '✕ You are not authorized to use **aforget**.',
       );
@@ -1984,10 +2005,6 @@ client.on(Events.InteractionCreate, async interaction => {
       return summary.handleSlashCommand({ interaction, ai });
     }
 
-    case 'summarize-public': {
-      return summary.handlePublicSlashCommand({ interaction, ai });
-    }
-
     case 'forget': {
       return interaction.reply({
         content: forgetUserConversation(getInteractionAiSessionId(interaction)),
@@ -2181,6 +2198,10 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 
     case 'status': {
+      if (!requireFeatureAccess(interaction, 'status')) {
+        return;
+      }
+
       return interaction.reply({
         embeds: [
           buildStatusEmbed(
@@ -2201,7 +2222,7 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 
     case 'dashboard': {
-      if (!isAdmin(interaction.user.id, interaction.member)) {
+      if (!hasFeatureAccess('dashboard', interaction.user.id, interaction.member)) {
         return interaction.reply({
           content: '✕ You are not authorized to use this command.',
           flags: MessageFlags.Ephemeral,
@@ -2216,7 +2237,7 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 
     case 'timeout': {
-      if (!isAdmin(interaction.user.id, interaction.member)) {
+      if (!hasFeatureAccess('timeout', interaction.user.id, interaction.member)) {
         return interaction.reply({
           content: '✕ You are not authorized to use this command.',
           flags: MessageFlags.Ephemeral,
@@ -2293,7 +2314,7 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 
     case 'untimeout': {
-      if (!isAdmin(interaction.user.id, interaction.member)) {
+      if (!hasFeatureAccess('untimeout', interaction.user.id, interaction.member)) {
         return interaction.reply({
           content: '✕ You are not authorized to use this command.',
           flags: MessageFlags.Ephemeral,
@@ -2348,7 +2369,7 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 
     case 'warn': {
-      if (!isAdmin(interaction.user.id, interaction.member)) {
+      if (!hasFeatureAccess('warn', interaction.user.id, interaction.member)) {
         return interaction.reply({
           content: '✕ You are not authorized to use this command.',
           flags: MessageFlags.Ephemeral,
@@ -2388,7 +2409,7 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 
     case 'modlog': {
-      if (!isAdmin(interaction.user.id, interaction.member)) {
+      if (!hasFeatureAccess('modlog', interaction.user.id, interaction.member)) {
         return interaction.reply({
           content: '✕ You are not authorized to use this command.',
           flags: MessageFlags.Ephemeral,
@@ -2429,7 +2450,7 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 
     case 'banishlist': {
-      if (!isAdmin(interaction.user.id, interaction.member)) {
+      if (!hasFeatureAccess('banishlist', interaction.user.id, interaction.member)) {
         return interaction.reply({
           content: '✕ You are not authorized to use this command.',
           flags: MessageFlags.Ephemeral,
@@ -2464,7 +2485,7 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 
     case 'unbanish': {
-      if (!isAdmin(interaction.user.id, interaction.member)) {
+      if (!hasFeatureAccess('unbanish', interaction.user.id, interaction.member)) {
         return interaction.reply({
           content: '✕ You are not authorized to use this command.',
           flags: MessageFlags.Ephemeral,
@@ -2504,7 +2525,7 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 
     case 'ai': {
-      if (!isAdmin(interaction.user.id, interaction.member)) {
+      if (!hasFeatureAccess('ai', interaction.user.id, interaction.member)) {
         log(
           'Admin',
           `Rejected /ai from unauthorized user ${interaction.user.tag} (${interaction.user.id}).`,
