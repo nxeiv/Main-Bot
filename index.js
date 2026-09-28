@@ -2009,18 +2009,25 @@ const response = await ai.ask(contextualAiQuestion, {
   }
 
   // ============================================================
-  // PUBLIC HELP QUESTION
-  // Keep the only automatic responder limited to the explicit
-  // "help?" trigger. All other natural-language messages require
-  // a direct bot mention or a direct reply to the bot.
+  // PUBLIC QUESTION AUTORESPONDERS
+  // Restore the deterministic Cottage★ instant-answer router for
+  // public questions, but only when the message actually ends in
+  // a question mark. Unknown questions remain silent and do not
+  // invoke Gemini.
   // ============================================================
+
+  const publicQuestion = message.content.trim();
 
   if (
     message.guild?.id === config.discord.guildId &&
-    message.content.trim().toLowerCase() === 'help?'
+    publicQuestion.endsWith('?')
   ) {
-    await message.reply(ai.getHelpMessage());
-    return;
+    const instantAnswer = ai.getInstantAnswer(publicQuestion);
+
+    if (instantAnswer) {
+      await message.reply(instantAnswer);
+      return;
+    }
   }
 
 });
