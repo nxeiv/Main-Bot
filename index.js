@@ -344,6 +344,16 @@ const commands = [
     .setDescription('ⓘ Shows Minecraft AFK status'),
 
   new SlashCommandBuilder()
+    .setName('afk')
+    .setDescription('Marks yourself as AFK')
+    .addStringOption(option =>
+      option
+        .setName('reason')
+        .setDescription('Optional reason for being AFK')
+        .setRequired(false),
+  ),
+
+  new SlashCommandBuilder()
     .setName('maintenance')
     .setDescription(
       '⚒︎ Announces server maintenance DO NOT USE IF NOT SMP MODERATOR.',
@@ -1498,6 +1508,17 @@ client.on(Events.MessageCreate, async message => {
 
   if (
     message.guild?.id === config.discord.guildId &&
+    !/^afk\??(?:\s+(.+))?$/i.test(rawMessageText) &&
+    clearUserAfk(message.author.id)
+  ) {
+    log(
+      'AFK',
+      `${message.author.tag} returned; cleared their AFK status.`,
+    );
+  }
+
+  if (
+    message.guild?.id === config.discord.guildId &&
     normalizedMessageText === 'forget'
   ) {
     await message.reply(
@@ -1527,10 +1548,10 @@ client.on(Events.MessageCreate, async message => {
   }
 
   // ============================================================
-  // GREED-STYLE AFK
+  // USER AFK STATUS
   // ============================================================
 
-  const afkCommandMatch = rawMessageText.match(/^,afk(?:\s+(.+))?$/i);
+  const afkCommandMatch = rawMessageText.match(/^afk\??(?:\s+(.+))?$/i);
 
   if (
     message.guild?.id === config.discord.guildId &&
@@ -1547,16 +1568,6 @@ client.on(Events.MessageCreate, async message => {
     return;
   }
 
-  // Any normal message means this user is back.
-  if (
-    message.guild?.id === config.discord.guildId &&
-    clearUserAfk(message.author.id)
-  ) {
-    log(
-      'AFK',
-      `${message.author.tag} returned; cleared their AFK status.`,
-    );
-  }
 
   // Tell users when a mentioned member is AFK.
   if (
@@ -2381,6 +2392,16 @@ client.on(Events.InteractionCreate, async interaction => {
       });
     }
 
+    case 'afk': {
+      const reason = interaction.options.getString('reason', false)?.trim() || 'AFK';
+
+      setUserAfk(interaction.user.id, reason);
+
+      return interaction.reply({
+        content: `✓ You are now marked as AFK: **${userAfkStatuses.get(interaction.user.id).reason}**`,
+        flags: MessageFlags.Ephemeral,
+      });
+    }
     case 'dashboard': {
       if (!hasFeatureAccess('dashboard', interaction.user.id, interaction.member)) {
         return interaction.reply({
