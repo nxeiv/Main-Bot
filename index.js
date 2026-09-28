@@ -233,11 +233,9 @@ function loadScheduledAdminActions() {
 let botAfkState = {
   active: false,
   reason: '',
-  setAt: null,
-  setBy: null,
 };
 
-function setBotAfk(reason, user = null) {
+function setBotAfk(reason) {
   const normalizedReason = String(reason || '').trim();
 
   if (!normalizedReason) {
@@ -248,8 +246,6 @@ function setBotAfk(reason, user = null) {
     botAfkState = {
       active: false,
       reason: '',
-      setAt: null,
-      setBy: null,
     };
 
     updatePresence();
@@ -259,8 +255,6 @@ function setBotAfk(reason, user = null) {
   botAfkState = {
     active: true,
     reason: normalizedReason.slice(0, 200),
-    setAt: Date.now(),
-    setBy: user?.id || null,
   };
 
   updatePresence();
@@ -1549,7 +1543,7 @@ client.on(Events.MessageCreate, async message => {
     }
 
     try {
-      const active = setBotAfk(afkSetMatch[1], message.author);
+      const active = setBotAfk(afkSetMatch[1]);
 
       await message.reply(
         active
@@ -2352,7 +2346,7 @@ client.on(Events.InteractionCreate, async interaction => {
       const reason = interaction.options.getString('reason', true).trim();
 
       try {
-        const active = setBotAfk(reason, interaction.user);
+        const active = setBotAfk(reason);
 
         return interaction.reply({
           content: active
