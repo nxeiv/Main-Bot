@@ -181,24 +181,81 @@ On successful startup, the bot should log into Discord, reconcile the guild slas
 
 | Command | Access | Purpose |
 | --- | --- | --- |
-| `/start` | Administrator | Starts the Minecraft AFK session |
-| `/stop` | Administrator | Stops the Minecraft AFK session |
-| `/status` | Administrator | Shows the unified Discord, Minecraft, and AI dashboard |
-| `/maintenance` | Administrator | Sends the configured maintenance announcement |
-| `/forget` | General | Clears the requesting user's AI conversation |
-| `/aforget` | Administrator | Clears all normal AI conversations |
-| `/ai status` | Administrator | Shows AI health and queue diagnostics |
-| `/dashboard` | Administrator | Shows Discord, Minecraft, and AI health |
-| `/summarize <channel>` | General | Summarizes recent messages from a selected channel |
-| `/timeout <user> <duration> [reason]` | Administrator | Applies a Discord timeout |
-| `/untimeout <user>` | Administrator | Removes a Discord timeout |
-| `/warn <user> <reason>` | Administrator | Records a persistent moderation warning |
-| `/modlog <user>` | Administrator | Shows recent moderation history |
-| `/banishlist` | Administrator | Shows active banishments |
-| `/unbanish <user>` | Administrator | Releases a member from banishment |
-| `/clearwarns <user>` | Administrator | Clears recorded moderation warnings |
+| `/help` | **Public** | Shows the bot help message and access labels |
+| `/forget` | **Public** | Clears the requesting user's AI conversation |
+| `/summarize <channel>` | **Public** | Summarizes recent messages from a selected channel |
+| `/start` | **Admin** | Starts the Minecraft AFK session |
+| `/stop` | **Admin** | Stops the Minecraft AFK session |
+| `/status` | **Admin** | Shows Minecraft AFK status |
+| `/maintenance` | **Admin** | Sends the configured maintenance announcement |
+| `/aforget` | **Admin** | Clears all AI conversations |
+| `/ai status` | **Admin** | Shows AI health and queue diagnostics |
+| `/dashboard` | **Admin** | Shows Discord, Minecraft, and AI health |
+| `/timeout <user> <duration> [reason]` | **Admin** | Applies a Discord timeout |
+| `/untimeout <user>` | **Admin** | Removes a Discord timeout |
+| `/warn <user> <reason>` | **Admin** | Records a persistent moderation warning |
+| `/modlog <user>` | **Admin** | Shows recent moderation history |
+| `/banishlist` | **Admin** | Shows active banishments |
+| `/unbanish <user>` | **Admin** | Releases a member from banishment |
+| `/clearwarns <user>` | **Admin** | Clears recorded moderation warnings |
 
-Administrative requests made through the AI system are independently checked against the configured administrator IDs before an administrative action is executed.
+The bot's `/help` response also displays `[Public]` or `[Admin]` beside each command so the access level can be checked directly in Discord.
+
+## Testing guide
+
+Use the labels below to separate **Public** tests from **Admin** tests.
+
+### Feature access matrix
+
+| Feature | Access | Test |
+| --- | --- | --- |
+| `/help` | **Public** | Run `/help`; confirm the response shows the access labels |
+| `/forget` | **Public** | Run `/forget`; confirm your own AI context is cleared |
+| `/summarize <channel>` | **Public** | Run it in a test channel; confirm a summary is generated and can be dismissed by the requester |
+| Known-question autoresponders | **Public** | Post a supported question without mentioning the bot; confirm it answers automatically |
+| General AI mention | **Public** | Mention the bot with a normal question; confirm it responds through Gemini |
+| Reply-aware AI | **Public** | Reply to a bot message with a follow-up; confirm the referenced message is used as context |
+| `/start` | **Admin** | Run as an admin; confirm the AFK Minecraft session starts or reports it is already active |
+| `/stop` | **Admin** | Run as an admin during a safe test window; confirm the AFK session stops |
+| `/status` | **Admin** | Run as an admin; confirm the Minecraft status embed appears |
+| `/dashboard` | **Admin** | Run as an admin; confirm Discord, Minecraft, and AI health appear |
+| `/maintenance` | **Admin** | Run only during an intentional maintenance test; confirm the configured maintenance channel receives the announcement |
+| `/aforget` | **Admin** | Run as an admin; confirm normal AI conversation state is cleared |
+| `/ai status` | **Admin** | Run as an admin; confirm AI diagnostics are returned |
+| Moderation commands | **Admin** | Test with a dedicated test account using `/timeout`, `/untimeout`, `/warn`, `/modlog`, and `/clearwarns` |
+| Banishment | **Admin** | Reply to a test member's message with `banish?`; verify `/banishlist`, then use `/unbanish` |
+| Admin AI requests | **Admin** | Make a clear administrative request as an admin; repeat as a non-admin and confirm the second request is rejected |
+| Slash-command watchdog | **Public/Admin** | Leave the bot running and verify the command count remains stable in the logs |
+
+### Recommended test order
+
+1. **Start the bot.** Confirm Discord login, slash-command reconciliation, and Minecraft startup in the console.
+2. **Run `/help` publicly.** Confirm the response includes `[Public]` and `[Admin]` labels.
+3. **Test public deterministic questions.** Send `ip?`, `bedrock?`, `rules?`, `channels?`, `roles?`, `features?`, `java?`, `world download?`, and `smp join?` without mentioning the bot. They should answer automatically.
+4. **Verify the removed responders.** Send `tpa?` and `rtp?` without mentioning the bot. They should produce **no automatic response**.
+5. **Test public AI.** Mention the bot with a normal question, then reply to its response with a follow-up. This requires Gemini availability.
+6. **Test `/forget` and `/summarize`.** Use a test conversation/channel so normal community messages are not affected.
+7. **Switch to an admin account.** Test `/status`, `/dashboard`, and `/ai status` first because they are low-risk checks.
+8. **Test Minecraft controls.** Test `/start` and `/stop` only when stopping the AFK session is acceptable. Use `/maintenance` only during a deliberate maintenance test.
+9. **Test moderation.** With a test account, run `/warn`, `/modlog`, `/timeout`, `/untimeout`, and `/clearwarns`.
+10. **Test banishment.** Use the reply-based `banish?` flow, confirm `/banishlist`, then release the test account with `/unbanish`.
+11. **Test access control.** From a non-admin account, try `/dashboard` and one moderation command. Both should return the unauthorized response.
+12. **Test slash-command recovery.** Watch the 5-minute watchdog logs and confirm they report the registered guild commands rather than repeatedly reporting zero.
+13. **Review the console.** Check for Discord errors, unknown-message errors, Gemini 503/429 failures, and unexpected permission failures.
+
+### Removed TPA/RTP responders
+
+These are no longer part of the deterministic knowledge or automatic question-reply system:
+
+- `tpa?`
+- `rtp?`
+- `teleport?`
+- `teleport request?`
+- `random teleport?`
+- `random teleport`
+
+A user can still explicitly mention the bot or reply to it and ask about those topics; that follows the normal AI path rather than an automatic responder.
+
 
 ## AI system
 
