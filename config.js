@@ -42,8 +42,6 @@ const config = {
     aforeget: 'admin',
     ai: 'admin',
     summarize: 'public',
-    timeout: 'admin',
-    untimeout: 'admin',
     warn: 'admin',
     modlog: 'admin',
     banishlist: 'admin',
