@@ -181,7 +181,7 @@ Mention me or reply to one of my messages when you want an AI answer.
 • [Admin] \`/warn\` \`/modlog\` \`/banishlist\` \`/unbanish\` \`/clearwarns\`
 
 **Public questions**
-• \`ip?\` · \`bedrock join?\` · \`rules?\` · \`channels?\` · \`roles?\` · \`features?\`
+• \`afk?\` · \`ip?\` · \`bedrock join?\` · \`rules?\` · \`channels?\` · \`roles?\` · \`features?\`
 • Ask about Java, Bedrock, joining, SMP features, or the world download.`;
 
 
