@@ -29,7 +29,7 @@ This is a presentation layer only; it does not change the bot's underlying comma
 - Minecraft connection and player-count status
 - Administrative `/start`, `/stop`, `/status`, `/dashboard`, and `/maintenance` controls
 - `/summarize <channel>` for a dismissable channel summary
-- Administrator moderation tools: `/timeout`, `/untimeout`, `/warn`, `/modlog`, `/banishlist`, and `/unbanish`
+- Administrator moderation tools: `/warn`, `/modlog`, `/banishlist`, `/unbanish`, and `/clearwarns`
 - Reply-to-message `banish?` moderation with a configurable 5-second timeout and escape phrase
 - Persistent banishment and moderation event state
 - AI-assisted administrative requests with admin verification
@@ -37,6 +37,7 @@ This is a presentation layer only; it does not change the bot's underlying comma
 - `/forget` for clearing one user's AI conversation
 - `/aforget` for clearing all AI conversations
 - `/ai status` for administrator-only AI diagnostics, including request/error counters
+- `/afk <reason>` for the bot's Discord AFK presence; `afk? <reason>` is the admin text shortcut
 - Discord error reporting through an optional private error channel
 - Slash-command watchdog and automatic reconciliation
 - Daily Minecraft player welcomes
@@ -187,12 +188,11 @@ On successful startup, the bot should log into Discord, reconcile the guild slas
 | `/start` | **Admin** | Starts the Minecraft AFK session |
 | `/stop` | **Admin** | Stops the Minecraft AFK session |
 | `/status` | **Admin** | Shows Minecraft AFK status |
+| `/afk <reason>` | **Admin** | Marks the Discord bot as AFK; use `off` to clear |
 | `/maintenance` | **Admin** | Sends the configured maintenance announcement |
 | `/aforget` | **Admin** | Clears all AI conversations |
 | `/ai status` | **Admin** | Shows AI health and queue diagnostics |
 | `/dashboard` | **Admin** | Shows Discord, Minecraft, and AI health |
-| `/timeout <user> <duration> [reason]` | **Admin** | Applies a Discord timeout |
-| `/untimeout <user>` | **Admin** | Removes a Discord timeout |
 | `/warn <user> <reason>` | **Admin** | Records a persistent moderation warning |
 | `/modlog <user>` | **Admin** | Shows recent moderation history |
 | `/banishlist` | **Admin** | Shows active banishments |
@@ -222,7 +222,7 @@ Use the labels below to separate **Public** tests from **Admin** tests.
 | `/maintenance` | **Admin** | Run only during an intentional maintenance test; confirm the configured maintenance channel receives the announcement |
 | `/aforget` | **Admin** | Run as an admin; confirm normal AI conversation state is cleared |
 | `/ai status` | **Admin** | Run as an admin; confirm AI diagnostics are returned |
-| Moderation commands | **Admin** | Test with a dedicated test account using `/timeout`, `/untimeout`, `/warn`, `/modlog`, and `/clearwarns` |
+| Moderation commands | **Admin** | Test with a dedicated test account using `/warn`, `/modlog`, and `/clearwarns`; banishment uses its own reply-based flow |
 | Banishment | **Admin** | Reply to a test member's message with `banish?`; verify `/banishlist`, then use `/unbanish` |
 | Admin AI requests | **Admin** | Make a clear administrative request as an admin; repeat as a non-admin and confirm the second request is rejected |
 | Slash-command watchdog | **Public/Admin** | Leave the bot running and verify the command count remains stable in the logs |
@@ -237,7 +237,7 @@ Use the labels below to separate **Public** tests from **Admin** tests.
 6. **Test `/forget` and `/summarize`.** Use a test conversation/channel so normal community messages are not affected.
 7. **Switch to an admin account.** Test `/status`, `/dashboard`, and `/ai status` first because they are low-risk checks.
 8. **Test Minecraft controls.** Test `/start` and `/stop` only when stopping the AFK session is acceptable. Use `/maintenance` only during a deliberate maintenance test.
-9. **Test moderation.** With a test account, run `/warn`, `/modlog`, `/timeout`, `/untimeout`, and `/clearwarns`.
+9. **Test moderation.** With a test account, run `/warn`, `/modlog`, and `/clearwarns`.
 10. **Test banishment.** Use the reply-based `banish?` flow, confirm `/banishlist`, then release the test account with `/unbanish`.
 11. **Test access control.** From a non-admin account, try `/dashboard` and one moderation command. Both should return the unauthorized response.
 12. **Test slash-command recovery.** Watch the 5-minute watchdog logs and confirm they report the registered guild commands rather than repeatedly reporting zero.
@@ -255,6 +255,33 @@ These are no longer part of the deterministic knowledge or automatic question-re
 - `random teleport`
 
 A user can still explicitly mention the bot or reply to it and ask about those topics; that follows the normal AI path rather than an automatic responder.
+
+
+### Bot AFK status
+
+The bot has a small Discord-side AFK presence separate from the Minecraft AFK session.
+
+Admin controls:
+
+`/afk <reason>`
+
+The equivalent admin text shortcut is:
+
+`afk? <reason>`
+
+To clear the AFK state, use:
+
+`/afk off`
+
+or:
+
+`afk? off`
+
+Anyone can query the current state with:
+
+`afk?`
+
+When active, the bot changes its Discord presence to an AFK status containing the configured reason. The state is kept in memory and resets when the process restarts.
 
 
 ## AI system
