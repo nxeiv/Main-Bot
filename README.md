@@ -223,6 +223,8 @@ Use the labels below to separate **Public** tests from **Admin** tests.
 | `/aforget` | **Admin** | Run as an admin; confirm normal AI conversation state is cleared |
 | `/ai status` | **Admin** | Run as an admin; confirm AI diagnostics are returned |
 | `/afk <reason>` | **Admin** | Run as an admin; confirm the Discord presence changes to AFK with the supplied reason; use `/afk off` to clear it |
+| `afk?` | **Public** | Check the bot's current Discord AFK state |
+| `afk? <reason>` | **Admin** | Use the text shortcut to set the bot's AFK reason; use `afk? off` to clear it |
 | Moderation commands | **Admin** | Test with a dedicated test account using `/warn`, `/modlog`, and `/clearwarns`; banishment uses its own reply-based flow |
 | Banishment | **Admin** | Reply to a test member's message with `banish?`; verify `/banishlist`, then use `/unbanish` |
 | Admin AI requests | **Admin** | Make a clear administrative request as an admin; repeat as a non-admin and confirm the second request is rejected |
