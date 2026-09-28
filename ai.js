@@ -174,14 +174,17 @@ Mention me or reply to one of my messages when you want an AI answer.
 
 **Admin**
 • [Admin] \`/start\` \`/stop\` \`/status\`
-• [Admin] \`/afk <reason>\` \`/maintenance\` \`/dashboard\`
+• [Admin] \`/start\` \`/stop\` \`/status\`
+• [Admin] \`/maintenance\` \`/dashboard\`
 • [Admin] \`/aforget\` \`/ai status\`
 
+**Public AFK**
+• \`,afk [reason]\` — mark yourself AFK; reason defaults to \`AFK\`
 **Moderation**
 • [Admin] \`/warn\` \`/modlog\` \`/banishlist\` \`/unbanish\` \`/clearwarns\`
 
 **Public questions**
-• \`afk?\` · \`ip?\` · \`bedrock join?\` · \`rules?\` · \`channels?\` · \`roles?\` · \`features?\`
+• \`ip?\` · \`bedrock join?\` · \`rules?\` · \`channels?\` · \`roles?\` · \`features?\`
 • Ask about Java, Bedrock, joining, SMP features, or the world download.`;
 
 
