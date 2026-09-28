@@ -229,29 +229,99 @@ function loadScheduledAdminActions() {
   }
 }
 
+const USER_AFK_FILE = path.join(
+  __dirname,
+  'user-afk.json',
+);
+
 const userAfkStatuses = new Map();
 
-function setUserAfk(userId, reason) {
-  const normalizedReason = String(reason || '').trim();
+function saveUserAfkStatuses() {
+  try {
+    const serializedStatuses = Object.fromEntries(
+      userAfkStatuses.entries(),
+    );
 
-  if (!normalizedReason) {
-    throw new Error('An AFK reason is required.');
+    fs.writeFileSync(
+      USER_AFK_FILE,
+      JSON.stringify(serializedStatuses, null, 2),
+      'utf8',
+    );
+  } catch (error) {
+    log(
+      'AFK',
+      `Unable to save user AFK statuses: ${error.message}`,
+    );
   }
+}
+
+function loadUserAfkStatuses() {
+  try {
+    if (!fs.existsSync(USER_AFK_FILE)) {
+      return;
+    }
+
+    const raw = fs.readFileSync(USER_AFK_FILE, 'utf8');
+
+    if (!raw.trim()) {
+      return;
+    }
+
+    const saved = JSON.parse(raw);
+
+    if (!saved || typeof saved !== 'object' || Array.isArray(saved)) {
+      throw new Error('user-afk.json must contain a JSON object.');
+    }
+
+    for (const [userId, status] of Object.entries(saved)) {
+      if (
+        typeof userId === 'string' &&
+        status &&
+        typeof status === 'object' &&
+        typeof status.reason === 'string' &&
+        Number.isSafeInteger(status.setAt) &&
+        status.setAt > 0
+      ) {
+        userAfkStatuses.set(userId, {
+          reason: status.reason.slice(0, 200),
+          setAt: status.setAt,
+        });
+      }
+    }
+  } catch (error) {
+    log(
+      'AFK',
+      `Unable to load user AFK statuses: ${error.message}`,
+    );
+  }
+}
+
+function setUserAfk(userId, reason = 'AFK') {
+  const normalizedReason = String(reason || '').trim() || 'AFK';
 
   userAfkStatuses.set(userId, {
     reason: normalizedReason.slice(0, 200),
     setAt: Date.now(),
   });
+
+  saveUserAfkStatuses();
 }
 
 function clearUserAfk(userId) {
-  return userAfkStatuses.delete(userId);
+  const cleared = userAfkStatuses.delete(userId);
+
+  if (cleared) {
+    saveUserAfkStatuses();
+  }
+
+  return cleared;
 }
 
 function getUserAfk(userId) {
   return userAfkStatuses.get(userId) || null;
 }
 
+loadUserAfkStatuses();
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -272,16 +342,6 @@ const commands = [
   new SlashCommandBuilder()
     .setName('status')
     .setDescription('ⓘ Shows Minecraft AFK status'),
-
-  new SlashCommandBuilder()
-    .setName('afk')
-    .setDescription('Marks yourself as AFK')
-    .addStringOption(option =>
-      option
-        .setName('reason')
-        .setDescription('Reason for being AFK')
-        .setRequired(true),
-  ),
 
   new SlashCommandBuilder()
     .setName('maintenance')
@@ -1467,6 +1527,56 @@ client.on(Events.MessageCreate, async message => {
   }
 
   // ============================================================
+  // GREED-STYLE AFK
+  // ============================================================
+
+  const afkCommandMatch = rawMessageText.match(/^,afk(?:\s+(.+))?$/i);
+
+  if (
+    message.guild?.id === config.discord.guildId &&
+    afkCommandMatch
+  ) {
+    const reason = afkCommandMatch[1]?.trim() || 'AFK';
+
+    setUserAfk(message.author.id, reason);
+
+    await message.reply(
+      `✓ You are now marked as AFK: **${userAfkStatuses.get(message.author.id).reason}**`,
+    );
+
+    return;
+  }
+
+  // Any normal message means this user is back.
+  if (
+    message.guild?.id === config.discord.guildId &&
+    clearUserAfk(message.author.id)
+  ) {
+    log(
+      'AFK',
+      `${message.author.tag} returned; cleared their AFK status.`,
+    );
+  }
+
+  // Tell users when a mentioned member is AFK.
+  if (
+    message.guild?.id === config.discord.guildId &&
+    message.mentions.users.size > 0
+  ) {
+    for (const mentionedUser of message.mentions.users.values()) {
+      const afkStatus = getUserAfk(mentionedUser.id);
+
+      if (!afkStatus) {
+        continue;
+      }
+
+      await message.reply(
+        `ⓘ ${mentionedUser} is currently AFK: **${afkStatus.reason}** — since <t:${Math.floor(afkStatus.setAt / 1000)}:R>`,
+      );
+    }
+  }
+
+  // ============================================================
   // PRIVATE DISCORD -> MINECRAFT RELAY
   // ============================================================
 
@@ -1493,48 +1603,6 @@ client.on(Events.MessageCreate, async message => {
 
     return;
   }
-
-  // ============================================================
-  // USER AFK STATUS
-  // ============================================================
-
-  const afkCommandMatch = rawMessageText.match(/^afk\??(?:\s+(.+))?$/i);
-
-  if (
-    message.guild?.id === config.discord.guildId &&
-    afkCommandMatch
-  ) {
-    const reason = afkCommandMatch[1]?.trim();
-
-    if (!reason) {
-      await message.reply('✕ Please provide an AFK reason. Example: `afk studying`');
-      return;
-    }
-
-    try {
-      setUserAfk(message.author.id, reason);
-
-      await message.reply(
-        `✓ You are now marked as AFK: **${userAfkStatuses.get(message.author.id).reason}**`,
-      );
-    } catch (error) {
-      await message.reply('✕ ' + error.message);
-    }
-
-    return;
-  }
-
-  // Any normal message means this user is back.
-  if (
-    message.guild?.id === config.discord.guildId &&
-    clearUserAfk(message.author.id)
-  ) {
-    log(
-      'AFK',
-      `${message.author.tag} returned; cleared their AFK status.`,
-    );
-  }
-
   // ============================================================
   // MAIN BOT MENTION
   // ============================================================
@@ -2311,24 +2379,6 @@ client.on(Events.InteractionCreate, async interaction => {
         content: ai.getHelpMessage(),
         flags: MessageFlags.Ephemeral,
       });
-    }
-
-    case 'afk': {
-      const reason = interaction.options.getString('reason', true).trim();
-
-      try {
-        setUserAfk(interaction.user.id, reason);
-
-        return interaction.reply({
-          content: `✓ You are now marked as AFK: **${userAfkStatuses.get(interaction.user.id).reason}**`,
-          flags: MessageFlags.Ephemeral,
-        });
-      } catch (error) {
-        return interaction.reply({
-          content: '✕ ' + error.message,
-          flags: MessageFlags.Ephemeral,
-        });
-      }
     }
 
     case 'dashboard': {
