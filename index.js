@@ -25,7 +25,7 @@ const mc = require('./minecraft');
 const ai = require('./ai');
 const summary = require('./summary');
 const { applyUnicodeTheme } = require('./unicode');
-const { handleBanishMessage, getActiveBanishments, clearActiveBanishment } = require('./banish');
+const { handleBanishMessage, getActiveBanishments } = require('./banish');
 const moderation = require('./moderation');
 
 const scheduledAdminActions = new Map();
@@ -230,6 +230,51 @@ function loadScheduledAdminActions() {
   }
 }
 
+let botAfkState = {
+  active: false,
+  reason: '',
+  setAt: null,
+  setBy: null,
+};
+
+function setBotAfk(reason, user = null) {
+  const normalizedReason = String(reason || '').trim();
+
+  if (!normalizedReason) {
+    throw new Error('An AFK reason is required.');
+  }
+
+  if (/^(off|clear|none)$/i.test(normalizedReason)) {
+    botAfkState = {
+      active: false,
+      reason: '',
+      setAt: null,
+      setBy: null,
+    };
+
+    updatePresence();
+    return false;
+  }
+
+  botAfkState = {
+    active: true,
+    reason: normalizedReason.slice(0, 200),
+    setAt: Date.now(),
+    setBy: user?.id || null,
+  };
+
+  updatePresence();
+  return true;
+}
+
+function getBotAfkMessage() {
+  if (!botAfkState.active) {
+    return 'The bot is not currently marked as AFK.';
+  }
+
+  return 'The bot is currently AFK: **' + botAfkState.reason + '**';
+}
+
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -250,6 +295,16 @@ const commands = [
   new SlashCommandBuilder()
     .setName('status')
     .setDescription('ⓘ Shows Minecraft AFK status'),
+
+  new SlashCommandBuilder()
+    .setName('afk')
+    .setDescription('Sets the bot Discord AFK status')
+    .addStringOption(option =>
+      option
+        .setName('reason')
+        .setDescription('Reason for being AFK, or "off" to clear the status')
+        .setRequired(true),
+  ),
 
   new SlashCommandBuilder()
     .setName('maintenance')
@@ -295,38 +350,6 @@ const commands = [
         )
         .setRequired(true),
   ),
-
-  new SlashCommandBuilder()
-    .setName('timeout')
-    .setDescription('⚒︎ Temporarily timeout a member')
-    .addUserOption(option =>
-      option
-        .setName('user')
-        .setDescription('Member to timeout')
-        .setRequired(true),
-    )
-    .addStringOption(option =>
-      option
-        .setName('duration')
-        .setDescription('Duration such as 10s, 5m, 1h, or 1d')
-        .setRequired(true),
-    )
-    .addStringOption(option =>
-      option
-        .setName('reason')
-        .setDescription('Reason for the timeout')
-        .setRequired(false),
-    ),
-
-  new SlashCommandBuilder()
-    .setName('untimeout')
-    .setDescription('✓ Remove a member timeout')
-    .addUserOption(option =>
-      option
-        .setName('user')
-        .setDescription('Member to untimeout')
-        .setRequired(true),
-    ),
 
   new SlashCommandBuilder()
     .setName('warn')
@@ -1251,7 +1274,16 @@ function updatePresence() {
 
   const status = mc.getStatus();
   const reconnecting = status.connecting || status.reconnecting;
-  const presence = status.connected
+
+  const presence = botAfkState.active
+    ? {
+      status: 'idle',
+      activities: [{
+        name: 'AFK: ' + botAfkState.reason.slice(0, 100),
+        type: ActivityType.Watching,
+      }],
+    }
+    : status.connected
     ? {
       status: 'online',
       activities: [{
@@ -1488,6 +1520,44 @@ client.on(Events.MessageCreate, async message => {
       await message.reply(
         '✕ The AFK bot is currently not connected to Minecraft.',
       );
+    }
+
+    return;
+  }
+
+  // ============================================================
+  // BOT AFK STATUS
+  // ============================================================
+
+  if (
+    message.guild?.id === config.discord.guildId &&
+    /^afk\?$/i.test(rawMessageText)
+  ) {
+    await message.reply(getBotAfkMessage());
+    return;
+  }
+
+  const afkSetMatch = rawMessageText.match(/^afk\?\s+(.+)$/i);
+
+  if (
+    message.guild?.id === config.discord.guildId &&
+    afkSetMatch
+  ) {
+    if (!isAdmin(message.author.id, message.member)) {
+      await message.reply('✕ You are not authorized to change the bot AFK status.');
+      return;
+    }
+
+    try {
+      const active = setBotAfk(afkSetMatch[1], message.author);
+
+      await message.reply(
+        active
+          ? '✓ Bot marked as AFK: **' + botAfkState.reason + '**'
+          : '✓ Bot AFK status cleared.',
+      );
+    } catch (error) {
+      await message.reply('✕ ' + error.message);
     }
 
     return;
@@ -2271,6 +2341,33 @@ client.on(Events.InteractionCreate, async interaction => {
       });
     }
 
+    case 'afk': {
+      if (!hasFeatureAccess('afk', interaction.user.id, interaction.member)) {
+        return interaction.reply({
+          content: '✕ You are not authorized to use this command.',
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+
+      const reason = interaction.options.getString('reason', true).trim();
+
+      try {
+        const active = setBotAfk(reason, interaction.user);
+
+        return interaction.reply({
+          content: active
+            ? '✓ Bot marked as AFK: **' + botAfkState.reason + '**'
+            : '✓ Bot AFK status cleared.',
+          flags: MessageFlags.Ephemeral,
+        });
+      } catch (error) {
+        return interaction.reply({
+          content: '✕ ' + error.message,
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+    }
+
     case 'dashboard': {
       if (!hasFeatureAccess('dashboard', interaction.user.id, interaction.member)) {
         return interaction.reply({
@@ -2284,138 +2381,6 @@ client.on(Events.InteractionCreate, async interaction => {
         components: [buildDashboardComponents()],
         flags: MessageFlags.Ephemeral,
       });
-    }
-
-    case 'timeout': {
-      if (!hasFeatureAccess('timeout', interaction.user.id, interaction.member)) {
-        return interaction.reply({
-          content: '✕ You are not authorized to use this command.',
-          flags: MessageFlags.Ephemeral,
-        });
-      }
-
-      const targetUser = interaction.options.getUser('user', true);
-      const durationText = interaction.options.getString('duration', true);
-      const reason = interaction.options.getString('reason') || 'No reason provided.';
-      const durationMs = moderation.parseDuration(durationText);
-
-      if (!durationMs) {
-        return interaction.reply({
-          content: '✕ Invalid duration. Use values such as **10s**, **5m**, **1h**, or **1d**.',
-          flags: MessageFlags.Ephemeral,
-        });
-      }
-
-      const targetMember = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
-
-      if (!targetMember || targetUser.bot) {
-        return interaction.reply({
-          content: '✕ That user cannot be moderated.',
-          flags: MessageFlags.Ephemeral,
-        });
-      }
-
-      if (!targetMember.moderatable) {
-        return interaction.reply({
-          content: '✕ I cannot timeout that member. Check my permissions and role hierarchy.',
-          flags: MessageFlags.Ephemeral,
-        });
-      }
-
-      try {
-        await targetMember.timeout(
-          durationMs,
-          `Timeout by ${interaction.user.tag}: ${reason}`,
-        );
-
-        const event = moderation.recordEvent({
-          type: 'timeout',
-          targetId: targetUser.id,
-          targetTag: targetUser.tag,
-          moderatorId: interaction.user.id,
-          moderatorTag: interaction.user.tag,
-          durationMs,
-          reason,
-        });
-
-        await sendModerationLog(
-          createEmbed('⚒︎ Member Timed Out', Colors.Orange)
-            .setDescription(
-              `<@${targetUser.id}> was timed out by <@${interaction.user.id}>.`,
-            )
-            .addFields(
-              { name: 'Duration', value: moderation.formatDuration(durationMs), inline: true },
-              { name: 'Reason', value: reason.slice(0, 1024), inline: true },
-              { name: 'Event', value: `\`${event.id}\``, inline: true },
-            ),
-        );
-
-        return interaction.reply({
-          content: `✓ Timed out <@${targetUser.id}> for ${moderation.formatDuration(durationMs)}.`,
-          flags: MessageFlags.Ephemeral,
-        });
-      } catch (error) {
-        await reportErrorToDiscord(error, 'Manual timeout');
-        return interaction.reply({
-          content: '✕ I could not apply that timeout.',
-          flags: MessageFlags.Ephemeral,
-        });
-      }
-    }
-
-    case 'untimeout': {
-      if (!hasFeatureAccess('untimeout', interaction.user.id, interaction.member)) {
-        return interaction.reply({
-          content: '✕ You are not authorized to use this command.',
-          flags: MessageFlags.Ephemeral,
-        });
-      }
-
-      const targetUser = interaction.options.getUser('user', true);
-      const targetMember = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
-
-      if (!targetMember || !targetMember.moderatable) {
-        return interaction.reply({
-          content: '✕ I cannot modify that member.',
-          flags: MessageFlags.Ephemeral,
-        });
-      }
-
-      try {
-        await targetMember.timeout(
-          null,
-          `Manual untimeout by ${interaction.user.tag}.`,
-        );
-
-        moderation.recordEvent({
-          type: 'untimeout',
-          targetId: targetUser.id,
-          targetTag: targetUser.tag,
-          moderatorId: interaction.user.id,
-          moderatorTag: interaction.user.tag,
-          reason: 'Manual untimeout.',
-        });
-
-        clearActiveBanishment(targetUser.id);
-
-        await sendModerationLog(
-          createEmbed('✓ Member Untimed Out', Colors.Green)
-            .setDescription(
-              `<@${targetUser.id}> was untimed out by <@${interaction.user.id}>.`,
-            ),
-        );
-
-        return interaction.reply({
-          content: `✓ Removed the timeout from <@${targetUser.id}>.`,
-          flags: MessageFlags.Ephemeral,
-        });
-      } catch (error) {
-        await reportErrorToDiscord(error, 'Manual untimeout');
-        return interaction.reply({
-          content: '✕ I could not remove that timeout.',
-          flags: MessageFlags.Ephemeral,
-        });
-      }
     }
 
     case 'warn': {
