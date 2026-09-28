@@ -174,11 +174,11 @@ Mention me or reply to one of my messages when you want an AI answer.
 
 **Admin**
 • [Admin] \`/start\` \`/stop\` \`/status\`
-• [Admin] \`/maintenance\` \`/dashboard\`
+• [Admin] \`/afk <reason>\` \`/maintenance\` \`/dashboard\`
 • [Admin] \`/aforget\` \`/ai status\`
 
 **Moderation**
-• [Admin] \`/timeout\` \`/untimeout\` \`/warn\` \`/modlog\`
+• [Admin] \`/warn\` \`/modlog\` \`/banishlist\` \`/unbanish\` \`/clearwarns\`
 • [Admin] \`/banishlist\` \`/unbanish\` \`/clearwarns\`
 
 **Public questions**
