@@ -178,7 +178,7 @@ Mention me or reply to one of my messages when you want an AI answer.
 • [Admin] \`/aforget\` \`/ai status\`
 
 **Public AFK**
-• \`,afk [reason]\` — mark yourself AFK; reason defaults to \`AFK\`
+
 **Moderation**
 • [Admin] \`/warn\` \`/modlog\` \`/banishlist\` \`/unbanish\` \`/clearwarns\`
 
