@@ -179,7 +179,6 @@ Mention me or reply to one of my messages when you want an AI answer.
 
 **Moderation**
 • [Admin] \`/warn\` \`/modlog\` \`/banishlist\` \`/unbanish\` \`/clearwarns\`
-• [Admin] \`/banishlist\` \`/unbanish\` \`/clearwarns\`
 
 **Public questions**
 • \`ip?\` · \`bedrock join?\` · \`rules?\` · \`channels?\` · \`roles?\` · \`features?\`
