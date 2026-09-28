@@ -962,6 +962,31 @@ function shorten(text, limit = 1000) {
     : normalized;
 }
 
+let applicationIdMismatchLogged = false;
+
+function getDiscordApplicationId() {
+  const runtimeApplicationId = client.user?.id;
+  const configuredApplicationId = String(
+    config.discord.clientId || '',
+  ).trim();
+
+  if (
+    runtimeApplicationId &&
+    configuredApplicationId &&
+    runtimeApplicationId !== configuredApplicationId &&
+    !applicationIdMismatchLogged
+  ) {
+    applicationIdMismatchLogged = true;
+
+    log(
+      'Discord',
+      `Configured clientId (${configuredApplicationId}) does not match the logged-in bot application (${runtimeApplicationId}). Using the logged-in application ID for command registration.`,
+    );
+  }
+
+  return runtimeApplicationId || configuredApplicationId;
+}
+
 async function reconcileSlashCommands(source = 'Registrar') {
   const rest = new REST({ version: '10' }).setToken(config.discord.token);
 
@@ -1131,6 +1156,8 @@ async function registerCommands() {
 }
 
 let commandWatchdogRunning = false;
+let consecutiveEmptyCommandReports = 0;
+const EMPTY_COMMAND_REPORT_CONFIRMATIONS = 3;
 
 async function commandWatchdog() {
   if (commandWatchdogRunning) return;
@@ -1151,14 +1178,29 @@ async function commandWatchdog() {
       `Watchdog: Discord currently reports ${existing.length} guild command(s).`,
     );
 
-    // Never recreate every command because Discord unexpectedly reports zero.
-    // A transient/incomplete API response should not replace command IDs.
+    // A single empty response can be transient, so do not recreate commands
+    // immediately. If Discord reports zero repeatedly, treat it as a real
+    // missing-command condition and allow reconciliation to repair it.
     if (existing.length === 0 && commands.length > 0) {
+      consecutiveEmptyCommandReports += 1;
+
+      if (
+        consecutiveEmptyCommandReports <
+        EMPTY_COMMAND_REPORT_CONFIRMATIONS
+      ) {
+        log(
+          'Watchdog',
+          `Discord returned 0 guild commands. Waiting for confirmation (${consecutiveEmptyCommandReports}/${EMPTY_COMMAND_REPORT_CONFIRMATIONS}) before attempting repair.`,
+        );
+        return;
+      }
+
       log(
         'Watchdog',
-        'Discord returned 0 guild commands. Skipping repair to avoid destructive recreation after a transient API response.',
+        `Discord returned 0 guild commands ${consecutiveEmptyCommandReports} times consecutively. Attempting command reconciliation.`,
       );
-      return;
+    } else {
+      consecutiveEmptyCommandReports = 0;
     }
 
     const result = await reconcileSlashCommands('Watchdog');
