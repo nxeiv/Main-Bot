@@ -37,7 +37,7 @@ This is a presentation layer only; it does not change the bot's underlying comma
 - `/forget` for clearing one user's AI conversation
 - `/aforget` for clearing all AI conversations
 - `/ai status` for administrator-only AI diagnostics, including request/error counters
-- `,afk [reason]` for a user's AFK status; the reason defaults to `AFK`
+- `/afk <reason>` or `afk? <reason>` for a user's AFK status; the reason defaults to `AFK`
 - Discord error reporting through an optional private error channel
 - Slash-command watchdog and automatic reconciliation
 - Daily Minecraft player welcomes
@@ -189,7 +189,7 @@ On successful startup, the bot should log into Discord, reconcile the guild slas
 | `/start` | **Admin** | Starts the Minecraft AFK session |
 | `/stop` | **Admin** | Stops the Minecraft AFK session |
 | `/status` | **Admin** | Shows Minecraft AFK status |
-| `,afk [reason]` | **Public** | Marks the requesting user as AFK; the reason defaults to `AFK` |
+| `/afk [reason]` | **Public** | Marks the requesting user as AFK; the reason defaults to `AFK` |
 | `/maintenance` | **Admin** | Sends the configured maintenance announcement |
 | `/aforget` | **Admin** | Clears all AI conversations |
 | `/ai status` | **Admin** | Shows AI health and queue diagnostics |
@@ -234,7 +234,7 @@ Use the labels below to separate **Public** tests from **Admin** tests.
 1. **Start the bot.** Confirm Discord login, slash-command reconciliation, and Minecraft startup in the console.
 2. **Run `/help` publicly.** Confirm the response includes `[Public]` and `[Admin]` labels.
 3. **Test public deterministic questions.** Send `ip?`, `bedrock?`, `rules?`, `channels?`, `roles?`, `features?`, `java?`, `world download?`, and `smp join?` without mentioning the bot. They should answer automatically.
-4. **Test user AFK.** As a normal user, send `,afk testing` (or just `,afk`). Confirm the user is marked AFK, then send another message from that same account and confirm the AFK status is automatically cleared. Mention that user from another account and confirm the bot reports the AFK reason and time.
+4. **Test user AFK.** As a normal user, run `/afk testing` or send `afk? testing`. Also test `/afk` or `afk?` without a reason and confirm the reason defaults to `AFK`. Send another message from that same account and confirm the AFK status is automatically cleared. Mention that user from another account and confirm the bot reports the AFK reason and time.
 5. **Test public AI.** Mention the bot with a normal question, then reply to its response with a follow-up. This requires Gemini availability.
 6. **Test `/forget` and `/summarize`.** Use a test conversation/channel so normal community messages are not affected.
 7. **Switch to an admin account.** Test `/status`, `/dashboard`, and `/ai status` first because they are low-risk checks.
