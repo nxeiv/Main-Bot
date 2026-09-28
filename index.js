@@ -880,6 +880,25 @@ function formatUptime(totalSeconds) {
   ].filter(Boolean).join(' ');
 }
 
+function formatAfkDuration(durationMs) {
+  const totalSeconds = Math.max(0, Math.floor(durationMs / 1000));
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  const parts = [];
+
+  if (days) parts.push(`${days}d`);
+  if (hours) parts.push(`${hours}h`);
+  if (minutes) parts.push(`${minutes}m`);
+
+  if (seconds || parts.length === 0) {
+    parts.push(`${seconds}s`);
+  }
+
+  return parts.join(' ');
+}
 function formatDelay(delayMs) {
   const seconds = Math.round(delayMs / 1000);
   if (seconds % 60 === 0) {
@@ -1508,13 +1527,26 @@ client.on(Events.MessageCreate, async message => {
 
   if (
     message.guild?.id === config.discord.guildId &&
-    !/^afk\??(?:\s+(.+))?$/i.test(rawMessageText) &&
-    clearUserAfk(message.author.id)
+    !/^afk\??(?:\s+(.+))?$/i.test(rawMessageText)
   ) {
-    log(
-      'AFK',
-      `${message.author.tag} returned; cleared their AFK status.`,
-    );
+    const afkStatus = getUserAfk(message.author.id);
+
+    if (afkStatus) {
+      const afkDuration = formatAfkDuration(
+        Date.now() - afkStatus.setAt,
+      );
+
+      clearUserAfk(message.author.id);
+
+      log(
+        'AFK',
+        `${message.author.tag} returned; cleared their AFK status after ${afkDuration}.`,
+      );
+
+      await message.channel.send(
+        `${message.author} your AFK status: **${afkStatus.reason}** was removed. — You were AFK for **${afkDuration}**.`,
+      );
+    }
   }
 
   if (
