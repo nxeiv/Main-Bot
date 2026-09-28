@@ -37,7 +37,6 @@ const config = {
     start: 'admin',
     stop: 'admin',
     maintenance: 'admin',
-    afk: 'admin',
     forget: 'public',
     aforeget: 'admin',
     ai: 'admin',
