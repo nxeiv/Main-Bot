@@ -61,8 +61,6 @@ const SERVER_INFO = {
     'Cottage Protection',
     'Cottage Teams',
     'Cozy Sitting',
-    'Cottage Teleport',
-    "Wanderer's Way",
     'Lantern Light',
     'Fresh Vanilla',
     'True Hardcore',
@@ -98,8 +96,6 @@ const FEATURE_GUIDE = {
   'Cottage Protection': 'Lets players protect their builds and belongings.',
   'Cottage Teams': 'Lets players team up with other players.',
   'Cozy Sitting': 'Lets players sit down and relax around the world.',
-  'Cottage Teleport': 'Lets players send teleport requests to other players.',
-  "Wanderer's Way": 'type /rtp in chat to teleport in a random location',
   'Lantern Light': 'Held light sources can illuminate the surroundings.',
   'Fresh Vanilla': 'Keeps familiar vanilla gameplay while adding carefully chosen quality-of-life improvements.',
   'True Hardcore': 'The server uses a Hardcore experience where Keep Inventory is disabled and death matters.',
@@ -146,12 +142,6 @@ const FEATURE_TUTORIALS = {
   'Cozy Sitting':
     'Use /sit or right-click stairs, slabs, and players to sit. To disable accidental sitting, use /gsit toggle off.',
 
-  'Cottage Teleport':
-    'Use /tpa <player> in chat to send a teleport request to another player.',
-
-  "Wanderer's Way":
-    "type /rtp in chat to teleport in a random location",
-
   'Lantern Light':
     'Lantern Light is automatic. Held light sources can illuminate the surroundings without needing a separate bot command.',
   'Fresh Vanilla':
@@ -178,19 +168,20 @@ const BOT_HELP_MESSAGE = `**The Cottage★ Help**
 Mention me or reply to one of my messages when you want an AI answer.
 
 **Commands**
-• \`/status\` — Minecraft status
-• \`/status\` — Minecraft status (admin)
-• \`/summarize <channel>\` — public channel summary, expires after 10 minutes
+• [Public] \`/help\` — show this help
+• [Public] \`/forget\` — clear your own AI conversation
+• [Public] \`/summarize <channel>\` — public channel summary, expires after 10 minutes
 
 **Admin**
-• \`/start\` \`/stop\` \`/maintenance\` \`/dashboard\`
-• \`/aforget\` \`/ai status\`
+• [Admin] \`/start\` \`/stop\` \`/status\`
+• [Admin] \`/maintenance\` \`/dashboard\`
+• [Admin] \`/aforget\` \`/ai status\`
 
 **Moderation**
-• \`/timeout\` \`/untimeout\` \`/warn\` \`/modlog\`
-• \`/banishlist\` \`/unbanish\` \`/clearwarns\`
+• [Admin] \`/timeout\` \`/untimeout\` \`/warn\` \`/modlog\`
+• [Admin] \`/banishlist\` \`/unbanish\` \`/clearwarns\`
 
-**Try asking**
+**Public questions**
 • \`ip?\` · \`bedrock join?\` · \`rules?\` · \`channels?\` · \`roles?\` · \`features?\`
 • Ask about Java, Bedrock, joining, SMP features, or the world download.`;
 
@@ -209,8 +200,6 @@ const FEATURE_ALIASES = {
   'grief prevention': 'Cottage Protection',
   'ultimate teams': 'Cottage Teams',
   gsit: 'Cozy Sitting',
-  'just tpa': 'Cottage Teleport',
-  'simple rtp': "Wanderer's Way",
   'dynamic lights': 'Lantern Light',
   'vanilla refresh mechanics': 'Fresh Vanilla',
   'keep inventory off': 'True Hardcore',
@@ -1333,14 +1322,6 @@ function getKnownAnswer(message) {
 
   if (text === 'bedrock?' || text === 'bedrock' || text === 'bedrock join?' || text === 'bedrock joining?') {
     return SERVER_INFO.bedrockJoiningInfo;
-  }
-
-  if (text === 'tpa?' || text === 'tpa' || text === 'teleport?' || text === 'teleport request?') {
-    return `**Cottage Teleport** — ${FEATURE_TUTORIALS['Cottage Teleport']}`;
-  }
-
-  if (text === 'rtp?' || text === 'rtp' || text === 'random teleport?' || text === 'random teleport') {
-    return `**Wanderer's Way** — ${FEATURE_TUTORIALS["Wanderer's Way"]}`;
   }
 
   // ============================================================
