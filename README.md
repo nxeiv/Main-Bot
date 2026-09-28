@@ -222,6 +222,7 @@ Use the labels below to separate **Public** tests from **Admin** tests.
 | `/maintenance` | **Admin** | Run only during an intentional maintenance test; confirm the configured maintenance channel receives the announcement |
 | `/aforget` | **Admin** | Run as an admin; confirm normal AI conversation state is cleared |
 | `/ai status` | **Admin** | Run as an admin; confirm AI diagnostics are returned |
+| `/afk <reason>` | **Admin** | Run as an admin; confirm the Discord presence changes to AFK with the supplied reason; use `/afk off` to clear it |
 | Moderation commands | **Admin** | Test with a dedicated test account using `/warn`, `/modlog`, and `/clearwarns`; banishment uses its own reply-based flow |
 | Banishment | **Admin** | Reply to a test member's message with `banish?`; verify `/banishlist`, then use `/unbanish` |
 | Admin AI requests | **Admin** | Make a clear administrative request as an admin; repeat as a non-admin and confirm the second request is rejected |
@@ -232,7 +233,7 @@ Use the labels below to separate **Public** tests from **Admin** tests.
 1. **Start the bot.** Confirm Discord login, slash-command reconciliation, and Minecraft startup in the console.
 2. **Run `/help` publicly.** Confirm the response includes `[Public]` and `[Admin]` labels.
 3. **Test public deterministic questions.** Send `ip?`, `bedrock?`, `rules?`, `channels?`, `roles?`, `features?`, `java?`, `world download?`, and `smp join?` without mentioning the bot. They should answer automatically.
-4. **Verify the removed responders.** Send `tpa?` and `rtp?` without mentioning the bot. They should produce **no automatic response**.
+4. **Test the bot AFK status.** Run `/afk testing` as an admin, confirm the Discord presence changes to `AFK: testing`, then send `afk?` publicly and confirm it reports the current reason. Clear it with `/afk off`.
 5. **Test public AI.** Mention the bot with a normal question, then reply to its response with a follow-up. This requires Gemini availability.
 6. **Test `/forget` and `/summarize`.** Use a test conversation/channel so normal community messages are not affected.
 7. **Switch to an admin account.** Test `/status`, `/dashboard`, and `/ai status` first because they are low-risk checks.
@@ -242,46 +243,6 @@ Use the labels below to separate **Public** tests from **Admin** tests.
 11. **Test access control.** From a non-admin account, try `/dashboard` and one moderation command. Both should return the unauthorized response.
 12. **Test slash-command recovery.** Watch the 5-minute watchdog logs and confirm they report the registered guild commands rather than repeatedly reporting zero.
 13. **Review the console.** Check for Discord errors, unknown-message errors, Gemini 503/429 failures, and unexpected permission failures.
-
-### Removed TPA/RTP responders
-
-These are no longer part of the deterministic knowledge or automatic question-reply system:
-
-- `tpa?`
-- `rtp?`
-- `teleport?`
-- `teleport request?`
-- `random teleport?`
-- `random teleport`
-
-A user can still explicitly mention the bot or reply to it and ask about those topics; that follows the normal AI path rather than an automatic responder.
-
-
-### Bot AFK status
-
-The bot has a small Discord-side AFK presence separate from the Minecraft AFK session.
-
-Admin controls:
-
-`/afk <reason>`
-
-The equivalent admin text shortcut is:
-
-`afk? <reason>`
-
-To clear the AFK state, use:
-
-`/afk off`
-
-or:
-
-`afk? off`
-
-Anyone can query the current state with:
-
-`afk?`
-
-When active, the bot changes its Discord presence to an AFK status containing the configured reason. The state is kept in memory and resets when the process restarts.
 
 
 ## AI system
