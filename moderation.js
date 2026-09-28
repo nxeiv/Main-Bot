@@ -4,7 +4,6 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const STATE_FILE = path.join(__dirname, 'moderation-state.json');
-const MAX_TIMEOUT_MS = 28 * 24 * 60 * 60 * 1000;
 const MAX_EVENTS = 500;
 
 let state = {
@@ -105,28 +104,6 @@ function clearWarnings(userId) {
   return count;
 }
 
-function parseDuration(input) {
-  const normalized = String(input || '').trim().toLowerCase();
-  const match = normalized.match(/^(\d+(?:\.\d+)?)\s*(s|sec|secs|second|seconds|m|min|mins|minute|minutes|h|hr|hrs|hour|hours|d|day|days)$/);
-  if (!match) return null;
-
-  const amount = Number(match[1]);
-  if (!Number.isFinite(amount) || amount <= 0) return null;
-
-  const unit = match[2];
-  const multiplier = unit.startsWith('s')
-    ? 1000
-    : unit.startsWith('m')
-      ? 60 * 1000
-      : unit.startsWith('h')
-        ? 60 * 60 * 1000
-        : 24 * 60 * 60 * 1000;
-
-  const durationMs = Math.round(amount * multiplier);
-  if (durationMs < 1000 || durationMs > MAX_TIMEOUT_MS) return null;
-  return durationMs;
-}
-
 function formatDuration(durationMs) {
   const seconds = Math.max(1, Math.round(Number(durationMs || 0) / 1000));
   if (seconds % 86400 === 0) return `${seconds / 86400}d`;
@@ -138,8 +115,6 @@ function formatDuration(durationMs) {
 loadState();
 
 module.exports = {
-  MAX_TIMEOUT_MS,
-  parseDuration,
   formatDuration,
   recordEvent,
   recordWarning,
