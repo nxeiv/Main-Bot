@@ -31,7 +31,6 @@ const moderation = require('./moderation');
 const scheduledAdminActions = new Map();
 
 const runtimeHealth = {
-  startedAt: Date.now(),
   lastMinecraftConnectedAt: null,
   lastMinecraftDisconnectedAt: null,
   lastMinecraftDisconnectReason: null,
