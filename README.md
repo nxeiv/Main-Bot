@@ -37,7 +37,7 @@ This is a presentation layer only; it does not change the bot's underlying comma
 - `/forget` for clearing one user's AI conversation
 - `/aforget` for clearing all AI conversations
 - `/ai status` for administrator-only AI diagnostics, including request/error counters
-- `/afk <reason>` for a user's AFK status; `afk? <reason>` is the equivalent public text shortcut
+- `,afk [reason]` for a user's AFK status; the reason defaults to `AFK`
 - Discord error reporting through an optional private error channel
 - Slash-command watchdog and automatic reconciliation
 - Daily Minecraft player welcomes
@@ -91,6 +91,7 @@ The current server configuration targets **The Cottage★ SMP** on Minecraft **1
 | `scheduled-actions.json` | Runtime state for persistent scheduled actions; created locally and ignored by Git |
 | `banish-state.json` | Runtime state for active banishments; created locally and ignored by Git |
 | `moderation-state.json` | Runtime moderation history and warnings; created locally and ignored by Git |
+| `user-afk.json` | Persistent per-user AFK state; created locally and ignored by Git |
 
 ## Requirements
 
@@ -188,7 +189,7 @@ On successful startup, the bot should log into Discord, reconcile the guild slas
 | `/start` | **Admin** | Starts the Minecraft AFK session |
 | `/stop` | **Admin** | Stops the Minecraft AFK session |
 | `/status` | **Admin** | Shows Minecraft AFK status |
-| `/afk <reason>` | **Public** | Marks the requesting user as AFK |
+| `,afk [reason]` | **Public** | Marks the requesting user as AFK; the reason defaults to `AFK` |
 | `/maintenance` | **Admin** | Sends the configured maintenance announcement |
 | `/aforget` | **Admin** | Clears all AI conversations |
 | `/ai status` | **Admin** | Shows AI health and queue diagnostics |
@@ -222,8 +223,7 @@ Use the labels below to separate **Public** tests from **Admin** tests.
 | `/maintenance` | **Admin** | Run only during an intentional maintenance test; confirm the configured maintenance channel receives the announcement |
 | `/aforget` | **Admin** | Run as an admin; confirm normal AI conversation state is cleared |
 | `/ai status` | **Admin** | Run as an admin; confirm AI diagnostics are returned |
-| `/afk <reason>` | **Admin** | Run as an admin; confirm the Discord presence changes to AFK with the supplied reason; use `/afk off` to clear it |
-| `afk? <reason>` | **Public** | Marks the requesting user as AFK |
+| `,afk [reason]` | **Public** | Run `,afk testing` (or just `,afk`) to mark yourself AFK; the reason defaults to `AFK`; a normal message clears it |
 | Moderation commands | **Admin** | Test with a dedicated test account using `/warn`, `/modlog`, and `/clearwarns`; banishment uses its own reply-based flow |
 | Banishment | **Admin** | Reply to a test member's message with `banish?`; verify `/banishlist`, then use `/unbanish` |
 | Admin AI requests | **Admin** | Make a clear administrative request as an admin; repeat as a non-admin and confirm the second request is rejected |
@@ -356,7 +356,7 @@ The following files are generated locally and are intentionally ignored by Git:
 - `scheduled-actions.json`
 - logs and log rotations
 
-They contain runtime state rather than source code.
+They contain runtime state rather than source code. `user-afk.json` stores active user AFK reasons and timestamps so AFK status survives a bot restart until the user sends a new message.
 
 If the bot is moved to a new host, these files do not need to be committed to GitHub. Copy them separately only when preserving local runtime state is actually desired.
 
