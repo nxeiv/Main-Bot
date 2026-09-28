@@ -991,7 +991,7 @@ async function reconcileSlashCommands(source = 'Registrar') {
   const rest = new REST({ version: '10' }).setToken(config.discord.token);
 
   const route = Routes.applicationGuildCommands(
-    config.discord.clientId,
+    getDiscordApplicationId(),
     config.discord.guildId,
   );
 
@@ -1092,7 +1092,7 @@ async function reconcileSlashCommands(source = 'Registrar') {
     if (!commandsMatch(command, current)) {
       const updatedCommand = await rest.patch(
         Routes.applicationGuildCommand(
-          config.discord.clientId,
+          getDiscordApplicationId(),
           config.discord.guildId,
           current.id,
         ),
@@ -1116,7 +1116,7 @@ async function reconcileSlashCommands(source = 'Registrar') {
 
     await rest.delete(
       Routes.applicationGuildCommand(
-        config.discord.clientId,
+        getDiscordApplicationId(),
         config.discord.guildId,
         current.id,
       ),
@@ -1167,7 +1167,7 @@ async function commandWatchdog() {
   try {
     const rest = new REST({ version: '10' }).setToken(config.discord.token);
     const route = Routes.applicationGuildCommands(
-      config.discord.clientId,
+      getDiscordApplicationId(),
       config.discord.guildId,
     );
 
