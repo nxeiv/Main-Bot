@@ -1967,14 +1967,17 @@ const response = await ai.ask(contextualAiQuestion, {
   }
 
   // ============================================================
-  // INSTANT ANSWERS
-  // Reuse the same deterministic answer router used by AI.
+  // PUBLIC HELP QUESTION
+  // Keep the only automatic responder limited to the explicit
+  // "help?" trigger. All other natural-language messages require
+  // a direct bot mention or a direct reply to the bot.
   // ============================================================
 
-  const instantAnswer = ai.getInstantAnswer(message.content.trim());
-
-  if (instantAnswer) {
-    await message.reply(instantAnswer);
+  if (
+    message.guild?.id === config.discord.guildId &&
+    message.content.trim().toLowerCase() === 'help?'
+  ) {
+    await message.reply(ai.getHelpMessage());
     return;
   }
 
