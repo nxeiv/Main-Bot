@@ -37,7 +37,7 @@ This is a presentation layer only; it does not change the bot's underlying comma
 - `/forget` for clearing one user's AI conversation
 - `/aforget` for clearing all AI conversations
 - `/ai status` for administrator-only AI diagnostics, including request/error counters
-- `/afk <reason>` for the bot's Discord AFK presence; `afk? <reason>` is the admin text shortcut
+- `/afk <reason>` for a user's AFK status; `afk? <reason>` is the equivalent public text shortcut
 - Discord error reporting through an optional private error channel
 - Slash-command watchdog and automatic reconciliation
 - Daily Minecraft player welcomes
@@ -188,7 +188,7 @@ On successful startup, the bot should log into Discord, reconcile the guild slas
 | `/start` | **Admin** | Starts the Minecraft AFK session |
 | `/stop` | **Admin** | Stops the Minecraft AFK session |
 | `/status` | **Admin** | Shows Minecraft AFK status |
-| `/afk <reason>` | **Admin** | Marks the Discord bot as AFK; use `off` to clear |
+| `/afk <reason>` | **Public** | Marks the requesting user as AFK |
 | `/maintenance` | **Admin** | Sends the configured maintenance announcement |
 | `/aforget` | **Admin** | Clears all AI conversations |
 | `/ai status` | **Admin** | Shows AI health and queue diagnostics |
@@ -223,8 +223,7 @@ Use the labels below to separate **Public** tests from **Admin** tests.
 | `/aforget` | **Admin** | Run as an admin; confirm normal AI conversation state is cleared |
 | `/ai status` | **Admin** | Run as an admin; confirm AI diagnostics are returned |
 | `/afk <reason>` | **Admin** | Run as an admin; confirm the Discord presence changes to AFK with the supplied reason; use `/afk off` to clear it |
-| `afk?` | **Public** | Check the bot's current Discord AFK state |
-| `afk? <reason>` | **Admin** | Use the text shortcut to set the bot's AFK reason; use `afk? off` to clear it |
+| `afk? <reason>` | **Public** | Marks the requesting user as AFK |
 | Moderation commands | **Admin** | Test with a dedicated test account using `/warn`, `/modlog`, and `/clearwarns`; banishment uses its own reply-based flow |
 | Banishment | **Admin** | Reply to a test member's message with `banish?`; verify `/banishlist`, then use `/unbanish` |
 | Admin AI requests | **Admin** | Make a clear administrative request as an admin; repeat as a non-admin and confirm the second request is rejected |
@@ -235,7 +234,7 @@ Use the labels below to separate **Public** tests from **Admin** tests.
 1. **Start the bot.** Confirm Discord login, slash-command reconciliation, and Minecraft startup in the console.
 2. **Run `/help` publicly.** Confirm the response includes `[Public]` and `[Admin]` labels.
 3. **Test public deterministic questions.** Send `ip?`, `bedrock?`, `rules?`, `channels?`, `roles?`, `features?`, `java?`, `world download?`, and `smp join?` without mentioning the bot. They should answer automatically.
-4. **Test the bot AFK status.** Run `/afk testing` as an admin, confirm the Discord presence changes to `AFK: testing`, then send `afk?` publicly and confirm it reports the current reason. Clear it with `/afk off`.
+4. **Test user AFK.** As a normal user, run `/afk testing` or send `afk? testing`. Confirm the user is marked AFK, then send another normal message from that same account and confirm the AFK status is automatically cleared.
 5. **Test public AI.** Mention the bot with a normal question, then reply to its response with a follow-up. This requires Gemini availability.
 6. **Test `/forget` and `/summarize`.** Use a test conversation/channel so normal community messages are not affected.
 7. **Switch to an admin account.** Test `/status`, `/dashboard`, and `/ai status` first because they are low-risk checks.
