@@ -229,43 +229,27 @@ function loadScheduledAdminActions() {
   }
 }
 
-let botAfkState = {
-  active: false,
-  reason: '',
-};
+const userAfkStatuses = new Map();
 
-function setBotAfk(reason) {
+function setUserAfk(userId, reason) {
   const normalizedReason = String(reason || '').trim();
 
   if (!normalizedReason) {
     throw new Error('An AFK reason is required.');
   }
 
-  if (/^(off|clear|none)$/i.test(normalizedReason)) {
-    botAfkState = {
-      active: false,
-      reason: '',
-    };
-
-    updatePresence();
-    return false;
-  }
-
-  botAfkState = {
-    active: true,
+  userAfkStatuses.set(userId, {
     reason: normalizedReason.slice(0, 200),
-  };
-
-  updatePresence();
-  return true;
+    setAt: Date.now(),
+  });
 }
 
-function getBotAfkMessage() {
-  if (!botAfkState.active) {
-    return 'The bot is not currently marked as AFK.';
-  }
+function clearUserAfk(userId) {
+  return userAfkStatuses.delete(userId);
+}
 
-  return 'The bot is currently AFK: **' + botAfkState.reason + '**';
+function getUserAfk(userId) {
+  return userAfkStatuses.get(userId) || null;
 }
 
 const client = new Client({
@@ -291,11 +275,11 @@ const commands = [
 
   new SlashCommandBuilder()
     .setName('afk')
-    .setDescription('Sets the bot Discord AFK status')
+    .setDescription('Marks yourself as AFK')
     .addStringOption(option =>
       option
         .setName('reason')
-        .setDescription('Reason for being AFK, or "off" to clear the status')
+        .setDescription('Reason for being AFK')
         .setRequired(true),
   ),
 
@@ -1268,15 +1252,7 @@ function updatePresence() {
   const status = mc.getStatus();
   const reconnecting = status.connecting || status.reconnecting;
 
-  const presence = botAfkState.active
-    ? {
-      status: 'idle',
-      activities: [{
-        name: 'AFK: ' + botAfkState.reason.slice(0, 100),
-        type: ActivityType.Watching,
-      }],
-    }
-    : status.connected
+  const presence = status.connected
     ? {
       status: 'online',
       activities: [{
@@ -1519,41 +1495,44 @@ client.on(Events.MessageCreate, async message => {
   }
 
   // ============================================================
-  // BOT AFK STATUS
+  // USER AFK STATUS
   // ============================================================
 
-  if (
-    message.guild?.id === config.discord.guildId &&
-    /^afk\?$/i.test(rawMessageText)
-  ) {
-    await message.reply(getBotAfkMessage());
-    return;
-  }
-
-  const afkSetMatch = rawMessageText.match(/^afk\?\s+(.+)$/i);
+  const afkCommandMatch = rawMessageText.match(/^afk\??(?:\s+(.+))?$/i);
 
   if (
     message.guild?.id === config.discord.guildId &&
-    afkSetMatch
+    afkCommandMatch
   ) {
-    if (!isAdmin(message.author.id, message.member)) {
-      await message.reply('✕ You are not authorized to change the bot AFK status.');
+    const reason = afkCommandMatch[1]?.trim();
+
+    if (!reason) {
+      await message.reply('✕ Please provide an AFK reason. Example: `afk studying`');
       return;
     }
 
     try {
-      const active = setBotAfk(afkSetMatch[1]);
+      setUserAfk(message.author.id, reason);
 
       await message.reply(
-        active
-          ? '✓ Bot marked as AFK: **' + botAfkState.reason + '**'
-          : '✓ Bot AFK status cleared.',
+        `✓ You are now marked as AFK: **${userAfkStatuses.get(message.author.id).reason}**`,
       );
     } catch (error) {
       await message.reply('✕ ' + error.message);
     }
 
     return;
+  }
+
+  // Any normal message means this user is back.
+  if (
+    message.guild?.id === config.discord.guildId &&
+    clearUserAfk(message.author.id)
+  ) {
+    log(
+      'AFK',
+      `${message.author.tag} returned; cleared their AFK status.`,
+    );
   }
 
   // ============================================================
@@ -2335,22 +2314,13 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 
     case 'afk': {
-      if (!hasFeatureAccess('afk', interaction.user.id, interaction.member)) {
-        return interaction.reply({
-          content: '✕ You are not authorized to use this command.',
-          flags: MessageFlags.Ephemeral,
-        });
-      }
-
       const reason = interaction.options.getString('reason', true).trim();
 
       try {
-        const active = setBotAfk(reason);
+        setUserAfk(interaction.user.id, reason);
 
         return interaction.reply({
-          content: active
-            ? '✓ Bot marked as AFK: **' + botAfkState.reason + '**'
-            : '✓ Bot AFK status cleared.',
+          content: `✓ You are now marked as AFK: **${userAfkStatuses.get(interaction.user.id).reason}**`,
           flags: MessageFlags.Ephemeral,
         });
       } catch (error) {
