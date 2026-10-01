@@ -141,6 +141,7 @@ function getStatus() {
       ? Math.floor((Date.now() - state.startTime) / 1000)
       : 0,
     reconnectAttempts: state.reconnectAttempts,
+    manualStop: state.manualStop,
     server: `${config.server.ip}:${config.server.port}`,
   };
 }
@@ -249,10 +250,17 @@ function createBot() {
     log('Bot', `Kicked from the server: ${r}`);
 
     state.connected = false;
+    state.isConnecting = false;
+    state.playerCount = 0;
     clearIntervals();
     clearTimers();
 
     emitter.emit('kicked', r);
+
+    if (!state.manualStop) {
+      log('Bot', 'Minecraft bot was kicked. Scheduling a reconnection.');
+      rejoinASAP();
+    }
   });
 
   bot.on('end', (reason) => {
