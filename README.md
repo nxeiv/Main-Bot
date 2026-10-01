@@ -150,6 +150,19 @@ Review `config.js` before deploying the bot to a different server or Discord gui
 
 Administrators can be configured by both user ID and role ID in `config.js`; members with a configured administrator role can use the administrator commands and admin AI actions.
 
+## Website status API
+
+The Main Bot exposes a read-only HTTP API for the Cottage★ website:
+
+- `GET /health` — basic service health check.
+- `GET /api/status` — public Minecraft connection state, player count, uptime, and reconnect attempts.
+
+The server listens on `PORT` when supplied by the host, otherwise `STATUS_PORT` (default `3000`). It binds to `0.0.0.0` so a WispByte public subdomain can route traffic to it.
+
+Set `STATUS_ALLOWED_ORIGINS` to a comma-separated list of website origins, for example `https://example.github.io`. Using `*` is acceptable while testing because the endpoint is read-only, but replace it with the real website origin once deployment is confirmed.
+
+The API deliberately does not return the Minecraft hostname or port.
+
 ## Installation
 
 Clone the repository and enter it:
