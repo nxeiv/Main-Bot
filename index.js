@@ -1292,19 +1292,34 @@ async function commandWatchdog() {
       consecutiveEmptyCommandReports = 0;
     }
 
-    const result = await reconcileSlashCommands('Watchdog');
+    const expectedNames = new Set(
+      commands.map(command => command.name),
+    );
+    const existingNames = new Set(
+      existing.map(command => command.name),
+    );
 
-    if (
-      result.created === 0 &&
-      result.updated === 0 &&
-      result.removed === 0 &&
-      result.existing === result.expected
-    ) {
+    const missingNames = commands
+      .filter(command => !existingNames.has(command.name))
+      .map(command => command.name);
+
+    const unexpectedNames = existing
+      .filter(command => !expectedNames.has(command.name))
+      .map(command => command.name);
+
+    if (missingNames.length === 0 && unexpectedNames.length === 0) {
       log(
         'Watchdog',
-        `Slash commands OK (${result.existing}/${result.expected}); no command IDs were replaced.`,
+        `Slash commands OK (${existing.length}/${commands.length}); definitions are managed by startup reconciliation.`,
       );
     } else {
+      log(
+        'Watchdog',
+        `Slash command set drift detected. Missing: ${missingNames.join(', ') || 'none'}; unexpected: ${unexpectedNames.join(', ') || 'none'}.`,
+      );
+
+      const result = await reconcileSlashCommands('Watchdog');
+
       log(
         'Watchdog',
         `Slash command repair complete: ${result.created} created, ${result.updated} updated, ${result.removed} removed.`,
@@ -1699,6 +1714,14 @@ const question = message.content
 const normalizedQuestion = question
   .toLowerCase()
   .trim();
+
+if (!question && !isReplyToBot) {
+  await message.reply(
+    'ⓘ Mention me with a question or message and I will help.',
+  );
+
+  return;
+}
 
 const aiSessionId = getDiscordAiSessionId(message);
 
@@ -2769,7 +2792,8 @@ client.once(Events.ClientReady, async readyClient => {
     if (
       !status.connected &&
       !status.connecting &&
-      !status.reconnecting
+      !status.reconnecting &&
+      !status.manualStop
     ) {
       log('Watchdog', 'Minecraft session is inactive; attempting recovery.');
       mc.start();
