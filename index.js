@@ -28,6 +28,7 @@ const summary = require('./summary');
 const { applyUnicodeTheme } = require('./unicode');
 const { handleBanishMessage, getActiveBanishments } = require('./banish');
 const moderation = require('./moderation');
+const reminders = require('./reminders');
 
 const scheduledAdminActions = new Map();
 
@@ -353,6 +354,37 @@ const commands = [
         .setDescription('Optional reason for being AFK')
         .setRequired(false),
   ),
+
+  new SlashCommandBuilder()
+    .setName('remind')
+    .setDescription('Creates a personal reminder')
+    .addStringOption(option =>
+      option
+        .setName('duration')
+        .setDescription('How long from now, such as 30m, 2h, or 1d')
+        .setRequired(true),
+    )
+    .addStringOption(option =>
+      option
+        .setName('message')
+        .setDescription('What you want to be reminded about')
+        .setMaxLength(500)
+        .setRequired(true),
+    ),
+
+  new SlashCommandBuilder()
+    .setName('reminders')
+    .setDescription('Lists your active reminders'),
+
+  new SlashCommandBuilder()
+    .setName('remind-cancel')
+    .setDescription('Cancels one of your reminders')
+    .addStringOption(option =>
+      option
+        .setName('id')
+        .setDescription('Reminder ID from /reminders')
+        .setRequired(true),
+    ),
 
   new SlashCommandBuilder()
     .setName('maintenance')
@@ -2566,6 +2598,90 @@ client.on(Events.InteractionCreate, async interaction => {
         flags: MessageFlags.Ephemeral,
       });
     }
+
+    case 'remind': {
+      const durationInput = interaction.options.getString('duration', true).trim();
+      const message = interaction.options.getString('message', true).trim();
+
+      try {
+        const durationMs = reminders.parseDuration(durationInput);
+        const reminder = reminders.createReminder({
+          userId: interaction.user.id,
+          userTag: interaction.user.tag,
+          guildId: interaction.guildId,
+          channelId: interaction.channelId,
+          durationMs,
+          message,
+        });
+
+        const timestamp = Math.floor(reminder.executeAt / 1000);
+
+        return interaction.reply({
+          content:
+            `✓ Reminder \`${reminder.id}\` set for <t:${timestamp}:F> (<t:${timestamp}:R>).\\nReminder: **${reminder.message}**\\nUse \`/reminders\` to view it or \`/remind-cancel\` to cancel it.`,
+          flags: MessageFlags.Ephemeral,
+        });
+      } catch (error) {
+        return interaction.reply({
+          content: `✕ ${error.message}`,
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+    }
+
+    case 'reminders': {
+      const activeReminders = reminders.getUserReminders(interaction.user.id);
+
+      if (activeReminders.length === 0) {
+        return interaction.reply({
+          content: 'ⓘ You have no active reminders.',
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+
+      const embed = createEmbed('Your Reminders', Colors.Blurple)
+        .setDescription('Active reminders are shown below. Times use your Discord locale.');
+
+      for (const reminder of activeReminders.slice(0, 25)) {
+        const timestamp = Math.floor(reminder.executeAt / 1000);
+
+        embed.addFields({
+          name: reminder.id,
+          value:
+            `<t:${timestamp}:F> (<t:${timestamp}:R>)\\n${reminder.message}`,
+          inline: false,
+        });
+      }
+
+      return interaction.reply({
+        embeds: [embed],
+        flags: MessageFlags.Ephemeral,
+      });
+    }
+
+    case 'remind-cancel': {
+      const reminderId = interaction.options.getString('id', true).trim();
+      const result = reminders.cancelReminder(
+        interaction.user.id,
+        reminderId,
+      );
+
+      if (!result.ok) {
+        return interaction.reply({
+          content:
+            result.reason === 'not_owner'
+              ? '✕ You can only cancel your own reminders.'
+              : '✕ I could not find that reminder. Use /reminders to see your active reminders.',
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+
+      return interaction.reply({
+        content:
+          `✓ Cancelled reminder \`${result.reminder.id}\`: **${result.reminder.message}**`,
+        flags: MessageFlags.Ephemeral,
+      });
+    }
     case 'dashboard': {
       if (!hasFeatureAccess('dashboard', interaction.user.id, interaction.member)) {
         return interaction.reply({
@@ -2912,6 +3028,8 @@ client.once(Events.ClientReady, async readyClient => {
   updatePresence();
 
   restoreScheduledAdminActions();
+
+  reminders.initialize(readyClient);
 
   log('Bot', 'Starting AFK session.');
   mc.start();

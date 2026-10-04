@@ -62,6 +62,7 @@ The goal is the same as the website: **quiet, warm, recognizable, and not overly
 - `/forget` and `/aforget`
 - administrator-only `/ai status`
 - public `/afk [reason]`
+- public `/remind <duration> <message>`, `/reminders`, and `/remind-cancel <id>`
 - daily Minecraft player welcomes
 - Discord ↔ Minecraft chat integration
 - optional private error reporting
