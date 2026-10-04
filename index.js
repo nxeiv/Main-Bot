@@ -2618,7 +2618,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
         return interaction.reply({
           content:
-            `✓ Reminder \`${reminder.id}\` set for <t:${timestamp}:F> (<t:${timestamp}:R>).\\nReminder: **${reminder.message}**\\nUse \`/reminders\` to view it or \`/remind-cancel\` to cancel it.`,
+            `✓ Reminder \`${reminder.id}\` set for <t:${timestamp}:F> (<t:${timestamp}:R>).\nReminder: **${reminder.message}**\nUse \`/reminders\` to view it or \`/remind-cancel\` to cancel it.`,
           flags: MessageFlags.Ephemeral,
         });
       } catch (error) {
