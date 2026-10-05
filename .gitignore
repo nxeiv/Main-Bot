@@ -31,7 +31,5 @@ Thumbs.db
 *.swp
 *.swo
 
-moderation-state.json
-banish-state.json
 
 user-afk.json

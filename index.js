@@ -26,8 +26,6 @@ const mc = require('./minecraft');
 const ai = require('./ai');
 const summary = require('./summary');
 const { applyUnicodeTheme } = require('./unicode');
-const { handleBanishMessage, getActiveBanishments } = require('./banish');
-const moderation = require('./moderation');
 const reminders = require('./reminders');
 
 const scheduledAdminActions = new Map();
@@ -431,55 +429,7 @@ const commands = [
         .setRequired(true),
   ),
 
-  new SlashCommandBuilder()
-    .setName('warn')
-    .setDescription('⚠︎ Record a moderation warning')
-    .addUserOption(option =>
-      option
-        .setName('user')
-        .setDescription('Member to warn')
-        .setRequired(true),
-    )
-    .addStringOption(option =>
-      option
-        .setName('reason')
-        .setDescription('Reason for the warning')
-        .setRequired(true),
-    ),
 
-  new SlashCommandBuilder()
-    .setName('modlog')
-    .setDescription('ⓘ View recent moderation history')
-    .addUserOption(option =>
-      option
-        .setName('user')
-        .setDescription('Member whose history to view')
-        .setRequired(true),
-    ),
-
-  new SlashCommandBuilder()
-    .setName('banishlist')
-    .setDescription('⚒︎ Show active banishments'),
-
-  new SlashCommandBuilder()
-    .setName('unbanish')
-    .setDescription('✓ Release a member from banishment')
-    .addUserOption(option =>
-      option
-        .setName('user')
-        .setDescription('Member to release')
-        .setRequired(true),
-    )
-,
-  new SlashCommandBuilder()
-    .setName('clearwarns')
-    .setDescription('⌫ Clear a member\'s recorded warnings')
-    .addUserOption(option =>
-      option
-        .setName('user')
-        .setDescription('Member whose warnings to clear')
-        .setRequired(true),
-    ),
 
 ].map(command => command.toJSON());
 
@@ -1172,19 +1122,6 @@ function buildDashboardComponents() {
   );
 }
 
-async function sendModerationLog(embed) {
-  const channelId = config.discord.moderationLogChannelId;
-  if (!channelId) return;
-
-  try {
-    const channel = await client.channels.fetch(channelId);
-    if (!channel?.isTextBased()) return;
-    await channel.send({ embeds: [embed], allowedMentions: { parse: [] } });
-  } catch (error) {
-    await reportErrorToDiscord(error, 'Moderation log');
-  }
-}
-
 function shorten(text, limit = 1000) {
   const normalized = String(text || 'Unknown reason').replace(/\s+/g, ' ').trim();
   return normalized.length > limit
@@ -1708,12 +1645,6 @@ client.on(Events.MessageCreate, async message => {
     return;
   }
 
-  const banishResult = await handleBanishMessage(message);
-
-  if (banishResult.handled) {
-    return;
-  }
-    
   // ============================================================
   // BEDROCK JOIN VIDEO FOLLOW-UP
   // ============================================================
@@ -2512,14 +2443,6 @@ client.on(Events.InteractionCreate, async interaction => {
         `Verified /start request from ${interaction.user.tag} (${interaction.user.id}).`,
       );
 
-      moderation.recordEvent({
-        type: 'admin_action',
-        action: interaction.commandName,
-        moderatorId: interaction.user.id,
-        moderatorTag: interaction.user.tag,
-        result: 'requested',
-      });
-
       if (
         status.connected ||
         status.connecting ||
@@ -2584,14 +2507,6 @@ client.on(Events.InteractionCreate, async interaction => {
         'Admin',
         `Verified /stop request from ${interaction.user.tag} (${interaction.user.id}).`,
       );
-
-      moderation.recordEvent({
-        type: 'admin_action',
-        action: interaction.commandName,
-        moderatorId: interaction.user.id,
-        moderatorTag: interaction.user.tag,
-        result: 'requested',
-      });
 
       if (
         !status.connected &&
@@ -2760,162 +2675,6 @@ client.on(Events.InteractionCreate, async interaction => {
       });
     }
 
-    case 'warn': {
-      if (!hasFeatureAccess('warn', interaction.user.id, interaction.member)) {
-        return interaction.reply({
-          content: '✕ You are not authorized to use this command.',
-          flags: MessageFlags.Ephemeral,
-        });
-      }
-
-      const targetUser = interaction.options.getUser('user', true);
-      const reason = interaction.options.getString('reason', true).trim();
-
-      if (targetUser.bot) {
-        return interaction.reply({
-          content: '✕ Bots cannot receive moderation warnings.',
-          flags: MessageFlags.Ephemeral,
-        });
-      }
-
-      const warning = moderation.recordWarning({
-        targetId: targetUser.id,
-        targetTag: targetUser.tag,
-        moderatorId: interaction.user.id,
-        moderatorTag: interaction.user.tag,
-        reason,
-      });
-
-      await sendModerationLog(
-        createEmbed('⚠︎ Member Warned', Colors.Yellow)
-          .setDescription(
-            `<@${targetUser.id}> was warned by <@${interaction.user.id}>.`,
-          )
-          .addFields({ name: 'Reason', value: reason.slice(0, 1024) }),
-      );
-
-      return interaction.reply({
-        content: `⚠︎ Warning recorded for <@${targetUser.id}>. Warning #${moderation.getWarnings(targetUser.id).length}.`,
-        flags: MessageFlags.Ephemeral,
-      });
-    }
-
-    case 'modlog': {
-      if (!hasFeatureAccess('modlog', interaction.user.id, interaction.member)) {
-        return interaction.reply({
-          content: '✕ You are not authorized to use this command.',
-          flags: MessageFlags.Ephemeral,
-        });
-      }
-
-      const targetUser = interaction.options.getUser('user', true);
-      const warnings = moderation.getWarnings(targetUser.id);
-      const events = moderation.getEvents(targetUser.id, 8);
-
-      const embed = createEmbed(
-        `ⓘ Moderation History: ${targetUser.tag}`,
-        Colors.Blurple,
-      )
-        .setDescription(
-          `Warnings recorded: **${warnings.length}**`,
-        );
-
-      if (events.length === 0) {
-        embed.addFields({
-          name: 'Recent Events',
-          value: 'No moderation events recorded.',
-        });
-      } else {
-        embed.addFields(
-          ...events.slice(0, 8).map(event => ({
-            name: `${event.type} • ${new Date(event.timestamp).toLocaleString('en-PH')}`,
-            value: event.reason || 'No reason recorded.',
-            inline: false,
-          })),
-        );
-      }
-
-      return interaction.reply({
-        embeds: [embed],
-        flags: MessageFlags.Ephemeral,
-      });
-    }
-
-    case 'banishlist': {
-      if (!hasFeatureAccess('banishlist', interaction.user.id, interaction.member)) {
-        return interaction.reply({
-          content: '✕ You are not authorized to use this command.',
-          flags: MessageFlags.Ephemeral,
-        });
-      }
-
-      const active = getActiveBanishments();
-
-      if (active.length === 0) {
-        return interaction.reply({
-          content: 'ⓘ No active banishments.',
-          flags: MessageFlags.Ephemeral,
-        });
-      }
-
-      const lines = [];
-      for (const entry of active) {
-        const member = await interaction.guild.members.fetch(entry.userId).catch(() => null);
-        lines.push(
-          `<@${entry.userId}> • since <t:${Math.floor(entry.startedAt / 1000)}:R>`,
-        );
-        if (!member) continue;
-      }
-
-      return interaction.reply({
-        embeds: [
-          createEmbed('⚒︎ Active Banishments', Colors.Orange)
-            .setDescription(lines.join('\\n')),
-        ],
-        flags: MessageFlags.Ephemeral,
-      });
-    }
-
-    case 'unbanish': {
-      if (!hasFeatureAccess('unbanish', interaction.user.id, interaction.member)) {
-        return interaction.reply({
-          content: '✕ You are not authorized to use this command.',
-          flags: MessageFlags.Ephemeral,
-        });
-      }
-
-      const targetUser = interaction.options.getUser('user', true);
-      const targetMember = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
-
-      clearActiveBanishment(targetUser.id);
-
-      try {
-        if (targetMember?.moderatable && targetMember.communicationDisabledUntilTimestamp) {
-          await targetMember.timeout(null, `Banish release by ${interaction.user.tag}.`);
-        }
-
-        moderation.recordEvent({
-          type: 'banish_release',
-          targetId: targetUser.id,
-          targetTag: targetUser.tag,
-          moderatorId: interaction.user.id,
-          moderatorTag: interaction.user.tag,
-          reason: 'Manual banishment release.',
-        });
-
-        return interaction.reply({
-          content: `✓ Released <@${targetUser.id}> from banishment.`,
-          flags: MessageFlags.Ephemeral,
-        });
-      } catch (error) {
-        await reportErrorToDiscord(error, 'Manual banish release');
-        return interaction.reply({
-          content: '✕ I could not release that member.',
-          flags: MessageFlags.Ephemeral,
-        });
-      }
-    }
-
     case 'ai': {
       if (!hasFeatureAccess('ai', interaction.user.id, interaction.member)) {
         log(
@@ -3010,37 +2769,6 @@ client.on(Events.InteractionCreate, async interaction => {
 
       return interaction.reply({
         content: '✕ Unknown AI subcommand.',
-        flags: MessageFlags.Ephemeral,
-      });
-    }
-
-    case 'clearwarns': {
-      if (!isAdmin(interaction.user.id, interaction.member)) {
-        return interaction.reply({
-          content: '✕ You are not authorized to use this command.',
-          flags: MessageFlags.Ephemeral,
-        });
-      }
-
-      const targetUser = interaction.options.getUser('user', true);
-      const count = moderation.clearWarnings(targetUser.id);
-
-      await sendModerationLog(
-        createEmbed('⌫ Warnings Cleared', Colors.Blurple)
-          .setDescription(
-            `<@${targetUser.id}>'s recorded warnings were cleared by <@${interaction.user.id}>.`,
-          )
-          .addFields({
-            name: 'Warnings Removed',
-            value: String(count),
-            inline: true,
-          }),
-      );
-
-      return interaction.reply({
-        content: count > 0
-          ? `✓ Cleared ${count} recorded warning${count === 1 ? '' : 's'} for <@${targetUser.id}>.`
-          : `ⓘ <@${targetUser.id}> had no recorded warnings.`,
         flags: MessageFlags.Ephemeral,
       });
     }
