@@ -1217,13 +1217,60 @@ function getDiscordApplicationId() {
   return runtimeApplicationId || configuredApplicationId;
 }
 
-async function reconcileSlashCommands(source = 'Registrar') {
-  const rest = new REST({ version: '10' }).setToken(config.discord.token);
+const discordRest = new REST({ version: '10' }).setToken(config.discord.token);
 
-  const route = Routes.applicationGuildCommands(
+discordRest.on('rateLimited', info => {
+  const retryAfterMs = Number(info?.retryAfter || 0);
+  const retryAfter = Number.isFinite(retryAfterMs)
+    ? `${Math.max(0, Math.round(retryAfterMs))}ms`
+    : 'unknown';
+
+  log(
+    'Discord',
+    `REST rate limit encountered: ${info?.method || 'UNKNOWN'} ${info?.route || 'unknown route'} | scope=${info?.scope || 'unknown'} | retryAfter=${retryAfter} | limit=${info?.limit ?? 'unknown'}.`,
+  );
+});
+
+function getSlashCommandRoute() {
+  return Routes.applicationGuildCommands(
     getDiscordApplicationId(),
     config.discord.guildId,
   );
+}
+
+async function replaceSlashCommandsInBulk(source = 'Registrar') {
+  const route = getSlashCommandRoute();
+
+  const replaced = await discordRest.put(route, {
+    body: commands.map(command =>
+      typeof command?.toJSON === 'function'
+        ? command.toJSON()
+        : command,
+    ),
+  });
+
+  const replacedCount = Array.isArray(replaced)
+    ? replaced.length
+    : commands.length;
+
+  log(
+    'Discord',
+    `${source}: Replaced the guild slash-command set in bulk (${replacedCount}/${commands.length}).`,
+  );
+
+  return {
+    existing: 0,
+    expected: commands.length,
+    created: replacedCount,
+    updated: 0,
+    removed: 0,
+    replaced: true,
+  };
+}
+
+async function reconcileSlashCommands(source = 'Registrar') {
+  const rest = discordRest;
+  const route = getSlashCommandRoute();
 
   const expectedByName = new Map(
     commands.map(command => [command.name, command]),
@@ -1235,6 +1282,13 @@ async function reconcileSlashCommands(source = 'Registrar') {
     'Discord',
     `${source}: Discord currently reports ${existing.length} guild command(s).`,
   );
+
+  // An empty command set is best repaired with one bulk overwrite instead of
+  // creating every command individually. This is both faster and much gentler
+  // on Discord's REST limits.
+  if (existing.length === 0 && commands.length > 0) {
+    return replaceSlashCommandsInBulk(source);
+  }
 
   const existingByName = new Map(
     existing.map(command => [command.name, command]),
@@ -1388,6 +1442,7 @@ async function registerCommands() {
 let commandWatchdogRunning = false;
 let consecutiveEmptyCommandReports = 0;
 const EMPTY_COMMAND_REPORT_CONFIRMATIONS = 3;
+const COMMAND_WATCHDOG_INTERVAL_MS = 15 * 60 * 1000;
 
 async function commandWatchdog() {
   if (commandWatchdogRunning) return;
@@ -1395,11 +1450,8 @@ async function commandWatchdog() {
   commandWatchdogRunning = true;
 
   try {
-    const rest = new REST({ version: '10' }).setToken(config.discord.token);
-    const route = Routes.applicationGuildCommands(
-      getDiscordApplicationId(),
-      config.discord.guildId,
-    );
+    const rest = discordRest;
+    const route = getSlashCommandRoute();
 
     const existing = await rest.get(route);
 
@@ -1427,8 +1479,19 @@ async function commandWatchdog() {
 
       log(
         'Watchdog',
-        `Discord returned 0 guild commands ${consecutiveEmptyCommandReports} times consecutively. Attempting command reconciliation.`,
+        `Discord returned 0 guild commands ${consecutiveEmptyCommandReports} times consecutively. Performing one bulk command replacement instead of individual creates.`,
       );
+
+      const result = await replaceSlashCommandsInBulk('Watchdog');
+
+      consecutiveEmptyCommandReports = 0;
+
+      log(
+        'Watchdog',
+        `Slash command bulk repair complete: ${result.created}/${result.expected} command(s) replaced in one request.`,
+      );
+
+      return;
     } else {
       consecutiveEmptyCommandReports = 0;
     }
@@ -3003,12 +3066,12 @@ client.once(Events.ClientReady, async readyClient => {
 
   await registerCommands();
     
-  // Slash command watchdog: check every 5 minutes.
-  log('Watchdog', 'Slash command watchdog started (every 5 minutes).');
+  // Slash command watchdog: health-check every 15 minutes.
+  log('Watchdog', 'Slash command watchdog started (every 15 minutes).');
 
   setInterval(() => {
     void commandWatchdog();
-  }, 5 * 60 * 1000);
+  }, COMMAND_WATCHDOG_INTERVAL_MS);
 
   // Runtime watchdog: recover an unexpectedly inactive Minecraft session.
   setInterval(() => {
