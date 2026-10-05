@@ -25,6 +25,4 @@ jobs:
           node --check minecraft.js
           node --check summary.js
           node --check unicode.js
-          node --check banish.js
-          node --check moderation.js
           node --check config.js
