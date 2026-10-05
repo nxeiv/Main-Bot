@@ -13,7 +13,6 @@ const config = {
     statusChannelId: '1551186617635704832',
     maintenanceChannelId: '1478252152169431134',
     chatChannelId: '1551228249214820483',
-    moderationLogChannelId: String(process.env.MODERATION_LOG_CHANNEL_ID || '').trim(),
     errorChannelId: String(process.env.ERROR_CHANNEL_ID || '').trim(),
   },
 
@@ -41,11 +40,6 @@ const config = {
     aforeget: 'admin',
     ai: 'admin',
     summarize: 'public',
-    warn: 'admin',
-    modlog: 'admin',
-    banishlist: 'admin',
-    unbanish: 'admin',
-    clearwarns: 'admin',
   },
 
   server: {
@@ -65,14 +59,6 @@ const config = {
     maxDelayMs: 300_000,
   },
 
-  banish: {
-    enabled: true,
-    durationMs: 5_000,
-    command: 'banish?',
-    escapePhrase: 'I am sorry for what I did and I will never do it again.',
-    persistFile: 'banish-state.json',
-    staleAfterMs: 24 * 60 * 60 * 1000,
-  },
 };
 
 const missing = [];
