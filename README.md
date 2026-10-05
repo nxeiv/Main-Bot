@@ -54,9 +54,6 @@ The goal is the same as the website: **quiet, warm, recognizable, and not overly
 - Minecraft connection and player-count status
 - administrative `/start`, `/stop`, `/status`, `/dashboard`, and `/maintenance`
 - `/summarize <channel>` for public channel summaries
-- administrator moderation tools
-- reply-based `banish?` moderation
-- persistent moderation and banishment state
 - admin-verified AI administrative requests
 - scheduled administrative actions with persistence
 - `/forget` and `/aforget`
@@ -96,9 +93,7 @@ The configured Minecraft account is **Server**.
 | `ai.js` | Gemini clients, conversation memory, deterministic answers, AI requests, rate limiting, and administrative request parsing |
 | `summary.js` | Channel-summary generation and dismiss-button behavior |
 | `unicode.js` | Shared Unicode-first presentation/theme layer |
-| `banish.js` | Reply-based admin banishment and persistent banishment state |
-| `moderation.js` | Persistent warnings, moderation events, durations, and moderation history |
-| `config.js` | Discord, Minecraft, access policy, reconnect, and moderation configuration |
+| `config.js` | Discord, Minecraft, access policy, reconnect, and server configuration |
 | `.env.example` | Environment variable template |
 | `package.json` | Dependencies, scripts, and Node.js requirement |
 
@@ -125,8 +120,6 @@ Current access levels include:
 | `/maintenance` | Admin |
 | `/aforget` | Admin |
 | `/ai status` | Admin |
-| moderation commands | Admin |
-| banishment controls | Admin |
 
 Administrators can be granted through configured user IDs and the Cottage★ Moderator role.
 
@@ -229,11 +222,6 @@ The Minecraft hostname is used internally by the bot. It should not be added to 
 | `/maintenance` | Admin | Sends the configured maintenance announcement |
 | `/aforget` | Admin | Clears all AI conversations |
 | `/ai status` | Admin | Shows AI health and queue diagnostics |
-| `/warn` | Admin | Records a persistent moderation warning |
-| `/modlog` | Admin | Views moderation history |
-| `/banishlist` | Admin | Shows active banishments |
-| `/unbanish` | Admin | Releases a member from banishment |
-| `/clearwarns` | Admin | Clears recorded warnings |
 
 The bot's `/help` response mirrors these access labels directly in Discord.
 
@@ -329,36 +317,12 @@ Scheduled administrative actions are saved locally so they can survive a restart
 
 ---
 
-# Banishment
-
-The Cottage★ banish mechanic is intentionally admin-only and reply-based.
-
-Reply directly to a member's message with:
-
-`banish?`
-
-The bot applies the configured timeout, records the action, and gives the member the configured escape phrase.
-
-Configuration lives in `config.js`:
-
-- duration
-- command
-- escape phrase
-- persistence file
-- stale-state window
-
-Active banishments survive bot restarts.
-
----
-
 # Runtime state
 
 The following files are generated locally and should not be committed:
 
 - `daily-welcomes.json`
 - `scheduled-actions.json`
-- `banish-state.json`
-- `moderation-state.json`
 - `user-afk.json`
 - logs and local runtime data
 
@@ -380,7 +344,6 @@ GEMINI_API_KEY_4=your_fourth_gemini_api_key
 
 MC_PASSWORD=
 
-MODERATION_LOG_CHANNEL_ID=
 ERROR_CHANNEL_ID=
 
 STATUS_PORT=3000
@@ -496,7 +459,6 @@ A practical test order is:
 7. Test `/forget` and `/summarize`.
 8. Test `/status`, `/dashboard`, and `/ai status` as admin.
 9. Test `/start` and `/stop` only during a safe maintenance window.
-10. Test moderation and banishment using test accounts.
 11. Verify the website can reach `/api/status`.
 12. Review logs for Discord, Minecraft, Gemini, network, and permission errors.
 
