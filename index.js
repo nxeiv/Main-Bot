@@ -1961,10 +1961,6 @@ client.on(Events.MessageCreate, async message => {
       return;
     }
 
-    if (personalityText === 'thanks' || personalityText === 'thank you') {
-      await message.reply('you\'re welcome.');
-      return;
-    }
   }
 
   if (
