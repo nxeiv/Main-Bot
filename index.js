@@ -1761,7 +1761,7 @@ async function handlePingGatedTextShortcut({ message, question }) {
     ).addFields(
       {
         name: 'Model',
-        value: `\`${diagnostics.model}\`,
+        value: `\`${diagnostics.model}\``,
         inline: true,
       },
       {
