@@ -50,7 +50,7 @@ function buildTranscript(messages) {
   return transcript;
 }
 
-async function collectSummary({ interaction, target, ai }) {
+async function collectSummary({ requesterId, target, ai }) {
   if (
     target.type !== ChannelType.GuildText &&
     target.type !== ChannelType.GuildAnnouncement
@@ -113,7 +113,7 @@ async function handleSlashCommand({ interaction, ai }) {
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     const generatedSummary = await collectSummary({
-      interaction,
+      requesterId: interaction.id,
       target,
       ai,
     });
@@ -183,7 +183,69 @@ async function handleSlashCommand({ interaction, ai }) {
   }
 }
 
+async function handleMessageCommand({ message, target, ai }) {
+  try {
+    const generatedSummary = await collectSummary({
+      requesterId: message.id,
+      target,
+      ai,
+    });
+
+    const summaryText = String(generatedSummary || '')
+      .replace(/[⌁◆◇✓✕ⓘ⚠︎⚒︎⌂⌫→]/g, '')
+      .trim()
+      .slice(0, 1800);
+
+    if (!summaryText) {
+      throw new Error('AI returned an empty summary.');
+    }
+
+    const embed = new EmbedBuilder()
+      .setTitle('Channel Summary')
+      .setDescription(summaryText)
+      .addFields({
+        name: 'Channel',
+        value: `<#${target.id}>`,
+        inline: true,
+      })
+      .setFooter({
+        text: `Requested by ${message.member?.displayName || message.author.username}`,
+      })
+      .setTimestamp();
+
+    const reply = await message.reply({
+      embeds: [embed],
+      allowedMentions: { parse: [] },
+    });
+
+    setTimeout(async () => {
+      try {
+        await reply.delete();
+      } catch (error) {
+        console.error(
+          '[Summary] Unable to expire public summary:',
+          error?.message || error,
+        );
+      }
+    }, 10 * 60 * 1000);
+
+    return reply;
+  } catch (error) {
+    console.error(
+      `[Summary] Unable to summarize #${target?.name || 'unknown'}:`,
+      error?.message || error,
+    );
+
+    return message.reply({
+      content:
+        error?.message ||
+        'I could not summarize that channel right now. Please try again in a moment.',
+      allowedMentions: { parse: [] },
+    });
+  }
+}
 
 module.exports = {
   handleSlashCommand,
+  handleMessageCommand,
 };
