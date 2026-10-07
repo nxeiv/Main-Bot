@@ -171,7 +171,7 @@ Slash-command replies are private to you. Public \`?\` text interactions are vis
 
 **Commands**
 • [Public] \`/help\` — show this help
-• [Public] \`/ping\` — check bot latency
+• [Admin] \`/ping\` — check bot latency
 • [Public] \`/forget\` — clear your own AI conversation
 • [Public] \`/remind <duration> <message>\` — set a personal reminder
 • [Public] \`/reminders\` — list your active reminders
@@ -193,7 +193,7 @@ Ping the bot before using these:
 • \`summarize? #channel\`
 
 **Public questions**
-• \`ping?\` · \`ip?\` · \`bedrock join?\` · \`rules?\` · \`channels?\` · \`roles?\` · \`features?\`
+• \`ip?\` · \`bedrock join?\` · \`rules?\` · \`channels?\` · \`roles?\` · \`features?\`
 • \`who are you?\` · \`are you awake?\` · \`is the backyard awake?\` · \`what are you doing?\`
 • Ask about Java, Bedrock, joining, SMP features, or the world download.`;
 
