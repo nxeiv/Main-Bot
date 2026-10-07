@@ -1909,6 +1909,10 @@ client.on(Events.MessageCreate, async message => {
 
   if (message.guild?.id === config.discord.guildId) {
     if (normalizedMessageText === 'ping?') {
+      if (!isAdmin(message.author.id, message.member)) {
+        return;
+      }
+
       await message.reply(`PONG! ${getDiscordPing()}ms`);
       return;
     }
@@ -2666,6 +2670,23 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 
     case 'ping': {
+      if (!hasFeatureAccess('ping', interaction.user.id, interaction.member)) {
+        log(
+          'Admin',
+          `Rejected /ping from unauthorized user ${interaction.user.tag} (${interaction.user.id}).`,
+        );
+
+        return interaction.reply({
+          content: '✕ You are not authorized to use this command.',
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+
+      log(
+        'Admin',
+        `Verified /ping request from ${interaction.user.tag} (${interaction.user.id}).`,
+      );
+
       return interaction.reply({
         content: `PONG! ${getDiscordPing()}ms`,
         flags: MessageFlags.Ephemeral,
