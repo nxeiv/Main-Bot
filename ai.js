@@ -167,7 +167,7 @@ const BOT_HELP_MESSAGE = `**The Cottage★ Help**
 
 Mention me or reply to one of my messages when you want an AI answer.
 
-Slash-command replies are private to you. Public `?` text interactions are visible to the channel.
+Slash-command replies are private to you. Public \`?\` text interactions are visible to the channel.
 
 **Commands**
 • [Public] \`/help\` — show this help
