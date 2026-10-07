@@ -186,6 +186,12 @@ Slash-command replies are private to you. Public \`?\` text interactions are vis
 **Public AFK**
 • \`afk?\` — mark yourself AFK or update your reason
 
+**Mention-only shortcuts**
+Ping the bot before using these:
+• \`start?\` · \`stop?\` · \`status?\` · \`dashboard?\`
+• \`ai status?\`
+• \`summarize? #channel\`
+
 **Public questions**
 • \`ping?\` · \`ip?\` · \`bedrock join?\` · \`rules?\` · \`channels?\` · \`roles?\` · \`features?\`
 • \`who are you?\` · \`are you awake?\` · \`is the backyard awake?\` · \`what are you doing?\`
