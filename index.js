@@ -1662,6 +1662,203 @@ mc.emitter.on('minecraftPlayerLeft', async ({ username }) => {
   void notifyChannel(embed);
 });
 
+
+async function handlePingGatedTextShortcut({ message, question }) {
+  const normalizedQuestion = String(question || '')
+    .trim()
+    .toLowerCase();
+
+  const isShortcut =
+    normalizedQuestion === 'start?' ||
+    normalizedQuestion === 'stop?' ||
+    normalizedQuestion === 'status?' ||
+    normalizedQuestion === 'ai status?' ||
+    normalizedQuestion === 'dashboard?' ||
+    /^summarize\?\s+<\#\d+>$/.test(normalizedQuestion);
+
+  if (!isShortcut) {
+    return false;
+  }
+
+  if (normalizedQuestion === 'start?' || normalizedQuestion === 'stop?') {
+    const action = normalizedQuestion === 'start?' ? 'start' : 'stop';
+
+    if (!hasFeatureAccess(action, message.author.id, message.member)) {
+      await message.reply('✕ You are not authorized to use this command.');
+      return true;
+    }
+
+    try {
+      const result = await executeAdministrativeAction(action);
+
+      await message.reply(
+        action === 'start'
+          ? result === 'already active'
+            ? 'ⓘ The Minecraft AFK bot is already running.'
+            : '✓ Minecraft AFK bot started.'
+          : result === 'already stopped'
+            ? 'ⓘ The Minecraft AFK bot is already stopped.'
+            : '✓ Minecraft AFK bot stopped.',
+      );
+    } catch (error) {
+      log(
+        'Admin',
+        `Ping-gated ${action} shortcut failed: ${error.message}`,
+      );
+
+      await message.reply(
+        `✕ Unable to execute **${action}**: ${error.message}`,
+      );
+    }
+
+    return true;
+  }
+
+  if (normalizedQuestion === 'status?') {
+    if (!hasFeatureAccess('status', message.author.id, message.member)) {
+      await message.reply('✕ You are not authorized to use this command.');
+      return true;
+    }
+
+    await message.reply({
+      embeds: [
+        buildStatusEmbed(
+          mc.getStatus(),
+          'Status Check',
+          Colors.Blurple,
+        ),
+      ],
+    });
+
+    return true;
+  }
+
+  if (normalizedQuestion === 'dashboard?') {
+    if (!hasFeatureAccess('dashboard', message.author.id, message.member)) {
+      await message.reply('✕ You are not authorized to use this command.');
+      return true;
+    }
+
+    await message.reply({
+      embeds: [buildDashboardEmbed()],
+      components: [buildDashboardComponents()],
+    });
+
+    return true;
+  }
+
+  if (normalizedQuestion === 'ai status?') {
+    if (!hasFeatureAccess('ai', message.author.id, message.member)) {
+      await message.reply('✕ You are not authorized to use this command.');
+      return true;
+    }
+
+    const diagnostics = ai.getAiDiagnostics();
+
+    const embed = createEmbed(
+      'AI Diagnostics',
+      Colors.Blurple,
+    ).addFields(
+      {
+        name: 'Model',
+        value: `\`${diagnostics.model}\`\`,
+        inline: true,
+      },
+      {
+        name: 'Configured Keys',
+        value: String(diagnostics.configuredKeys),
+        inline: true,
+      },
+      {
+        name: 'Active Normal Key',
+        value: String(diagnostics.activeNormalKey),
+        inline: true,
+      },
+      {
+        name: 'Active Admin Key',
+        value: String(diagnostics.activeAdminKey),
+        inline: true,
+      },
+      {
+        name: 'Queued Requests',
+        value: `${diagnostics.queuedRequests}/${diagnostics.queueLimit}`,
+        inline: true,
+      },
+      {
+        name: 'Active Cooldowns',
+        value: String(diagnostics.activeCooldowns),
+        inline: true,
+      },
+      {
+        name: 'Conversation Sessions',
+        value: String(diagnostics.conversationSessions),
+        inline: true,
+      },
+      {
+        name: 'Context Limit',
+        value: `${diagnostics.contextLimitMessages} messages`,
+        inline: true,
+      },
+      {
+        name: 'AI Requests',
+        value: String(diagnostics.totalRequests),
+        inline: true,
+      },
+      {
+        name: 'AI Errors',
+        value: String(diagnostics.totalErrors),
+        inline: true,
+      },
+      {
+        name: 'Last AI Error',
+        value: diagnostics.lastError
+          ? `\`${diagnostics.lastError.slice(0, 900)}\``
+          : 'None recorded',
+        inline: false,
+      },
+    ).setDescription(
+      'Admin access confirmed. This view exposes health metadata only; API keys and private conversation contents are never shown.',
+    );
+
+    await message.reply({
+      embeds: [embed],
+    });
+
+    return true;
+  }
+
+  const summarizeMatch = normalizedQuestion.match(
+    /^summarize\?\s+<\#(\d+)>$/,
+  );
+
+  if (summarizeMatch) {
+    const target = await client.channels.fetch(summarizeMatch[1]);
+
+    if (!target?.isTextBased()) {
+      await message.reply('✕ I can only summarize text-based Discord channels.');
+      return true;
+    }
+
+    if (!(
+      target.type === ChannelType.GuildText ||
+      target.type === ChannelType.GuildAnnouncement
+    )) {
+      await message.reply('✕ I can only summarize text-based Discord channels.');
+      return true;
+    }
+
+    await summary.handleMessageCommand({
+      message,
+      target,
+      ai,
+    });
+
+    return true;
+  }
+
+  return false;
+}
+
 client.on(Events.MessageCreate, async message => {
   if (message.author.bot) {
     return;
@@ -1951,6 +2148,17 @@ const contextualAiQuestion =
       `User request: ${question || '(no additional text; infer what the user is asking about from the referenced message)'}`,
     ].join('\\n')
     : question;
+
+    if (isDirectBotMention) {
+      const handledShortcut = await handlePingGatedTextShortcut({
+        message,
+        question,
+      });
+
+      if (handledShortcut) {
+        return;
+      }
+    }
 
     // ========================================================
     // AI FORGET
