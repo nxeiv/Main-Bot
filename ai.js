@@ -167,13 +167,16 @@ const BOT_HELP_MESSAGE = `**The Cottage★ Help**
 
 Mention me or reply to one of my messages when you want an AI answer.
 
+Slash-command replies are private to you. Public \`?\` text interactions are visible to the channel.
+
 **Commands**
 • [Public] \`/help\` — show this help
+• [Public] \`/ping\` — check bot latency
 • [Public] \`/forget\` — clear your own AI conversation
 • [Public] \`/remind <duration> <message>\` — set a personal reminder
 • [Public] \`/reminders\` — list your active reminders
 • [Public] \`/remind-cancel <id>\` — cancel one of your reminders
-• [Public] \`/summarize <channel>\` — public channel summary, expires after 10 minutes
+• [Public] \`/summarize <channel>\` — private channel summary
 
 **Admin**
 • [Admin] \`/start\` \`/stop\` \`/status\`
@@ -181,15 +184,12 @@ Mention me or reply to one of my messages when you want an AI answer.
 • [Admin] \`/aforget\` \`/ai status\`
 
 **Public AFK**
-
-**Moderation**
-• [Admin] \`/warn\` \`/modlog\` \`/banishlist\` \`/unbanish\` \`/clearwarns\`
+• \`afk?\` — mark yourself AFK or update your reason
 
 **Public questions**
-• \`ip?\` · \`bedrock join?\` · \`rules?\` · \`channels?\` · \`roles?\` · \`features?\`
+• \`ping?\` · \`ip?\` · \`bedrock join?\` · \`rules?\` · \`channels?\` · \`roles?\` · \`features?\`
+• \`who are you?\` · \`are you awake?\` · \`is the backyard awake?\` · \`what are you doing?\`
 • Ask about Java, Bedrock, joining, SMP features, or the world download.`;
-
-
 
 const FEATURE_ALIASES = {
   cracked: 'Open Doors',

@@ -416,8 +416,12 @@ const commands = [
     .setDescription('ⓘ Shows Main Bot commands and features'),
 
   new SlashCommandBuilder()
+    .setName('ping')
+    .setDescription('Shows the bot latency'),
+
+  new SlashCommandBuilder()
     .setName('summarize')
-    .setDescription('Post a public summary of recent messages (expires after 10 minutes)')
+    .setDescription('Creates a private summary of recent messages (expires after 10 minutes)')
     .addChannelOption(option =>
       option
         .setName('channel')
@@ -655,6 +659,24 @@ async function reportErrorToDiscord(error, context = 'Main Bot') {
 function getDiscordConnectionState() {
   if (!client.isReady()) return 'Starting';
   return client.ws.status === 0 ? 'Connected' : 'Reconnecting / unavailable';
+}
+function getDiscordPing() {
+  const ping = Number(client.ws.ping);
+
+  if (!Number.isFinite(ping) || ping < 0) {
+    return 0;
+  }
+
+  return Math.round(ping);
+}
+
+function getBackyardState() {
+  const status = mc.getStatus();
+
+  if (status.connected) return 'awake';
+  if (status.connecting) return 'waking up';
+  if (status.reconnecting) return 'trying to wake up';
+  return 'asleep';
 }
 
 function isLikelyAdminRequest(text) {
@@ -1675,6 +1697,66 @@ client.on(Events.MessageCreate, async message => {
   const rawMessageText = message.content.trim();
   const normalizedMessageText = rawMessageText.toLowerCase();
 
+  // ============================================================
+  // SMALL PERSONALITY RESPONSES
+  // ============================================================
+
+  if (message.guild?.id === config.discord.guildId) {
+    if (normalizedMessageText === 'ping?') {
+      await message.reply(`PONG! ${getDiscordPing()}ms`);
+      return;
+    }
+
+    const personalityText = normalizedMessageText
+      .replace(/[!?.,]+$/g, '')
+      .trim();
+
+    if (personalityText === 'who are you') {
+      await message.reply(
+        'I\'m The Cottage★ Main Bot. I keep the Cottage connected, watch the backyard, handle reminders, and help out where I can.',
+      );
+      return;
+    }
+
+    if (personalityText === 'are you awake') {
+      await message.reply(
+        `yeah. I'm awake. The backyard is ${getBackyardState()}.`,
+      );
+      return;
+    }
+
+    if (personalityText === 'is the backyard awake') {
+      await message.reply(
+        getBackyardState() === 'awake'
+          ? 'yeah. the backyard is awake.'
+          : `nope. the backyard is ${getBackyardState()} right now.`,
+      );
+      return;
+    }
+
+    if (personalityText === 'what are you doing') {
+      await message.reply(
+        'watching Discord, keeping an eye on the backyard, and waiting for somebody to need me.',
+      );
+      return;
+    }
+
+    if (personalityText === 'good morning') {
+      await message.reply(`good morning, ${message.author}.`);
+      return;
+    }
+
+    if (personalityText === 'goodnight' || personalityText === 'good night') {
+      await message.reply(`goodnight, ${message.author}.`);
+      return;
+    }
+
+    if (personalityText === 'thanks' || personalityText === 'thank you') {
+      await message.reply('you\'re welcome.');
+      return;
+    }
+  }
+
   if (
     message.guild?.id === config.discord.guildId &&
     !/^afk\??(?:\s+(.+))?$/i.test(rawMessageText)
@@ -2366,6 +2448,13 @@ client.on(Events.InteractionCreate, async interaction => {
       return summary.handleSlashCommand({ interaction, ai });
     }
 
+    case 'ping': {
+      return interaction.reply({
+        content: `PONG! ${getDiscordPing()}ms`,
+        flags: MessageFlags.Ephemeral,
+      });
+    }
+
     case 'forget': {
       return interaction.reply({
         content: forgetUserConversation(getInteractionAiSessionId(interaction)),
@@ -2461,7 +2550,7 @@ client.on(Events.InteractionCreate, async interaction => {
         });
       }
 
-      await interaction.deferReply();
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
       await executeAdministrativeAction('start');
 
@@ -2526,7 +2615,7 @@ client.on(Events.InteractionCreate, async interaction => {
         });
       }
 
-      await interaction.deferReply();
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
       await executeAdministrativeAction('stop');
 

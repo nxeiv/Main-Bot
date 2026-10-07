@@ -110,7 +110,7 @@ async function handleSlashCommand({ interaction, ai }) {
   const target = interaction.options.getChannel('channel', true);
 
   try {
-    await interaction.deferReply();
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     const generatedSummary = await collectSummary({
       interaction,
@@ -145,13 +145,13 @@ async function handleSlashCommand({ interaction, ai }) {
       allowedMentions: { parse: [] },
     });
 
-    // Public summaries are intentionally temporary.
+    // Private summaries are intentionally temporary.
     setTimeout(async () => {
       try {
         await interaction.deleteReply();
       } catch (error) {
         console.error(
-          '[Summary] Unable to expire public summary:',
+          '[Summary] Unable to expire private summary:',
           error?.message || error,
         );
       }

@@ -53,7 +53,8 @@ The goal is the same as the website: **quiet, warm, recognizable, and not overly
 - feature descriptions and tutorials
 - Minecraft connection and player-count status
 - administrative `/start`, `/stop`, `/status`, `/dashboard`, and `/maintenance`
-- `/summarize <channel>` for public channel summaries
+- `/ping` for a quick Discord latency check
+- `/summarize <channel>` for private channel summaries
 - admin-verified AI administrative requests
 - scheduled administrative actions with persistence
 - `/forget` and `/aforget`
@@ -212,8 +213,8 @@ The Minecraft hostname is used internally by the bot. It should not be added to 
 | Command | Access | Purpose |
 | --- | --- | --- |
 | `/help` | Public | Shows bot help and access labels |
-| `/forget` | Public | Clears the requesting user's AI conversation |
-| `/summarize <channel>` | Public | Summarizes recent messages |
+| `/ping` | Public | Shows the current Discord bot latency |\n| `/forget` | Public | Clears the requesting user's AI conversation |
+| `/summarize <channel>` | Public | Privately summarizes recent messages |
 | `/afk [reason]` | Public | Marks the requesting user as AFK |
 | `/start` | Admin | Starts the Minecraft AFK session |
 | `/stop` | Admin | Stops the Minecraft AFK session |
