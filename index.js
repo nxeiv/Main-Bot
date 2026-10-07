@@ -1761,7 +1761,7 @@ async function handlePingGatedTextShortcut({ message, question }) {
     ).addFields(
       {
         name: 'Model',
-        value: `\`${diagnostics.model}\`\`,
+        value: `\`${diagnostics.model}\`,
         inline: true,
       },
       {
@@ -1832,7 +1832,16 @@ async function handlePingGatedTextShortcut({ message, question }) {
   );
 
   if (summarizeMatch) {
-    const target = await client.channels.fetch(summarizeMatch[1]);
+    let target;
+
+    try {
+      target = await client.channels.fetch(summarizeMatch[1]);
+    } catch (error) {
+      await message.reply(
+        '✕ I could not find that Discord channel.',
+      );
+      return true;
+    }
 
     if (!target?.isTextBased()) {
       await message.reply('✕ I can only summarize text-based Discord channels.');
