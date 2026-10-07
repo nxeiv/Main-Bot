@@ -40,6 +40,7 @@ const config = {
     aforeget: 'admin',
     ai: 'admin',
     summarize: 'public',
+    ping: 'admin',
   },
 
   server: {
