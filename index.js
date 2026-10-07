@@ -1951,7 +1951,7 @@ client.on(Events.MessageCreate, async message => {
       return;
     }
 
-    if (personalityText === 'good morning') {
+    if (personalityText === 'good morning' || personalityText === 'goodmorning') {
       await message.reply(`good morning, ${message.author}.`);
       return;
     }
