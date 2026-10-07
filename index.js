@@ -1708,7 +1708,7 @@ client.on(Events.MessageCreate, async message => {
     }
 
     const personalityText = normalizedMessageText
-      .replace(/[!.,]+$/g, '')
+      .replace(/[!?.,]+$/g, '')
       .trim();
 
     if (personalityText === 'who are you') {
