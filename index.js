@@ -421,7 +421,7 @@ const commands = [
 
   new SlashCommandBuilder()
     .setName('summarize')
-    .setDescription('Post a public summary of recent messages (expires after 10 minutes)')
+    .setDescription('Creates a private summary of recent messages (expires after 10 minutes)')
     .addChannelOption(option =>
       option
         .setName('channel')
