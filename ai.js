@@ -84,7 +84,7 @@ const SERVER_INFO = {
 };
 
 const FEATURE_GUIDE = {
-  'Open Doors': 'Players can join without owning a premium Minecraft account.',
+  'Open Doors': 'The SMP supports cracked (non-premium/offline-mode) Java clients. Players do not need a premium Minecraft account to join.',
   'Cottage Boost': 'Gives players Elytra flight and Spear Lunging.',
   'Grand Arrivals': 'Players get special animations when entering the world.',
   'Friendly Neighbors': 'Provides convenient interactions with villagers.',
@@ -107,7 +107,7 @@ const FEATURE_GUIDE = {
 
 const FEATURE_TUTORIALS = {
   'Open Doors':
-    'Open Doors is automatic. It allows players to join without owning a premium Minecraft account, so there is nothing you need to activate in-game.',
+    'Yes — The Cottage★ SMP supports cracked (non-premium/offline-mode) Java clients through Open Doors. You do not need a premium Java account. Open Doors is automatic; there is nothing to activate in-game.',
 
   'Cottage Boost':
     'Use an Elytra while using a spear with the Lunge enchantment to use Cottage Boost.',
@@ -251,6 +251,7 @@ The bot has deterministic answers for many common Cottage★ questions. Those an
 When answering a question yourself:
 - Answer the user's actual question first.
 - For server-specific facts, use only the authoritative information below.
+- The Cottage★ SMP DOES support cracked/non-premium (offline-mode) Java clients. This is the purpose of the **Open Doors** feature. If asked "is it cracked?", "does it support cracked?", "can non-premium players join?", or similar, answer yes clearly. Never claim genuine/premium accounts are required.
 - Do not invent commands, links, channels, IPs, ports, rules, features, joining procedures, or permissions.
 - If a server-specific fact is not confirmed below, say you do not know rather than guessing.
 - Do not contradict the deterministic bot answers.
