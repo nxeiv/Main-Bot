@@ -413,7 +413,7 @@ const commands = [
 
   new SlashCommandBuilder()
     .setName('help')
-    .setDescription('ⓘ Shows Main Bot commands and features'),
+    .setDescription('ⓘ Shows Cottage★ commands and features'),
 
   new SlashCommandBuilder()
     .setName('ping')
@@ -580,7 +580,7 @@ function hasFeatureAccess(feature, userId, member = null) {
   return false;
 }
 
-function requireFeatureAccess(interaction, feature) {
+async function requireFeatureAccess(interaction, feature) {
   if (hasFeatureAccess(
     feature,
     interaction.user.id,
@@ -589,10 +589,12 @@ function requireFeatureAccess(interaction, feature) {
     return true;
   }
 
-  return interaction.reply({
+  await interaction.reply({
     content: '✕ You are not authorized to use this command.',
     flags: MessageFlags.Ephemeral,
   });
+
+  return false;
 }
 
 function getDiscordAiSessionId(message) {
@@ -1923,7 +1925,7 @@ client.on(Events.MessageCreate, async message => {
 
     if (personalityText === 'who are you') {
       await message.reply(
-        'I\'m The Cottage★ Main Bot. I keep the Cottage connected, watch the backyard, handle reminders, and help out where I can.',
+        'I\'m The Cottage★, the community assistant. I keep an eye on Discord and the backyard, handle reminders, and help out where I can.',
       );
       return;
     }
@@ -2155,8 +2157,16 @@ const contextualAiQuestion =
       `Referenced message author: ${replyTargetMessage.member?.displayName || replyTargetMessage.author?.username || 'Unknown'}`,
       `Referenced message: ${shorten(replyTargetMessage.content || '(no text content)', 2000)}`,
       `User request: ${question || '(no additional text; infer what the user is asking about from the referenced message)'}`,
-    ].join('\\n')
+    ].join('\n')
     : question;
+
+    const directKnownAnswer =
+      question ? ai.getInstantAnswer(question) : null;
+
+    if (directKnownAnswer) {
+      await message.reply(directKnownAnswer);
+      return;
+    }
 
     if (isDirectBotMention) {
       const handledShortcut = await handlePingGatedTextShortcut({
@@ -2949,7 +2959,7 @@ client.on(Events.InteractionCreate, async interaction => {
         embed.addFields({
           name: reminder.id,
           value:
-            `<t:${timestamp}:F> (<t:${timestamp}:R>)\\n${reminder.message}`,
+            `<t:${timestamp}:F> (<t:${timestamp}:R>)\n${reminder.message}`,
           inline: false,
         });
       }

@@ -100,7 +100,7 @@ async function collectSummary({ requesterId, target, ai }) {
   ].join('\n');
 
   return ai.ask(prompt, {
-    userId: `summary:${interaction.id}`,
+    userId: `summary:${requesterId}`,
     platform: 'discord',
     skipKnownAnswers: true,
   });

@@ -175,14 +175,22 @@ async function deliverReminder(reminder) {
     }
 
     if (channel?.isTextBased()) {
-      await channel.send({
-        content,
-        allowedMentions: {
-          users: [reminder.userId],
-        },
-      });
+      try {
+        await channel.send({
+          content,
+          allowedMentions: {
+            users: [reminder.userId],
+          },
+        });
 
-      return true;
+        return true;
+      } catch (channelError) {
+        log(
+          'Unable to send reminder ' + reminder.id + ' to the original channel: ' +
+          channelError.message +
+          '. Falling back to DM.',
+        );
+      }
     }
 
     const user = await client.users.fetch(reminder.userId).catch(() => null);
