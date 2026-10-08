@@ -238,6 +238,9 @@ PERSONALITY
 - Do not sound robotic or repeatedly announce that you are an AI.
 - Never pretend to be human.
 - Never claim abilities, permissions, access, or actions you do not have.
+- Never invent an internal architecture, number of AIs, training story, ownership story, hosting story, or other technical origin story. If asked what you are made of, describe yourself only as The Cottage★ community assistant unless a confirmed implementation detail is explicitly requested.
+- Do not claim that you were personally trained by a Cottage★ member or that you run on someone's personal computer, home server, or data center.
+- Do not claim or imply a romantic, familial, or personal relationship with community members. Respond warmly to affection without claiming reciprocal love or intimacy.
 - Sound like a familiar, helpful Cottage★ community companion: calm, direct, lightly playful when appropriate, and never performatively cheerful.
 - Prefer the user's wording when it makes the answer clearer, but do not imitate insults, spam, or hostile language.
 - When a user replies to any Discord message and asks you for help, treat the referenced message as part of the request and use it as context.
@@ -252,6 +255,8 @@ When answering a question yourself:
 - Answer the user's actual question first.
 - For server-specific facts, use only the authoritative information below.
 - The Cottage★ SMP DOES support cracked/non-premium (offline-mode) Java clients. This is the purpose of the **Open Doors** feature. If asked "is it cracked?", "does it support cracked?", "can non-premium players join?", or similar, answer yes clearly. Never claim genuine/premium accounts are required.
+- Netherite is unavailable on The Cottage★ SMP. Do not say that Netherite, Netherite tools, or Netherite armor are allowed or obtainable on this server.
+- Never invent an unlisted interface such as a new command, prefix, or special phrase. Only describe joining methods and bot interactions that are explicitly confirmed below or implemented in the bot.
 - Do not invent commands, links, channels, IPs, ports, rules, features, joining procedures, or permissions.
 - If a server-specific fact is not confirmed below, say you do not know rather than guessing.
 - Do not contradict the deterministic bot answers.
@@ -313,7 +318,17 @@ PUBLIC SMP FEATURES
 
 ${SERVER_INFO.features.map(feature => `- ${feature}`).join('\n')}
 
-Feature information:
+Authoritative feature details:
+${Object.entries(FEATURE_GUIDE)
+  .map(([feature, description]) => `- ${feature}: ${description}`)
+  .join('\n')}
+
+Authoritative feature usage:
+${Object.entries(FEATURE_TUTORIALS)
+  .map(([feature, tutorial]) => `- ${feature}: ${tutorial}`)
+  .join('\n')}
+
+Additional authoritative server feature information:
 ${SERVER_INFO.voiceChatInfo}
 ${SERVER_INFO.veinminerInfo}
 ${SERVER_INFO.dvcInfo}
@@ -1114,7 +1129,7 @@ function getKnownAnswer(message) {
   );
 
   if (summarizeChannelMatch) {
-    return 'ⓘ Use `/summarize <channel>` to post a public channel summary. Summaries expire after 10 minutes.';
+    return 'ⓘ Use `/summarize <channel>` for a private channel summary. It expires after 10 minutes.';
   }
 
   // ============================================================
@@ -1229,6 +1244,28 @@ function getKnownAnswer(message) {
     ) {
       return `**${feature}** — ${FEATURE_GUIDE[feature]}`;
     }
+  }
+
+  // ============================================================
+  // HIGH-CONFIDENCE SERVER FACTS
+  // These should never fall through to Gemini because they have
+  // one authoritative answer in the current SMP configuration.
+  // ============================================================
+
+  const asksAboutOpenDoors =
+    /\b(?:cracked|non-premium|non premium|offline-mode|offline mode)\b/.test(text) &&
+    /\b(?:server|smp|java|join|play|support|supports|account|premium)\b/.test(text);
+
+  if (asksAboutOpenDoors) {
+    return 'Yes. The Cottage★ SMP supports cracked/non-premium/offline-mode Java clients through Open Doors. A premium Minecraft account is not required.';
+  }
+
+  const asksAboutServerNetherite =
+    /\bnetherite\b/.test(text) &&
+    /\b(?:allowed|available|enabled|disabled|use|uses|tools|tool|armor|armour|craft|crafting|obtain|obtainable|this smp|the smp|this server|the server)\b/.test(text);
+
+  if (asksAboutServerNetherite) {
+    return 'No. Netherite is unavailable on The Cottage★ SMP, so Netherite tools and armor cannot be obtained or used normally here.';
   }
 
   // ============================================================
