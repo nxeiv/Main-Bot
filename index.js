@@ -647,9 +647,7 @@ async function reportErrorToDiscord(error, context = 'Main Bot') {
         ],
         footer: { text: 'The Cottage★ Diagnostics' },
         timestamp: new Date().toISOString(),
-      }],
-      allowedMentions: { parse: [] },
-    });
+      }],      allowedMentions: { parse: [] },    });
   } catch (reportError) {
     console.error(
       '[Error] Unable to send Discord error report:',
@@ -1297,10 +1295,8 @@ async function reconcileSlashCommands(source = 'Registrar') {
           return true;
         }
 
-        if (
-          !Array.isArray(actualValue) ||
-          desiredValue.length !== actualValue.length
-        ) {
+        if (          !Array.isArray(actualValue) ||
+          desiredValue.length !== actualValue.length        ) {
           return false;
         }
 
@@ -1880,6 +1876,7 @@ client.on(Events.MessageCreate, async message => {
   // ============================================================
 
   const normalizedFollowUpMessageText = message.content
+    .replace(new RegExp(`<@!?${client.user?.id}>`, 'g'), '')
     .trim()
     .toLowerCase()
     .replace(/[!?.,]+$/g, '');
@@ -1887,6 +1884,7 @@ client.on(Events.MessageCreate, async message => {
   if (
     message.guild?.id === config.discord.guildId &&
     pendingBedrockVideoRequests.has(message.author.id) &&
+    message.mentions.users.has(client.user?.id) &&
     normalizedFollowUpMessageText === 'yes'
   ) {
     pendingBedrockVideoRequests.delete(message.author.id);
@@ -1905,66 +1903,6 @@ client.on(Events.MessageCreate, async message => {
   const rawMessageText = message.content.trim();
   const normalizedMessageText = rawMessageText.toLowerCase();
 
-  // ============================================================
-  // SMALL PERSONALITY RESPONSES
-  // ============================================================
-
-  if (message.guild?.id === config.discord.guildId) {
-    if (normalizedMessageText === 'ping?') {
-      if (!isAdmin(message.author.id, message.member)) {
-        return;
-      }
-
-      await message.reply(`PONG! ${getDiscordPing()}ms`);
-      return;
-    }
-
-    const personalityText = normalizedMessageText
-      .replace(/[!?.,]+$/g, '')
-      .trim();
-
-    if (personalityText === 'who are you') {
-      await message.reply(
-        'I\'m The Cottage★, the community assistant. I keep an eye on Discord and the backyard, handle reminders, and help out where I can.',
-      );
-      return;
-    }
-
-    if (personalityText === 'are you awake') {
-      await message.reply(
-        `yeah. I'm awake. The backyard is ${getBackyardState()}.`,
-      );
-      return;
-    }
-
-    if (personalityText === 'is the backyard awake') {
-      await message.reply(
-        getBackyardState() === 'awake'
-          ? 'yeah. the backyard is awake.'
-          : `nope. the backyard is ${getBackyardState()} right now.`,
-      );
-      return;
-    }
-
-    if (personalityText === 'what are you doing') {
-      await message.reply(
-        'watching Discord, keeping an eye on the backyard, and waiting for somebody to need me.',
-      );
-      return;
-    }
-
-    if (personalityText === 'good morning' || personalityText === 'goodmorning') {
-      await message.reply(`good morning, ${message.author}.`);
-      return;
-    }
-
-    if (personalityText === 'goodnight' || personalityText === 'good night') {
-      await message.reply(`goodnight, ${message.author}.`);
-      return;
-    }
-
-  }
-
   if (
     message.guild?.id === config.discord.guildId &&
     !/^afk\??(?:\s+(.+))?$/i.test(rawMessageText)
@@ -1981,80 +1919,6 @@ client.on(Events.MessageCreate, async message => {
       log(
         'AFK',
         `${message.author.tag} returned; cleared their AFK status after ${afkDuration}.`,
-      );
-
-      await message.channel.send(
-        `${message.author} your AFK status: **${afkStatus.reason}** was removed. — You were AFK for **${afkDuration}**.`,
-      );
-    }
-  }
-
-  if (
-    message.guild?.id === config.discord.guildId &&
-    normalizedMessageText === 'forget'
-  ) {
-    await message.reply(
-      forgetUserConversation(getDiscordAiSessionId(message)),
-    );
-
-    return;
-  }
-
-  if (
-    message.guild?.id === config.discord.guildId &&
-    normalizedMessageText === 'aforget'
-  ) {
-    if (!hasFeatureAccess('aforget', message.author.id, message.member)) {
-      await message.reply(
-        '✕ You are not authorized to use **aforget**.',
-      );
-
-      return;
-    }
-
-    await message.reply(
-      forgetAllConversations(),
-    );
-
-    return;
-  }
-
-  // ============================================================
-  // USER AFK STATUS
-  // ============================================================
-
-  const afkCommandMatch = rawMessageText.match(/^afk\??(?:\s+(.+))?$/i);
-
-  if (
-    message.guild?.id === config.discord.guildId &&
-    afkCommandMatch
-  ) {
-    const reason = afkCommandMatch[1]?.trim() || 'AFK';
-
-    setUserAfk(message.author.id, reason);
-
-    await message.reply(
-      `✓ You are now marked as AFK: **${userAfkStatuses.get(message.author.id).reason}**`,
-    );
-
-    return;
-  }
-
-
-  // Tell users when a mentioned member is AFK.
-  if (
-    message.guild?.id === config.discord.guildId &&
-    message.mentions.users.size > 0
-  ) {
-    for (const mentionedUser of message.mentions.users.values()) {
-      const afkStatus = getUserAfk(mentionedUser.id);
-
-      if (!afkStatus) {
-        continue;
-      }
-
-      await message.reply(
-        `ⓘ ${mentionedUser} is currently AFK: **${afkStatus.reason}** — since <t:${Math.floor(afkStatus.setAt / 1000)}:R>`,
       );
     }
   }
@@ -2080,8 +1944,7 @@ client.on(Events.MessageCreate, async message => {
       );
 
       await message.reply(
-        '✕ The AFK bot is currently not connected to Minecraft.',
-      );
+        '✕ The AFK bot is currently not connected to Minecraft.',      );
     }
 
     return;
@@ -2597,8 +2460,7 @@ const response = await ai.ask(contextualAiQuestion, {
       await message.reply(response);
     } catch (error) {
       log(
-        'AI',
-        `Unable to answer Discord mention: ${error.message}`,
+        'AI',        `Unable to answer Discord mention: ${error.message}`,
       );
 
       try {
@@ -2628,27 +2490,6 @@ const response = await ai.ask(contextualAiQuestion, {
     return;
   }
 
-  // ============================================================
-  // PUBLIC QUESTION AUTORESPONDERS
-  // Restore the deterministic Cottage★ instant-answer router for
-  // public questions, but only when the message actually ends in
-  // a question mark. Unknown questions remain silent and do not
-  // invoke Gemini.
-  // ============================================================
-
-  const publicQuestion = message.content.trim();
-
-  if (
-    message.guild?.id === config.discord.guildId &&
-    publicQuestion.endsWith('?')
-  ) {
-    const instantAnswer = ai.getInstantAnswer(publicQuestion);
-
-    if (instantAnswer) {
-      await message.reply(instantAnswer);
-      return;
-    }
-  }
 
 });
 client.on(Events.InteractionCreate, async interaction => {
@@ -2752,8 +2593,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
         return interaction.reply({
           content:
-            '✕ Failed to send the maintenance announcement.',
-          flags: MessageFlags.Ephemeral,
+            '✕ Failed to send the maintenance announcement.',          flags: MessageFlags.Ephemeral,
         });
       }
     }
