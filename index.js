@@ -647,8 +647,7 @@ async function reportErrorToDiscord(error, context = 'Main Bot') {
         ],
         footer: { text: 'The Cottage★ Diagnostics' },
         timestamp: new Date().toISOString(),
-      }],      allowedMentions: { parse: [] },
-    });
+      }],      allowedMentions: { parse: [] },    });
   } catch (reportError) {
     console.error(
       '[Error] Unable to send Discord error report:',
@@ -1297,8 +1296,7 @@ async function reconcileSlashCommands(source = 'Registrar') {
         }
 
         if (          !Array.isArray(actualValue) ||
-          desiredValue.length !== actualValue.length
-        ) {
+          desiredValue.length !== actualValue.length        ) {
           return false;
         }
 
@@ -1878,6 +1876,7 @@ client.on(Events.MessageCreate, async message => {
   // ============================================================
 
   const normalizedFollowUpMessageText = message.content
+    .replace(new RegExp(`<@!?${client.user?.id}>`, 'g'), '')
     .trim()
     .toLowerCase()
     .replace(/[!?.,]+$/g, '');
@@ -1927,8 +1926,6 @@ client.on(Events.MessageCreate, async message => {
   // ============================================================
   // PRIVATE DISCORD -> MINECRAFT RELAY
   // ============================================================
-  // PRIVATE DISCORD -> MINECRAFT RELAY
-  // ============================================================
 
   if (message.channel.id === config.discord.chatChannelId) {
     const text = message.content.trim();
@@ -1947,8 +1944,7 @@ client.on(Events.MessageCreate, async message => {
       );
 
       await message.reply(
-        '✕ The AFK bot is currently not connected to Minecraft.',
-      );
+        '✕ The AFK bot is currently not connected to Minecraft.',      );
     }
 
     return;
@@ -2597,8 +2593,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
         return interaction.reply({
           content:
-            '✕ Failed to send the maintenance announcement.',
-          flags: MessageFlags.Ephemeral,
+            '✕ Failed to send the maintenance announcement.',          flags: MessageFlags.Ephemeral,
         });
       }
     }
