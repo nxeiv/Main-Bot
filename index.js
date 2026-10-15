@@ -1901,7 +1901,6 @@ client.on(Events.MessageCreate, async message => {
   // ============================================================
 
   const rawMessageText = message.content.trim();
-  const normalizedMessageText = rawMessageText.toLowerCase();
   const afkCommandMatch = rawMessageText.match(/^afk(?:[ \t]+(.+))?$/i);
 
   // Explicit text counterpart for /afk. Keep this anchored so ordinary
