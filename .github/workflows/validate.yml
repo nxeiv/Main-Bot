@@ -26,6 +26,7 @@ jobs:
           node --check message-routing.js
           node --check status-server.js
           node --check afk-store.js
+          node --check ai-knowledge.js
           node --check minecraft.js
           node --check summary.js
           node --check unicode.js
