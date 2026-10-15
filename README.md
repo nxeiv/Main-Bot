@@ -94,6 +94,7 @@ The configured Minecraft account is **Server**.
 | `message-routing.js` | Pure policy for deciding when conversational AI may respond |
 | `status-server.js` | Read-only health and Minecraft status HTTP endpoints, including CORS policy |
 | `afk-store.js` | Persistent per-user Discord AFK state and validation |
+| `shutdown.js` | Idempotent cleanup of Minecraft, Discord, and HTTP connections |
 | `minecraft.js` | Mineflayer connection, reconnect logic, player tracking, chat, and anti-AFK behavior |
 | `ai.js` | Gemini clients, conversation memory, AI requests, rate limiting, and administrative request parsing |
 | `ai-knowledge.js` | Confirmed server facts, feature guides, aliases, help text, and AI system prompt |
@@ -547,6 +548,7 @@ When changing the bot:
 - keep conversational invocation rules in `message-routing.js`
 - keep the public HTTP status bridge in `status-server.js`
 - keep persisted user AFK state in `afk-store.js`
+- keep connection cleanup in `shutdown.js`
 - keep Minecraft connection logic in `minecraft.js`
 - keep AI request behavior in `ai.js`
 - keep confirmed server knowledge and the system prompt in `ai-knowledge.js`
