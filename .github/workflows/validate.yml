@@ -28,6 +28,6 @@ jobs:
           node --check unicode.js
           node --check config.js
       - name: Install locked dependencies
-        run: npm ci --ignore-scripts --no-audit --no-fund
+        run: npm install --ignore-scripts --no-audit --no-fund
       - name: Run unit tests
         run: npm test
