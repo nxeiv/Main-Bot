@@ -18,7 +18,6 @@ const {
   MessageFlags,
   REST,
   Routes,
-  SlashCommandBuilder,
 } = require('discord.js');
 
 const config = require('./config');
@@ -330,112 +329,7 @@ const client = new Client({
   ],
 });
 
-const commands = [
-  new SlashCommandBuilder()
-    .setName('start')
-    .setDescription('▶ Starts the Minecraft AFK session'),
-
-  new SlashCommandBuilder()
-    .setName('stop')
-    .setDescription('■ Stops the Minecraft AFK session'),
-
-  new SlashCommandBuilder()
-    .setName('status')
-    .setDescription('ⓘ Shows Minecraft AFK status'),
-
-  new SlashCommandBuilder()
-    .setName('afk')
-    .setDescription('Marks yourself as AFK')
-    .addStringOption(option =>
-      option
-        .setName('reason')
-        .setDescription('Optional reason for being AFK')
-        .setRequired(false),
-  ),
-
-  new SlashCommandBuilder()
-    .setName('remind')
-    .setDescription('Creates a personal reminder')
-    .addStringOption(option =>
-      option
-        .setName('duration')
-        .setDescription('How long from now, such as 30m, 2h, or 1d')
-        .setRequired(true),
-    )
-    .addStringOption(option =>
-      option
-        .setName('message')
-        .setDescription('What you want to be reminded about')
-        .setMaxLength(500)
-        .setRequired(true),
-    ),
-
-  new SlashCommandBuilder()
-    .setName('reminders')
-    .setDescription('Lists your active reminders'),
-
-  new SlashCommandBuilder()
-    .setName('remind-cancel')
-    .setDescription('Cancels one of your reminders')
-    .addStringOption(option =>
-      option
-        .setName('id')
-        .setDescription('Reminder ID from /reminders')
-        .setRequired(true),
-    ),
-
-  new SlashCommandBuilder()
-    .setName('maintenance')
-    .setDescription(
-      '⚒︎ Announces server maintenance DO NOT USE IF NOT SMP MODERATOR.',
-    ),
-
-  new SlashCommandBuilder()
-    .setName('forget')
-    .setDescription('⌫ Forgets your AI conversation context'),
-
-  new SlashCommandBuilder()
-    .setName('aforget')
-    .setDescription('⌫ Forgets all AI conversation contexts (admin only)'),
-
-  new SlashCommandBuilder()
-    .setName('ai')
-    .setDescription('◉ AI diagnostics (admin only)')
-    .addSubcommand(subcommand =>
-      subcommand
-        .setName('status')
-        .setDescription('ⓘ Shows AI health and queue diagnostics'),
-    ),
-
-  new SlashCommandBuilder()
-    .setName('dashboard')
-    .setDescription('◎ Shows Discord, Minecraft, and AI health'),
-
-  new SlashCommandBuilder()
-    .setName('help')
-    .setDescription('ⓘ Shows Cottage★ commands and features'),
-
-  new SlashCommandBuilder()
-    .setName('ping')
-    .setDescription('Shows the bot latency'),
-
-  new SlashCommandBuilder()
-    .setName('summarize')
-    .setDescription('Creates a private summary of recent messages (expires after 10 minutes)')
-    .addChannelOption(option =>
-      option
-        .setName('channel')
-        .setDescription('Channel to summarize')
-        .addChannelTypes(
-          ChannelType.GuildText,
-          ChannelType.GuildAnnouncement,
-        )
-        .setRequired(true),
-  ),
-
-
-
-].map(command => command.toJSON());
+const commands = require('./commands');
 
 function log(tag, message) {
   const timestamp = new Date().toISOString().replace('T', ' ').slice(0, 19);
