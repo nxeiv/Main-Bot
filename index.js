@@ -1951,7 +1951,10 @@ client.on(Events.MessageCreate, async message => {
     .map(user => ({ user, status: getUserAfk(user.id) }))
     .filter(entry => entry.status);
 
-  if (mentionedAfkUsers.length > 0) {
+  if (
+    message.guild?.id === config.discord.guildId &&
+    mentionedAfkUsers.length > 0
+  ) {
     const visibleAfkUsers = mentionedAfkUsers.slice(0, 5);
     const afkMentionLines = visibleAfkUsers.map(({ user, status }) => {
       const safeReason = status.reason.replace(/([*_~|>])/g, '\\$1');
@@ -2809,9 +2812,12 @@ client.on(Events.InteractionCreate, async interaction => {
 
       setUserAfk(interaction.user.id, reason);
 
+      const reason = userAfkStatuses.get(interaction.user.id).reason;
+      const safeReason = reason.replace(/([*_~|>])/g, '\\$1');
+
       return interaction.reply({
-        content: '✓ You are now marked as AFK: **' +
-          userAfkStatuses.get(interaction.user.id).reason + '**',
+        content: '✓ You are now marked as AFK: **' + safeReason + '**',
+        allowedMentions: { parse: [] },
       });
     }
 
