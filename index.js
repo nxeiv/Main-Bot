@@ -24,6 +24,7 @@ const {
 const config = require('./config');
 const mc = require('./minecraft');
 const ai = require('./ai');
+const { isExplicitBotInvocation } = require('./message-policy');
 const summary = require('./summary');
 const { applyUnicodeTheme } = require('./unicode');
 const reminders = require('./reminders');
@@ -2056,7 +2057,10 @@ client.on(Events.MessageCreate, async message => {
   if (
     message.guild?.id === config.discord.guildId &&
     client.user &&
-    isDirectBotMention
+    isExplicitBotInvocation({
+      isDirectMention: isDirectBotMention,
+      isReplyToBot,
+    })
   ) {
 const botMentionRegex = new RegExp(
   `<@!?${client.user.id}>`,
