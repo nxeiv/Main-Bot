@@ -163,30 +163,30 @@ const FEATURE_TUTORIALS = {
     'Java players need the Simple Voice Chat mod on their client. Bedrock players can use /dvc start in-game for their dedicated voice connection.',
 };
 
-const BOT_HELP_MESSAGE = \`**The Cottage★ Help**
+const BOT_HELP_MESSAGE = `**The Cottage★ Help**
 
 For an AI answer, mention **@The Cottage★** or reply directly to one of my messages. I stay quiet during ordinary conversation.
 
 **Everyday commands**
-• \`/help\` — show this guide
-• \`/afk [reason]\` — set your AFK status
-• \`/forget\` — clear your own AI conversation context
-• \`/remind <duration> <message>\` — create a personal reminder
-• \`/reminders\` — list your active reminders
-• \`/remind-cancel <id>\` — cancel one of your reminders
-• \`/summarize <channel>\` — request a summary of recent channel messages
+• **/help** — show this guide
+• **/afk [reason]** — set your AFK status
+• **/forget** — clear your own AI conversation context
+• **/remind <duration> <message>** — create a personal reminder
+• **/reminders** — list your active reminders
+• **/remind-cancel <id>** — cancel one of your reminders
+• **/summarize <channel>** — request a summary of recent channel messages
 
 **Server team commands**
-• \`/start\` · \`/stop\` · \`/status\` — manage or check the Minecraft AFK session
-• \`/maintenance\` — announce server maintenance
-• \`/dashboard\` — inspect service health
-• \`/ping\` — check bot latency
-• \`/ai status\` — inspect AI health and queue diagnostics
-• \`/aforget\` — clear all AI conversation contexts
+• **/start** · **/stop** · **/status** — manage or check the Minecraft AFK session
+• **/maintenance** — announce server maintenance
+• **/dashboard** — inspect service health
+• **/ping** — check bot latency
+• **/ai status** — inspect AI health and queue diagnostics
+• **/aforget** — clear all AI conversation contexts
 
 Access to server-team and diagnostic commands is restricted by the bot's permission settings. Use Discord's slash-command menu to see the commands available to you.
 
-For Minecraft help, mention me or reply to me with your question about Java, Bedrock, joining, SMP features, rules, or the world download.\`;
+For Minecraft help, mention me or reply to me with your question about Java, Bedrock, joining, SMP features, rules, or the world download.`;
 
 const FEATURE_ALIASES = {
   cracked: 'Open Doors',
