@@ -89,7 +89,8 @@ The configured Minecraft account is **Server**.
 
 | File | Responsibility |
 | --- | --- |
-| `index.js` | Discord client, commands, events, scheduling, permissions, HTTP status API, and Discord/Minecraft orchestration |
+| `index.js` | Discord client, events, scheduling, permissions, HTTP status API, and Discord/Minecraft orchestration |
+| `commands.js` | Slash-command definitions and Discord command schema |
 | `minecraft.js` | Mineflayer connection, reconnect logic, player tracking, chat, and anti-AFK behavior |
 | `ai.js` | Gemini clients, conversation memory, deterministic answers, AI requests, rate limiting, and administrative request parsing |
 | `summary.js` | Channel-summary generation and dismiss-button behavior |
@@ -538,6 +539,7 @@ Check:
 When changing the bot:
 
 - keep Discord orchestration in `index.js`
+- keep slash-command definitions in `commands.js`
 - keep Minecraft connection logic in `minecraft.js`
 - keep AI behavior and confirmed server knowledge in `ai.js`
 - keep summaries in `summary.js`
