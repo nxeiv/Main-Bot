@@ -95,7 +95,8 @@ The configured Minecraft account is **Server**.
 | `status-server.js` | Read-only health and Minecraft status HTTP endpoints, including CORS policy |
 | `afk-store.js` | Persistent per-user Discord AFK state and validation |
 | `minecraft.js` | Mineflayer connection, reconnect logic, player tracking, chat, and anti-AFK behavior |
-| `ai.js` | Gemini clients, conversation memory, deterministic answers, AI requests, rate limiting, and administrative request parsing |
+| `ai.js` | Gemini clients, conversation memory, AI requests, rate limiting, and administrative request parsing |
+| `ai-knowledge.js` | Confirmed server facts, feature guides, aliases, help text, and AI system prompt |
 | `summary.js` | Channel-summary generation and dismiss-button behavior |
 | `unicode.js` | Shared Unicode-first presentation/theme layer |
 | `config.js` | Discord, Minecraft, access policy, reconnect, and server configuration |
@@ -547,7 +548,8 @@ When changing the bot:
 - keep the public HTTP status bridge in `status-server.js`
 - keep persisted user AFK state in `afk-store.js`
 - keep Minecraft connection logic in `minecraft.js`
-- keep AI behavior and confirmed server knowledge in `ai.js`
+- keep AI request behavior in `ai.js`
+- keep confirmed server knowledge and the system prompt in `ai-knowledge.js`
 - keep summaries in `summary.js`
 - keep Unicode presentation logic in `unicode.js`
 - keep secrets in environment variables
