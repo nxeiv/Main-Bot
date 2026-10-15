@@ -46,7 +46,8 @@ const config = {
   server: {
     ip: 'the-cottage-c1-s5.play.hosting',
     port: 25565,
-    version: '1.21.11',
+    version: 'Paper 26.2',
+    clientProtocolVersion: '1.21.11',
   },
 
   bot: {
