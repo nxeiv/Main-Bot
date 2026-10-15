@@ -25,6 +25,7 @@ const mc = require('./minecraft');
 const ai = require('./ai');
 const summary = require('./summary');
 const { applyUnicodeTheme } = require('./unicode');
+const { shouldHandleConversationalMessage } = require('./message-routing');
 const reminders = require('./reminders');
 
 const scheduledAdminActions = new Map();
@@ -1790,30 +1791,7 @@ client.on(Events.MessageCreate, async message => {
     return;
   }
 
-  // ============================================================
-  // AI FORGET BUZZWORDS
-  // ============================================================
-
-  const rawMessageText = message.content.trim();
-  const afkCommandMatch = rawMessageText.match(/^afk(?:[ \t]+(.+))?$/i);
-
-  // Explicit text counterpart for /afk. Keep this anchored so ordinary
-  // conversation containing the word "afk" never activates the command.
-  if (
-    message.guild?.id === config.discord.guildId &&
-    afkCommandMatch
-  ) {
-    const reason = (afkCommandMatch[1] || '').trim().slice(0, 200) || 'AFK';
-    setUserAfk(message.author.id, reason);
-    const safeReason = reason.replace(/([*_~|>])/g, '\\$1');
-
-    await message.reply({
-      content: '✓ You are now marked as AFK: **' + safeReason + '**',
-      allowedMentions: { parse: [], repliedUser: false },
-    });
-
-    return;
-  }
+  // AFK STATE CLEANUP
 
   // Any ordinary message means the author has returned.
   if (message.guild?.id === config.discord.guildId) {
@@ -1834,42 +1812,6 @@ client.on(Events.MessageCreate, async message => {
     }
   }
 
-  // Reply with the saved AFK reason and duration when someone mentions
-  // an AFK member. No extra user notifications are triggered by this reply.
-  const mentionedAfkUsers = [...message.mentions.users.values()]
-    .filter(user =>
-      user.id !== message.author.id &&
-      user.id !== client.user?.id &&
-      !user.bot,
-    )
-    .map(user => ({ user, status: getUserAfk(user.id) }))
-    .filter(entry => entry.status);
-
-  if (
-    message.guild?.id === config.discord.guildId &&
-    mentionedAfkUsers.length > 0
-  ) {
-    const visibleAfkUsers = mentionedAfkUsers.slice(0, 5);
-    const afkMentionLines = visibleAfkUsers.map(({ user, status }) => {
-      const safeReason = status.reason.replace(/([*_~|>])/g, '\\$1');
-      const duration = formatAfkDuration(Date.now() - status.setAt);
-
-      return 'ⓘ **' + user.username + '** is AFK: **' +
-        safeReason + '** (away for ' + duration + ').';
-    });
-
-    if (mentionedAfkUsers.length > visibleAfkUsers.length) {
-      afkMentionLines.push(
-        '…and ' + (mentionedAfkUsers.length - visibleAfkUsers.length) +
-        ' more AFK member(s).',
-      );
-    }
-
-    await message.reply({
-      content: afkMentionLines.join('\n'),
-      allowedMentions: { parse: [], repliedUser: false },
-    });
-  }
   // Detect a real Discord user mention as well as the raw <@id> syntax.
   // A direct bot ping is a bot request, even in the Minecraft relay channel.
   const isBotMentionedBeforeRelay =
@@ -1948,9 +1890,13 @@ client.on(Events.MessageCreate, async message => {
   }
 
   if (
-    message.guild?.id === config.discord.guildId &&
     client.user &&
-    isDirectBotMention
+    shouldHandleConversationalMessage({
+      guildId: message.guild?.id,
+      configuredGuildId: config.discord.guildId,
+      isDirectBotMention,
+      isReplyToBot,
+    })
   ) {
 const botMentionRegex = new RegExp(
   `<@!?${client.user.id}>`,
