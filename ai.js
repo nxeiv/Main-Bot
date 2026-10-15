@@ -163,39 +163,30 @@ const FEATURE_TUTORIALS = {
     'Java players need the Simple Voice Chat mod on their client. Bedrock players can use /dvc start in-game for their dedicated voice connection.',
 };
 
-const BOT_HELP_MESSAGE = `**The Cottage★ Help**
+const BOT_HELP_MESSAGE = \`**The Cottage★ Help**
 
-Mention me or reply to one of my messages when you want an AI answer.
+For an AI answer, mention **@The Cottage★** or reply directly to one of my messages. I stay quiet during ordinary conversation.
 
-Slash-command replies are private to you. Public \`?\` text interactions are visible to the channel.
+**Everyday commands**
+• \`/help\` — show this guide
+• \`/afk [reason]\` — set your AFK status
+• \`/forget\` — clear your own AI conversation context
+• \`/remind <duration> <message>\` — create a personal reminder
+• \`/reminders\` — list your active reminders
+• \`/remind-cancel <id>\` — cancel one of your reminders
+• \`/summarize <channel>\` — request a summary of recent channel messages
 
-**Commands**
-• [Public] \`/help\` — show this help
-• [Admin] \`/ping\` — check bot latency
-• [Public] \`/forget\` — clear your own AI conversation
-• [Public] \`/remind <duration> <message>\` — set a personal reminder
-• [Public] \`/reminders\` — list your active reminders
-• [Public] \`/remind-cancel <id>\` — cancel one of your reminders
-• [Public] \`/summarize <channel>\` — private channel summary
+**Server team commands**
+• \`/start\` · \`/stop\` · \`/status\` — manage or check the Minecraft AFK session
+• \`/maintenance\` — announce server maintenance
+• \`/dashboard\` — inspect service health
+• \`/ping\` — check bot latency
+• \`/ai status\` — inspect AI health and queue diagnostics
+• \`/aforget\` — clear all AI conversation contexts
 
-**Admin**
-• [Admin] \`/start\` \`/stop\` \`/status\`
-• [Admin] \`/maintenance\` \`/dashboard\`
-• [Admin] \`/aforget\` \`/ai status\`
+Access to server-team and diagnostic commands is restricted by the bot's permission settings. Use Discord's slash-command menu to see the commands available to you.
 
-**Public AFK**
-• \`afk?\` — mark yourself AFK or update your reason
-
-**Mention-only shortcuts**
-Ping the bot before using these:
-• \`start?\` · \`stop?\` · \`status?\` · \`dashboard?\`
-• \`ai status?\`
-• \`summarize? #channel\`
-
-**Public questions**
-• \`ip?\` · \`bedrock join?\` · \`rules?\` · \`channels?\` · \`roles?\` · \`features?\`
-• \`who are you?\` · \`are you awake?\` · \`is the backyard awake?\` · \`what are you doing?\`
-• Ask about Java, Bedrock, joining, SMP features, or the world download.`;
+For Minecraft help, mention me or reply to me with your question about Java, Bedrock, joining, SMP features, rules, or the world download.\`;
 
 const FEATURE_ALIASES = {
   cracked: 'Open Doors',
