@@ -168,23 +168,23 @@ const BOT_HELP_MESSAGE = `**The Cottage★ Help**
 Mention me or reply to one of my messages when you want an AI answer. I stay quiet during normal conversation.
 
 **Public commands**
-• `/help` — show this help
-• `/afk [reason]` — mark yourself AFK or update your reason
-• `/forget` — clear your own AI conversation context
-• `/remind <duration> <message>` — set a personal reminder
-• `/reminders` — list your active reminders
-• `/remind-cancel <id>` — cancel one of your reminders
-• `/summarize <channel>` — create a temporary private summary
+• \`/help\` — show this help
+• \`/afk [reason]\` — mark yourself AFK or update your reason
+• \`/forget\` — clear your own AI conversation context
+• \`/remind <duration> <message>\` — set a personal reminder
+• \`/reminders\` — list your active reminders
+• \`/remind-cancel <id>\` — cancel one of your reminders
+• \`/summarize <channel>\` — create a temporary private summary
 
 **Admin commands**
-• `/start` · `/stop` · `/status` — control or check the Minecraft AFK session
-• `/maintenance` — announce planned server maintenance
-• `/dashboard` — check Discord, Minecraft, and AI health
-• `/ping` — check bot latency
-• `/aforget` — clear all AI conversation contexts
-• `/ai status` — inspect AI health and queue diagnostics
+• \`/start\` · \`/stop\` · \`/status\` — control or check the Minecraft AFK session
+• \`/maintenance\` — announce planned server maintenance
+• \`/dashboard\` — check Discord, Minecraft, and AI health
+• \`/ping\` — check bot latency
+• \`/aforget\` — clear all AI conversation contexts
+• \`/ai status\` — inspect AI health and queue diagnostics
 
-Slash-command access depends on the configured permissions. The bot does not use public keyword shortcuts for ordinary conversation.`
+Slash-command access depends on the configured permissions. The bot does not use public keyword shortcuts for ordinary conversation.`;
 
 const FEATURE_ALIASES = {
   cracked: 'Open Doors',
