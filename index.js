@@ -2812,8 +2812,8 @@ client.on(Events.InteractionCreate, async interaction => {
 
       setUserAfk(interaction.user.id, reason);
 
-      const reason = userAfkStatuses.get(interaction.user.id).reason;
-      const safeReason = reason.replace(/([*_~|>])/g, '\\$1');
+      const storedReason = userAfkStatuses.get(interaction.user.id).reason;
+      const safeReason = storedReason.replace(/([*_~|>])/g, '\\$1');
 
       return interaction.reply({
         content: '✓ You are now marked as AFK: **' + safeReason + '**',
