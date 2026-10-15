@@ -2056,7 +2056,7 @@ client.on(Events.MessageCreate, async message => {
   if (
     message.guild?.id === config.discord.guildId &&
     client.user &&
-    (isDirectBotMention || isReplyToBot)
+    isDirectBotMention
   ) {
 const botMentionRegex = new RegExp(
   `<@!?${client.user.id}>`,
@@ -2146,13 +2146,16 @@ const contextualAiQuestion =
     // NEW MEMBER WELCOME
     // ========================================================
 
-    const isNewMemberRequest =
-      /\bnew member\b/i.test(normalizedQuestion) ||
-      /\bnew here\b/i.test(normalizedQuestion) ||
-      /\bjust joined\b/i.test(normalizedQuestion) ||
-      /\bnew to the server\b/i.test(normalizedQuestion);
+    // Only handle an explicit request for welcome-message help or a clear
+    // announcement that someone has already joined. Mentioning the idea of
+    // bringing/inviting a new member is not a request for a welcome message.
+    const isNewMemberWelcomeRequest =
+      /\bhow (?:do|can) i welcome (?:a |the )?(?:new member|new person|them)\b/i.test(normalizedQuestion) ||
+      /\b(?:write|make|draft|give me) (?:a |an )?welcome message\b/i.test(normalizedQuestion) ||
+      /\b(?:a |the )?new member (?:has |just )joined\b/i.test(normalizedQuestion) ||
+      /\b(?:welcome|say hi to) (?:our |the )?new member\b/i.test(normalizedQuestion);
 
-    if (isNewMemberRequest) {
+    if (isNewMemberWelcomeRequest) {
       await message.reply(
         `Hello <@${message.author.id}>! Welcome to The Cottage★! ⌂
 
