@@ -27,6 +27,7 @@ const { applyUnicodeTheme } = require('./unicode');
 const { shouldHandleConversationalMessage } = require('./message-routing');
 const { startStatusServer } = require('./status-server');
 const { createAfkStore } = require('./afk-store');
+const { createShutdownHandler } = require('./shutdown');
 const reminders = require('./reminders');
 
 const scheduledAdminActions = new Map();
@@ -2737,7 +2738,22 @@ process.on('unhandledRejection', reason => {
   );
 });
 
-startStatusServer({ mc, log });
+const statusServer = startStatusServer({ mc, log });
+const shutdown = createShutdownHandler({
+  client,
+  mc,
+  statusServer,
+  log,
+});
+
+function handleShutdownSignal(signal) {
+  void shutdown(signal).finally(() => {
+    process.exit(0);
+  });
+}
+
+process.once('SIGINT', () => handleShutdownSignal('SIGINT'));
+process.once('SIGTERM', () => handleShutdownSignal('SIGTERM'));
 
 log('Discord', 'Starting Discord bot.');
 client.login(config.discord.token);
