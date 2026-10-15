@@ -4,9 +4,9 @@ const SERVER_INFO = {
   name: 'The Cottage★ SMP',
   chapter: 'Chapter 1 • Season 5',
 
-  // Java
-  minecraftVersion: '1.21.11',
-  serverSoftware: 'Paper 26.2',
+  // Java server version. Separate from the Mineflayer client protocol setting.
+  serverVersion: 'Paper 26.2',
+  serverSoftware: 'Paper',
   javaAddress: 'the-cottage-c1-s5.play.hosting',
 
   // Bedrock
@@ -287,7 +287,7 @@ ${SERVER_INFO.name}
 ${SERVER_INFO.chapter}
 
 Java:
-Minecraft version: ${SERVER_INFO.minecraftVersion}
+Server version: ${SERVER_INFO.serverVersion}
 Server software: ${SERVER_INFO.serverSoftware}
 Address: ${SERVER_INFO.javaAddress}
 
@@ -1365,7 +1365,7 @@ function getKnownAnswer(message) {
   }
 
   if (text === 'java?' || text === 'java' || text === 'java server?' || text === 'java server') {
-    return `Java: Minecraft ${SERVER_INFO.minecraftVersion} • ${SERVER_INFO.serverSoftware} • ${SERVER_INFO.javaAddress}`;
+    return `Java: ${SERVER_INFO.serverVersion} • ${SERVER_INFO.javaAddress}`;
   }
 
   if (text === 'bedrock?' || text === 'bedrock' || text === 'bedrock join?' || text === 'bedrock joining?') {

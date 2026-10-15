@@ -198,7 +198,8 @@ Current `config.js` settings:
 | --- | --- |
 | Host | `the-cottage-c1-s5.play.hosting` |
 | Port | `25565` |
-| Version | `1.21.11` |
+| Server software/version | `Paper 26.2` |
+| Mineflayer client protocol setting | `1.21.11` (separate from server version) |
 | Bot username | `Server` |
 | Authentication | `offline` |
 | Reconnect start | `60 seconds` |
@@ -213,9 +214,13 @@ The Minecraft hostname is used internally by the bot. It should not be added to 
 | Command | Access | Purpose |
 | --- | --- | --- |
 | `/help` | Public | Shows bot help and access labels |
-| `/ping` | Public | Shows the current Discord bot latency |\n| `/forget` | Public | Clears the requesting user's AI conversation |
+| `/forget` | Public | Clears the requesting user's AI conversation |
 | `/summarize <channel>` | Public | Privately summarizes recent messages |
-| `/afk [reason]` | Public | Marks the requesting user as AFK |
+| `/afk [reason]` | Public | Marks the requesting user as AFK; response is public |
+| `/remind <duration> <message>` | Public | Creates a personal reminder |
+| `/reminders` | Public | Lists your active reminders |
+| `/remind-cancel <id>` | Public | Cancels one of your reminders |
+| `/ping` | Admin | Shows the current Discord bot latency |
 | `/start` | Admin | Starts the Minecraft AFK session |
 | `/stop` | Admin | Stops the Minecraft AFK session |
 | `/status` | Admin | Shows Minecraft status |
@@ -225,6 +230,10 @@ The Minecraft hostname is used internally by the bot. It should not be added to 
 | `/ai status` | Admin | Shows AI health and queue diagnostics |
 
 The bot's `/help` response mirrors these access labels directly in Discord.
+
+**Text counterparts are ping-gated unless explicitly documented otherwise.** The special `afk [reason]` text command is an intentional exception: it works without pinging the bot, is matched as a standalone message, and replies publicly.
+
+The configured Mineflayer client protocol is separate from the server version. The project currently depends on upstream `mineflayer` 4.39.x, which does not yet natively support Minecraft Java 26.2; do not change the client protocol to `26.2` until a compatible protocol stack is installed and tested.
 
 ---
 

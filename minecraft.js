@@ -161,11 +161,11 @@ function createBot() {
 
   let bot;
   try {
-    const mcVersion = config.server.version || false;
+    const mcVersion = config.server.clientProtocolVersion || false;
     if (mcVersion) {
-      log('Bot', `Using Minecraft version ${mcVersion}.`);
+      log('Bot', `Using Minecraft client protocol version ${mcVersion}.`);
     } else {
-      log('Bot', 'No Minecraft version specified; detecting it automatically.');
+      log('Bot', 'No Minecraft client protocol version specified; detecting it automatically.');
     }
 
     bot = mineflayer.createBot({

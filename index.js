@@ -1901,12 +1901,28 @@ client.on(Events.MessageCreate, async message => {
   // ============================================================
 
   const rawMessageText = message.content.trim();
-  const normalizedMessageText = rawMessageText.toLowerCase();
+  const afkCommandMatch = rawMessageText.match(/^afk(?:[ \t]+(.+))?$/i);
 
+  // Explicit text counterpart for /afk. Keep this anchored so ordinary
+  // conversation containing the word "afk" never activates the command.
   if (
     message.guild?.id === config.discord.guildId &&
-    !/^afk\??(?:\s+(.+))?$/i.test(rawMessageText)
+    afkCommandMatch
   ) {
+    const reason = (afkCommandMatch[1] || '').trim().slice(0, 200) || 'AFK';
+    setUserAfk(message.author.id, reason);
+    const safeReason = reason.replace(/([*_~|>])/g, '\\$1');
+
+    await message.reply({
+      content: '✓ You are now marked as AFK: **' + safeReason + '**',
+      allowedMentions: { parse: [], repliedUser: false },
+    });
+
+    return;
+  }
+
+  // Any ordinary message means the author has returned.
+  if (message.guild?.id === config.discord.guildId) {
     const afkStatus = getUserAfk(message.author.id);
 
     if (afkStatus) {
@@ -1918,16 +1934,65 @@ client.on(Events.MessageCreate, async message => {
 
       log(
         'AFK',
-        `${message.author.tag} returned; cleared their AFK status after ${afkDuration}.`,
+        message.author.tag + ' returned; cleared their AFK status after ' +
+          afkDuration + '.',
       );
     }
   }
+
+  // Reply with the saved AFK reason and duration when someone mentions
+  // an AFK member. No extra user notifications are triggered by this reply.
+  const mentionedAfkUsers = [...message.mentions.users.values()]
+    .filter(user =>
+      user.id !== message.author.id &&
+      user.id !== client.user?.id &&
+      !user.bot,
+    )
+    .map(user => ({ user, status: getUserAfk(user.id) }))
+    .filter(entry => entry.status);
+
+  if (
+    message.guild?.id === config.discord.guildId &&
+    mentionedAfkUsers.length > 0
+  ) {
+    const visibleAfkUsers = mentionedAfkUsers.slice(0, 5);
+    const afkMentionLines = visibleAfkUsers.map(({ user, status }) => {
+      const safeReason = status.reason.replace(/([*_~|>])/g, '\\$1');
+      const duration = formatAfkDuration(Date.now() - status.setAt);
+
+      return 'ⓘ **' + user.username + '** is AFK: **' +
+        safeReason + '** (away for ' + duration + ').';
+    });
+
+    if (mentionedAfkUsers.length > visibleAfkUsers.length) {
+      afkMentionLines.push(
+        '…and ' + (mentionedAfkUsers.length - visibleAfkUsers.length) +
+        ' more AFK member(s).',
+      );
+    }
+
+    await message.reply({
+      content: afkMentionLines.join('\n'),
+      allowedMentions: { parse: [], repliedUser: false },
+    });
+  }
+  // Detect a real Discord user mention as well as the raw <@id> syntax.
+  // A direct bot ping is a bot request, even in the Minecraft relay channel.
+  const isBotMentionedBeforeRelay =
+    Boolean(client.user) &&
+    (
+      message.mentions.users.has(client.user.id) ||
+      new RegExp('<@!?' + client.user.id + '>').test(message.content)
+    );
 
   // ============================================================
   // PRIVATE DISCORD -> MINECRAFT RELAY
   // ============================================================
 
-  if (message.channel.id === config.discord.chatChannelId) {
+  if (
+    message.channel.id === config.discord.chatChannelId &&
+    !isBotMentionedBeforeRelay
+  ) {
     const text = message.content.trim();
 
     if (!text) {
@@ -1958,8 +2023,11 @@ client.on(Events.MessageCreate, async message => {
   );
 
   const isDirectBotMention =
-    client.user &&
-    botDirectMentionRegex.test(message.content);
+    Boolean(client.user) &&
+    (
+      message.mentions.users.has(client.user.id) ||
+      botDirectMentionRegex.test(message.content)
+    );
 
   let isReplyToBot =
     Boolean(client.user) &&
@@ -2744,9 +2812,12 @@ client.on(Events.InteractionCreate, async interaction => {
 
       setUserAfk(interaction.user.id, reason);
 
+      const storedReason = userAfkStatuses.get(interaction.user.id).reason;
+      const safeReason = storedReason.replace(/([*_~|>])/g, '\\$1');
+
       return interaction.reply({
-        content: `✓ You are now marked as AFK: **${userAfkStatuses.get(interaction.user.id).reason}**`,
-        flags: MessageFlags.Ephemeral,
+        content: '✓ You are now marked as AFK: **' + safeReason + '**',
+        allowedMentions: { parse: [] },
       });
     }
 
