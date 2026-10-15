@@ -26,3 +26,5 @@ jobs:
           node --check summary.js
           node --check unicode.js
           node --check config.js
+      - name: Run unit tests
+        run: npm test
