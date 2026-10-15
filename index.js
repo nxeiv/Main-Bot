@@ -26,6 +26,7 @@ const summary = require('./summary');
 const { applyUnicodeTheme } = require('./unicode');
 const { shouldHandleConversationalMessage } = require('./message-routing');
 const { startStatusServer } = require('./status-server');
+const { createAfkStore } = require('./afk-store');
 const reminders = require('./reminders');
 
 const scheduledAdminActions = new Map();
@@ -229,99 +230,16 @@ function loadScheduledAdminActions() {
   }
 }
 
-const USER_AFK_FILE = path.join(
-  __dirname,
-  'user-afk.json',
-);
+const afkStore = createAfkStore({
+  filePath: path.join(__dirname, 'user-afk.json'),
+  log: message => log('AFK', message),
+});
 
-const userAfkStatuses = new Map();
-
-function saveUserAfkStatuses() {
-  try {
-    const serializedStatuses = Object.fromEntries(
-      userAfkStatuses.entries(),
-    );
-
-    fs.writeFileSync(
-      USER_AFK_FILE,
-      JSON.stringify(serializedStatuses, null, 2),
-      'utf8',
-    );
-  } catch (error) {
-    log(
-      'AFK',
-      `Unable to save user AFK statuses: ${error.message}`,
-    );
-  }
-}
-
-function loadUserAfkStatuses() {
-  try {
-    if (!fs.existsSync(USER_AFK_FILE)) {
-      return;
-    }
-
-    const raw = fs.readFileSync(USER_AFK_FILE, 'utf8');
-
-    if (!raw.trim()) {
-      return;
-    }
-
-    const saved = JSON.parse(raw);
-
-    if (!saved || typeof saved !== 'object' || Array.isArray(saved)) {
-      throw new Error('user-afk.json must contain a JSON object.');
-    }
-
-    for (const [userId, status] of Object.entries(saved)) {
-      if (
-        typeof userId === 'string' &&
-        status &&
-        typeof status === 'object' &&
-        typeof status.reason === 'string' &&
-        Number.isSafeInteger(status.setAt) &&
-        status.setAt > 0
-      ) {
-        userAfkStatuses.set(userId, {
-          reason: status.reason.slice(0, 200),
-          setAt: status.setAt,
-        });
-      }
-    }
-  } catch (error) {
-    log(
-      'AFK',
-      `Unable to load user AFK statuses: ${error.message}`,
-    );
-  }
-}
-
-function setUserAfk(userId, reason = 'AFK') {
-  const normalizedReason = String(reason || '').trim() || 'AFK';
-
-  userAfkStatuses.set(userId, {
-    reason: normalizedReason.slice(0, 200),
-    setAt: Date.now(),
-  });
-
-  saveUserAfkStatuses();
-}
-
-function clearUserAfk(userId) {
-  const cleared = userAfkStatuses.delete(userId);
-
-  if (cleared) {
-    saveUserAfkStatuses();
-  }
-
-  return cleared;
-}
-
-function getUserAfk(userId) {
-  return userAfkStatuses.get(userId) || null;
-}
-
-loadUserAfkStatuses();
+const {
+  clearUserAfk,
+  getUserAfk,
+  setUserAfk,
+} = afkStore;
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -2548,7 +2466,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
       setUserAfk(interaction.user.id, reason);
 
-      const storedReason = userAfkStatuses.get(interaction.user.id).reason;
+      const storedReason = getUserAfk(interaction.user.id).reason;
       const safeReason = storedReason.replace(/([*_~|>])/g, '\\$1');
 
       return interaction.reply({
