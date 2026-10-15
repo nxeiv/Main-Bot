@@ -170,6 +170,7 @@ For an AI answer, mention **@The Cottage★** or reply directly to one of my mes
 **Everyday commands**
 • **/help** — show this guide
 • **/afk [reason]** — set your AFK status
+• **afk [reason]** — text shortcut for setting your AFK status
 • **/forget** — clear your own AI conversation context
 • **/remind <duration> <message>** — create a personal reminder
 • **/reminders** — list your active reminders
@@ -185,6 +186,8 @@ For an AI answer, mention **@The Cottage★** or reply directly to one of my mes
 • **/aforget** — clear all AI conversation contexts
 
 Access to server-team and diagnostic commands is restricted by the bot's permission settings. Use Discord's slash-command menu to see the commands available to you.
+
+When someone mentions a member who is marked AFK, I can show that member's AFK reason and how long they have been away.
 
 For Minecraft help, mention me or reply to me with your question about Java, Bedrock, joining, SMP features, rules, or the world download.`;
 
