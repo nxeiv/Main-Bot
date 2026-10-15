@@ -229,9 +229,9 @@ The Minecraft hostname is used internally by the bot. It should not be added to 
 | `/aforget` | Admin | Clears all AI conversations |
 | `/ai status` | Admin | Shows AI health and queue diagnostics |
 
-The bot's `/help` response mirrors these access labels directly in Discord.
+The bot's `/help` response mirrors the supported commands directly in Discord.
 
-**Text counterparts are ping-gated unless explicitly documented otherwise.** The special `afk [reason]` text command is an intentional exception: it works without pinging the bot, is matched as a standalone message, and replies publicly.
+**Conversational AI is opt-in.** Members must directly mention the bot or reply to one of its messages to start a conversational response. Ordinary chat, questions about other members, and messages that merely contain a keyword must not trigger the bot. Dedicated Discord-to-Minecraft relay behavior is separate from conversational AI. Use slash commands for AFK, reminders, summaries, and other supported tools.
 
 The configured Mineflayer client protocol is separate from the server version. The project currently depends on upstream `mineflayer` 4.39.x, which does not yet natively support Minecraft Java 26.2; do not change the client protocol to `26.2` until a compatible protocol stack is installed and tested.
 
@@ -458,7 +458,15 @@ Only run one Main Bot instance at a time.
 
 # Testing
 
-A practical test order is:
+Run the automated unit tests and syntax checks before manual testing:
+
+```bash
+npm test
+```
+
+The GitHub Actions validation workflow runs JavaScript syntax checks and `npm test` on pull requests.
+
+A practical manual test order is:
 
 1. Start the bot and verify Discord login.
 2. Verify slash-command reconciliation.
@@ -469,8 +477,10 @@ A practical test order is:
 7. Test `/forget` and `/summarize`.
 8. Test `/status`, `/dashboard`, and `/ai status` as admin.
 9. Test `/start` and `/stop` only during a safe maintenance window.
-11. Verify the website can reach `/api/status`.
-12. Review logs for Discord, Minecraft, Gemini, network, and permission errors.
+10. Verify ordinary unpinged chat does not trigger conversational replies or welcome messages.
+11. Verify a direct mention and a direct reply to the bot can trigger conversational replies.
+12. Verify the website can reach `/api/status`.
+13. Review logs for Discord, Minecraft, Gemini, network, and permission errors.
 
 ---
 
