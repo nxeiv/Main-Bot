@@ -23,6 +23,7 @@ jobs:
           node --check index.js
           node --check ai.js
           node --check commands.js
+          node --check message-routing.js
           node --check minecraft.js
           node --check summary.js
           node --check unicode.js
