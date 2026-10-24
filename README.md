@@ -202,16 +202,16 @@ Current `config.js` settings:
 
 | Setting | Current value |
 | --- | --- |
-| Host | `the-cottage-c1-s5.play.hosting` |
-| Port | `25565` |
-| Server software/version | `Paper 26.2` |
+| Host | `the-cottage-c1-s6.playwithbao.com` |
+| Port | `34159` (current BaoHost allocation; verify if the allocation changes) |
+| Server software/version | `Minecraft 26.2 / Paper 26.2` |
 | Mineflayer client protocol setting | `1.21.11` (separate from server version) |
 | Bot username | `Server` |
 | Authentication | `offline` |
 | Reconnect start | `60 seconds` |
 | Reconnect maximum | `300 seconds` |
 
-The Minecraft hostname is used internally by the bot. It should not be added to public website UI.
+The Java hostname above is the current public player-facing address and is also used by the bot. Keep `config.js`, `ai-knowledge.js`, the welcome message, and the website in sync when the address or BaoHost allocation changes.
 
 ---
 
