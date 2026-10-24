@@ -32,5 +32,12 @@ test('help text describes opt-in AI and does not advertise removed text shortcut
   assert.match(BOT_HELP_MESSAGE, /\/afk/);
   assert.doesNotMatch(BOT_HELP_MESSAGE, /afk\?\s*[—-]/i);
   assert.doesNotMatch(BOT_HELP_MESSAGE, /who are you\?/i);
-  assert.match(SYSTEM_PROMPT, /The Cottage★ SMP DOES support cracked/i);
+  assert.match(SYSTEM_PROMPT, /Chapter 1 • Season 6/);
+  assert.doesNotMatch(SYSTEM_PROMPT, /The Cottage★ SMP DOES support cracked/i);
+  assert.match(SERVER_INFO.javaAddress, /the-cottage-c1-s6\.playwithbao\.com/);
+  assert.equal(SERVER_INFO.serverVersion, 'Minecraft 26.2');
+  assert.ok(SERVER_INFO.features.includes('Quick Restocks'));
+  for (const retired of ['Open Doors', 'True Hardcore', 'Cottage Protection', 'Cottage Voice', 'Cottage Harvest']) {
+    assert.ok(!SERVER_INFO.features.includes(retired), retired + ' must not be advertised for Season 6');
+  }
 });

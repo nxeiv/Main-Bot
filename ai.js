@@ -814,7 +814,7 @@ function getKnownAnswer(message) {
     text === 'what are the minecraft features'
   ) {
     return [
-      '**The Cottage★ SMP features:**',
+      '**The Cottage★ Chapter 1 Season 6 features:**',
       ...SERVER_INFO.features.map(
         feature => `• **${feature}** — ${FEATURE_GUIDE[feature]}`,
       ),
@@ -873,12 +873,12 @@ function getKnownAnswer(message) {
   // one authoritative answer in the current SMP configuration.
   // ============================================================
 
-  const asksAboutOpenDoors =
+  const asksAboutUnconfirmedJavaAuthentication =
     /\b(?:cracked|non-premium|non premium|offline-mode|offline mode)\b/.test(text) &&
     /\b(?:server|smp|java|join|play|support|supports|account|premium)\b/.test(text);
 
-  if (asksAboutOpenDoors) {
-    return 'Yes. The Cottage★ SMP supports cracked/non-premium/offline-mode Java clients through Open Doors. A premium Minecraft account is not required.';
+  if (asksAboutUnconfirmedJavaAuthentication) {
+    return 'Cracked/non-premium Java access is not confirmed for Chapter 1 Season 6. Please ask staff before relying on it.';
   }
 
   const asksAboutServerNetherite =
@@ -886,7 +886,7 @@ function getKnownAnswer(message) {
     /\b(?:allowed|available|enabled|disabled|use|uses|tools|tool|armor|armour|craft|crafting|obtain|obtainable|this smp|the smp|this server|the server)\b/.test(text);
 
   if (asksAboutServerNetherite) {
-    return 'No. Netherite is unavailable on The Cottage★ SMP, so Netherite tools and armor cannot be obtained or used normally here.';
+    return 'The old Season 5 Netherite restriction has not been confirmed for Season 6. Check the current Minecraft Code of Conduct or ask staff.';
   }
 
   // ============================================================
@@ -900,7 +900,7 @@ function getKnownAnswer(message) {
     /\bserver ip information\b/.test(text) ||
     /\bwhere is the server ip\b/.test(text)
   ) {
-    return `The Cottage★ SMP IP information is here: ${SERVER_INFO.ipMessage}`;
+    return `Java: ${SERVER_INFO.javaAddress}\nBedrock: ${SERVER_INFO.bedrockJoiningInfo}`;
   }
 
   if (
@@ -922,7 +922,7 @@ function getKnownAnswer(message) {
     text === 'smp code of conduct?' ||
     text === 'smp code of conduct'
   ) {
-    return `The Cottage★ SMP Code of Conduct is here: ${SERVER_INFO.rulesLink}`;
+    return `The Cottage★ Minecraft Code of Conduct is here: ${SERVER_INFO.rulesLink}`;
   }
 
   // ============================================================
@@ -947,7 +947,7 @@ function getKnownAnswer(message) {
     /\bbedrock server address\b/.test(text) ||
     /\bbedrock port\b/.test(text)
   ) {
-    return `Bedrock: ${SERVER_INFO.bedrockAddress}:${SERVER_INFO.bedrockPort}`;
+    return `${SERVER_INFO.bedrockJoiningInfo} A verified direct Bedrock IP/port is not currently listed in the public server information.`;
   }
 
   // ============================================================
@@ -965,7 +965,7 @@ function getKnownAnswer(message) {
       '• Roles — <#1398624929099812937>',
       '• General — <#1398568017708978258>',
       '• Minecraft / Status — <#1533883039287873566>',
-      '• Bedrock Voice — <#1533895421988962334>',
+      '• Minecraft-related community — <#1533895421988962334>',
     ].join('\n');
   }
 
@@ -974,19 +974,19 @@ function getKnownAnswer(message) {
   }
 
   if (text === 'world download?' || text === 'world download' || text === 'download world?' || text === 'download world') {
-    return `The World Download is here: ${SERVER_INFO.worldDownload}`;
+    return 'A Season 6 world download has not been published yet. Do not use a previous-season download as the current world.';
   }
 
   if (text === 'join?' || text === 'join') {
-    return 'For Discord joining, use the official Cottage★ website. For the SMP, ask **smp join?** or **how do I join the SMP?**';
+    return 'For the Cottage★ community, use the official website. For Chapter 1 Season 6 joining instructions, ask **how do I join the server?**';
   }
 
   if (text === 'smp join?' || text === 'smp join' || text === 'join the smp?' || text === 'join the smp' || text === 'how do i join the smp?' || text === 'how do i join the smp') {
-    return `The Cottage★ SMP is invite-only. Start here: ${SERVER_INFO.invite}`;
+    return `The Cottage★ Chapter 1 Season 6 is invite-only. Start here: ${SERVER_INFO.invite}`;
   }
 
   if (text === 'java?' || text === 'java' || text === 'java server?' || text === 'java server') {
-    return `Java: ${SERVER_INFO.serverVersion} • ${SERVER_INFO.javaAddress}`;
+    return `Java: ${SERVER_INFO.serverVersion} • ${SERVER_INFO.serverSoftware} • ${SERVER_INFO.javaAddress}`;
   }
 
   if (text === 'bedrock?' || text === 'bedrock' || text === 'bedrock join?' || text === 'bedrock joining?') {
@@ -1009,7 +1009,7 @@ function getKnownAnswer(message) {
       /\bwhere are the smp rules\b/.test(text)
     )
   ) {
-    return `The Cottage★ SMP Code of Conduct is here: ${SERVER_INFO.rulesLink}`;
+    return `The Cottage★ Minecraft Code of Conduct is here: ${SERVER_INFO.rulesLink}`;
   }
   // ============================================================
   // BEDROCK JOINING

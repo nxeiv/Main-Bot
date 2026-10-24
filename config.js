@@ -44,8 +44,8 @@ const config = {
   },
 
   server: {
-    ip: 'the-cottage-c1-s5.play.hosting',
-    port: 25565,
+    ip: 'the-cottage-c1-s6.playwithbao.com',
+    port: 34159,
     version: 'Paper 26.2',
     clientProtocolVersion: '1.21.11',
   },
