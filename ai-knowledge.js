@@ -156,28 +156,6 @@ Mention me or reply to one of my messages when you want an AI answer. I stay qui
 
 Slash-command access depends on the configured permissions. The bot does not use public keyword shortcuts for ordinary conversation.`;
 
-const FEATURE_ALIASES = {
-  cracked: 'Open Doors',
-  'elytra lunge': 'Cottage Boost',
-  'spawn animations': 'Grand Arrivals',
-  'clickable villagers': 'Friendly Neighbors',
-  'armor stand customization': 'Cottage Custom',
-  'one mace': 'The Cottage Mace',
-  'players drop their heads on death': 'Memorial Keepsakes',
-  'netherite disabled': 'Classic Crafting',
-  'better mending': 'Cozy Repairs',
-  'grief prevention': 'Cottage Protection',
-  'ultimate teams': 'Cottage Teams',
-  gsit: 'Cozy Sitting',
-  'dynamic lights': 'Lantern Light',
-  'vanilla refresh mechanics': 'Fresh Vanilla',
-  'keep inventory off': 'True Hardcore',
-  'attribute swapping fixed on papermc': 'Steady Stats',
-  'dream displays': 'Cottage Displays',
-  veinminer: 'Cottage Harvest',
-  'simple voice chat': 'Cottage Voice',
-};
-
 const SYSTEM_PROMPT = `
 You are The Cottage★, the community assistant for The Cottage★ Discord community.
 
