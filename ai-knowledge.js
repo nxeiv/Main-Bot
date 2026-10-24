@@ -1,43 +1,28 @@
 'use strict';
 
 const SERVER_INFO = {
-  name: 'The Cottage★ SMP',
-  chapter: 'Chapter 1 • Season 5',
+  name: 'The Cottage★',
+  chapter: 'Chapter 1 • Season 6',
 
-  // Java server version. Separate from the Mineflayer client protocol setting.
-  serverVersion: 'Paper 26.2',
-  serverSoftware: 'Paper',
-  javaAddress: 'the-cottage-c1-s5.play.hosting',
+  // Current Java server information. The Mineflayer protocol setting is separate.
+  serverVersion: 'Minecraft 26.2',
+  serverSoftware: 'Paper 26.2',
+  javaAddress: 'the-cottage-c1-s6.playwithbao.com',
 
   // Bedrock
-  bedrockVersion: 'Any version supported by Geyser',
-  bedrockAddress: '62.141.62.31',
-  bedrockPort: '37731',
+  bedrockVersion: 'Geyser-supported versions; compatibility depends on the installed build and connection settings',
   bedrockJoiningInfo:
-    'Bedrock players can add "Emmcee4483" as a friend on Bedrock. Once the friend request is sent, they can be invited to the server through their friends list.',
-
- smpIntroMessage:
-    'https://discord.com/channels/1398568016915992667/1478252152169431134/1545519313606287390',
-
- bedrockJoinVideo:
-    'https://discord.com/channels/1398568016915992667/1478252152169431134/1551948220312190991',
+    'Send a Bedrock friend request to "Emmcee4483". After you send the request, Emmcee4483 will invite you through the Bedrock friends list. If the invitation or login does not work, contact staff for help.',
 
   // Discord links / channels
   invite: 'https://the-cottage.onrender.com/',
 
-  ipMessage:
-    'https://discord.com/channels/1398568016915992667/1478252152169431134/1545519313606287390',
-
   rulesLink:
     'https://discord.com/channels/1398568016915992667/1477236505465327626/1545520572652453980',
 
-  worldDownload:
-    'https://discord.com/channels/1398568016915992667/1478252152169431134/1507948745122381824',
-
   rulesChannel: '<#1478166898020585592>',
-
   minecraftChannel: '<#1533883039287873566>',
-  bedrockVoiceChannel: '<#1533895421988962334>',
+  minecraftCommunityChannel: '<#1533895421988962334>',
 
   moderatorRole: '<@&1495677126693621790>',
   accessRole: '<@&1447218476795166791>',
@@ -47,120 +32,105 @@ const SERVER_INFO = {
   javaAutoWhitelistSameIp: true,
   bedrockRequiresManualWhitelist: false,
 
-  // Features
+  // Public-facing Season 6 features confirmed by the current plugin setup.
   features: [
-    'Open Doors',
-    'Cottage Boost',
-    'Grand Arrivals',
-    'Friendly Neighbors',
-    'Cottage Custom',
-    'The Cottage Mace',
-    'Memorial Keepsakes',
-    'Classic Crafting',
-    'Cozy Repairs',
-    'Cottage Protection',
-    'Cottage Teams',
-    'Cozy Sitting',
-    'Lantern Light',
     'Fresh Vanilla',
-    'True Hardcore',
-    'Steady Stats',
-    'Cottage Displays',
-    'Cottage Harvest',
-    'Cottage Voice',
+    'Cottage Teleport',
+    "Wanderer's Way",
+    'Friendly Neighbors',
+    'Quick Restocks',
+    'Custom Recipes',
+    'String Duplication',
+    'Cottage Recovery',
+    'Skin Support',
+    'Fair Play',
+    'Cross-Platform Access',
   ],
 
-  voiceChatInfo:
-    'Cottage Voice provides proximity voice chat. Java players need the required voice-chat support installed.',
-
-  veinminerInfo:
-    'Cottage Harvest works on eligible connected wood and ores. Sneak while breaking to activate it. Stripped logs are excluded.',
-
-  dvcInfo:
-    'Bedrock players can use /dvc start in-game for the dedicated Minecraft voice chat.',
-
   rulesReminder:
-    'Players must follow The Cottage★ SMP Code of Conduct.',
+    'Players must follow The Cottage★ Minecraft Code of Conduct.',
 };
 
 const FEATURE_GUIDE = {
-  'Open Doors': 'The SMP supports cracked (non-premium/offline-mode) Java clients. Players do not need a premium Minecraft account to join.',
-  'Cottage Boost': 'Gives players Elytra flight and Spear Lunging.',
-  'Grand Arrivals': 'Players get special animations when entering the world.',
-  'Friendly Neighbors': 'Provides convenient interactions with villagers.',
-  'Cottage Custom': 'Lets players customize and pose armor stands.',
-  'The Cottage Mace': 'Provides the server’s special one-of-a-kind Mace setup.',
-  'Memorial Keepsakes': 'Players leave behind their head when they die.',
-  'Classic Crafting': 'Netherite is unavailable on the server.',
-  'Cozy Repairs': 'Provides a more convenient Mending experience.',
-  'Cottage Protection': 'Lets players protect their builds and belongings.',
-  'Cottage Teams': 'Lets players team up with other players.',
-  'Cozy Sitting': 'Lets players sit down and relax around the world.',
-  'Lantern Light': 'Held light sources can illuminate the surroundings.',
-  'Fresh Vanilla': 'Keeps familiar vanilla gameplay while adding carefully chosen quality-of-life improvements.',
-  'True Hardcore': 'The server uses a Hardcore experience where Keep Inventory is disabled and death matters.',
-  'Steady Stats': 'Player attributes work correctly on the server.',
-  'Cottage Displays': 'Provides decorative displays for builds.',
-  'Cottage Harvest': 'Lets players quickly harvest connected wood and ores while sneaking. Stripped logs are excluded.',
-  'Cottage Voice': 'Provides proximity voice chat. Java players need the required voice-chat support installed. Bedrock players can use /dvc start in-game for their dedicated voice connection.',
+  'Fresh Vanilla': 'Season 6 is vanilla-style survival with a few selected quality-of-life additions. Do not describe it as Hardcore or assume old Season 5 restrictions still apply.',
+  'Cottage Teleport': 'SimpleTPA lets players request teleportation with /tpa and /tpahere, then respond with /tpaccept or /tpdeny.',
+  "Wanderer's Way": 'Simple_RTP provides random teleportation through /rtp. Available destinations depend on the configured GUI and world settings.',
+  'Friendly Neighbors': 'ClickVillagers adds villager interactions such as claiming, anchors, pickup, and trading-partner controls.',
+  'Quick Restocks': 'InstaRestock changes villager trade restocking behavior for more convenient trading.',
+  'Custom Recipes': 'The server includes additional crafting recipes for golden apples and cobwebs.',
+  'String Duplication': 'StringDupersReturn enables the server’s string-duplication mechanic.',
+  'Cottage Recovery': 'InventoryRollbackPlus provides inventory backups and staff-managed restoration tools when recovery is appropriate.',
+  'Skin Support': 'SkinsRestorer provides skin support for compatible player setups. Bedrock-specific skin restoration is not currently enabled because Floodgate is not installed.',
+  'Fair Play': 'Server-side anti-cheat and attribute fixes help keep gameplay consistent.',
+  'Cross-Platform Access': 'Geyser bridges supported Bedrock clients to the Java server. Supported versions and login requirements depend on the current build and connection configuration.',
 };
 
 const FEATURE_TUTORIALS = {
-  'Open Doors':
-    'Yes — The Cottage★ SMP supports cracked (non-premium/offline-mode) Java clients through Open Doors. You do not need a premium Java account. Open Doors is automatic; there is nothing to activate in-game.',
+  'Fresh Vanilla':
+    'There is no special command for vanilla survival. Play normally and follow the current Minecraft Code of Conduct; do not assume old Season 5 rules still apply.',
 
-  'Cottage Boost':
-    'Use an Elytra while using a spear with the Lunge enchantment to use Cottage Boost.',
+  'Cottage Teleport':
+    'Use /tpa <player> to ask to teleport to someone, or /tpahere <player> to ask them to teleport to you. The recipient can use /tpaccept or /tpdeny.',
 
-  'Grand Arrivals':
-    'Grand Arrivals is automatic. The special arrival animations play when players enter the world.',
+  "Wanderer's Way":
+    'Use /rtp and choose one of the configured destinations in the random-teleport menu.',
 
   'Friendly Neighbors':
-    'Crouch and right-click a villager to place them into your inventory. A golden shovel can be used for the villager claiming system.',
+    'Interact with the villager and use the available villager controls. Shift-right-click a villager to open its edit interface.',
 
-  'Cottage Custom':
-    'Cottage Custom lets you use a tripwire hook to configure item displays without needing a traditional armor stand.',
+  'Quick Restocks':
+    'Trade with villagers as usual. The restock behavior is handled automatically; there is no player command required.',
 
-  'The Cottage Mace':
-    'The Cottage Mace is the server\'s special one-of-a-kind Mace setup. The bot does not have a confirmed usage command for it.',
+  'Custom Recipes':
+    'Check the crafting recipes for the additional golden-apple and cobweb recipes available on the server.',
 
-  'Memorial Keepsakes':
-    'Memorial Keepsakes is automatic. When a player dies, their head is left behind as a memorial keepsake.',
+  'String Duplication':
+    'Use the supported string-duplication mechanic through normal gameplay. There is no custom command to activate it.',
 
-  'Classic Crafting':
-    'Classic Crafting is a server rule rather than a command. Netherite is unavailable on The Cottage★ SMP.',
+  'Cottage Recovery':
+    'Contact a moderator and explain what happened. Inventory recovery is staff-managed and depends on whether a suitable backup is available.',
 
-  'Cozy Repairs':
-    'Crouch and right-click a tool with the Mending enchantment to use Cozy Repairs.',
+  'Skin Support':
+    'SkinsRestorer handles supported player skin setups through its normal workflow. Bedrock-specific skin restoration is not active in the current setup.',
 
-  'Cottage Protection':
-    'Hold a golden shovel to create a protected territory claim. Use /claimhelp for more details.',
+  'Fair Play':
+    'There is no player command to activate anti-cheat or attribute fixes; these run on the server.',
 
-  'Cottage Teams':
-    'Create a team with /team create <name>. Use /team for more details about team management.',
+  'Cross-Platform Access':
+    'Send a Bedrock friend request to Emmcee4483 and follow the server invitation through your Bedrock friends list. If the invitation or login does not work, contact staff. Specific Bedrock-version compatibility is not guaranteed by this message.',
+};
 
-  'Cozy Sitting':
-    'Use /sit or right-click stairs, slabs, and players to sit. To disable accidental sitting, use /gsit toggle off.',
-
-  'Lantern Light':
-    'Lantern Light is automatic. Held light sources can illuminate the surroundings without needing a separate bot command.',
-  'Fresh Vanilla':
-    'Fresh Vanilla keeps familiar vanilla gameplay while adding carefully chosen quality-of-life improvements. There is nothing you need to activate for it.',
-
-  'True Hardcore':
-    'True Hardcore is always active. Keep Inventory is disabled, so death matters on the server.',
-
-  'Steady Stats':
-    'Steady Stats is automatic. Player attributes work correctly on the server without needing a command.',
-
-  'Cottage Displays':
-    'Cottage Displays requires the Dream Displays mod on the Java client.',
-
-  'Cottage Harvest':
-    'While mining eligible connected ores or wood, crouch to harvest them together. Stripped logs are excluded.',
-
-  'Cottage Voice':
-    'Java players need the Simple Voice Chat mod on their client. Bedrock players can use /dvc start in-game for their dedicated voice connection.',
+const FEATURE_ALIASES = {
+  'vanilla survival': 'Fresh Vanilla',
+  'tpa': 'Cottage Teleport',
+  'tpahere': 'Cottage Teleport',
+  'teleport requests': 'Cottage Teleport',
+  'random teleport': "Wanderer's Way",
+  'random teleportation': "Wanderer's Way",
+  'rtp': "Wanderer's Way",
+  'villager claiming': 'Friendly Neighbors',
+  'villager pickup': 'Friendly Neighbors',
+  'trading partners': 'Friendly Neighbors',
+  'clickvillagers': 'Friendly Neighbors',
+  'restock': 'Quick Restocks',
+  'villager restock': 'Quick Restocks',
+  'faster restocks': 'Quick Restocks',
+  'golden apple recipe': 'Custom Recipes',
+  'cobweb recipe': 'Custom Recipes',
+  'string duping': 'String Duplication',
+  'string duplication': 'String Duplication',
+  'inventory rollback': 'Cottage Recovery',
+  'inventory backup': 'Cottage Recovery',
+  'restore inventory': 'Cottage Recovery',
+  'skinsrestorer': 'Skin Support',
+  'skins': 'Skin Support',
+  'anti-cheat': 'Fair Play',
+  'anticheat': 'Fair Play',
+  'grimac': 'Fair Play',
+  'bedrock': 'Cross-Platform Access',
+  'geyser': 'Cross-Platform Access',
+  'crossplay': 'Cross-Platform Access',
+  'cross-play': 'Cross-Platform Access',
 };
 
 const BOT_HELP_MESSAGE = `**The Cottage★ Help**
@@ -243,8 +213,10 @@ The bot has deterministic answers for many common Cottage★ questions. Those an
 When answering a question yourself:
 - Answer the user's actual question first.
 - For server-specific facts, use only the authoritative information below.
-- The Cottage★ SMP DOES support cracked/non-premium (offline-mode) Java clients. This is the purpose of the **Open Doors** feature. If asked "is it cracked?", "does it support cracked?", "can non-premium players join?", or similar, answer yes clearly. Never claim genuine/premium accounts are required.
-- Netherite is unavailable on The Cottage★ SMP. Do not say that Netherite, Netherite tools, or Netherite armor are allowed or obtainable on this server.
+- The current public server identity is The Cottage★ — Chapter 1 • Season 6. Describe it as vanilla-style survival with selected quality-of-life additions, not as Hardcore.
+- Do not claim that cracked/non-premium Java clients are supported; the current public configuration does not confirm that.
+- Do not reuse unconfirmed Season 5 features or restrictions, including the old Netherite restriction, land claims, teams, proximity voice chat, armor-stand customization, custom mace mechanics, or connected-block harvesting.
+- Bedrock players should use the friend-invite instructions below. Do not promise every Bedrock version or authentication path will work; if joining fails, direct the player to staff.
 - Never invent an unlisted interface such as a new command, prefix, or special phrase. Only describe joining methods and bot interactions that are explicitly confirmed below or implemented in the bot.
 - Do not invent commands, links, channels, IPs, ports, rules, features, joining procedures, or permissions.
 - If a server-specific fact is not confirmed below, say you do not know rather than guessing.
@@ -269,41 +241,34 @@ General: <#1398568017708978258>
 These are the MAIN DISCORD COMMUNITY channels.
 Do not confuse the main Discord rules with the Minecraft/SMP Code of Conduct.
 
-THE COTTAGE★ SMP — AUTHORITATIVE INFORMATION
+THE COTTAGE★ CHAPTER 1 SEASON 6 — AUTHORITATIVE INFORMATION
 
 Server:
 ${SERVER_INFO.name}
 ${SERVER_INFO.chapter}
 
 Java:
-Server version: ${SERVER_INFO.serverVersion}
+Minecraft version: ${SERVER_INFO.serverVersion}
 Server software: ${SERVER_INFO.serverSoftware}
-Address: ${SERVER_INFO.javaAddress}
+Public address: ${SERVER_INFO.javaAddress}
 
 Bedrock:
 Version support: ${SERVER_INFO.bedrockVersion}
-Address: ${SERVER_INFO.bedrockAddress}
-Port: ${SERVER_INFO.bedrockPort}
+Joining instructions: ${SERVER_INFO.bedrockJoiningInfo}
+A verified direct Bedrock IP/port is not currently published in the public server information. Never invent one or reuse Season 5 connection details.
 
-Bedrock joining:
-${SERVER_INFO.bedrockJoiningInfo}
-
-Use the Bedrock friend/invite method as the preferred simple joining explanation. Do not reveal or discuss the internal technology behind it.
-
-Only provide the manual Bedrock IP and port when the user specifically asks for them, needs an alternative method, or cannot use the friend/invite method.
+Do not reveal or discuss internal implementation details behind the Bedrock joining method. Do not guarantee every version or account setup will work; if the invite or login fails, direct the player to staff.
 
 Discord/server resources:
 Official Cottage website: ${SERVER_INFO.invite}
-Minecraft IP information: ${SERVER_INFO.ipMessage}
-SMP Code of Conduct: ${SERVER_INFO.rulesLink}
-World download: ${SERVER_INFO.worldDownload}
+Minecraft Code of Conduct: ${SERVER_INFO.rulesLink}
 Minecraft/status channel: ${SERVER_INFO.minecraftChannel}
-Bedrock voice channel: ${SERVER_INFO.bedrockVoiceChannel}
+Minecraft-related community channel: ${SERVER_INFO.minecraftCommunityChannel}
 Minecraft access role: ${SERVER_INFO.accessRole}
-SMP introduction message: ${SERVER_INFO.smpIntroMessage}
-Bedrock joining video: ${SERVER_INFO.bedrockJoinVideo}
 
-PUBLIC SMP FEATURES
+A Season 6 world download has not been published in the current knowledge. Do not share an old-season download as current.
+
+PUBLIC SEASON 6 FEATURES
 
 ${SERVER_INFO.features.map(feature => `- ${feature}`).join('\n')}
 
@@ -317,10 +282,7 @@ ${Object.entries(FEATURE_TUTORIALS)
   .map(([feature, tutorial]) => `- ${feature}: ${tutorial}`)
   .join('\n')}
 
-Additional authoritative server feature information:
-${SERVER_INFO.voiceChatInfo}
-${SERVER_INFO.veinminerInfo}
-${SERVER_INFO.dvcInfo}
+Additional authoritative server information:
 ${SERVER_INFO.rulesReminder}
 
 FEATURE NAMING
