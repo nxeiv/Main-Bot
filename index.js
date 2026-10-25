@@ -1828,7 +1828,7 @@ The joining guide has the setup details.`,
         `Hello! To join The Cottage★ Chapter 1 • Season 6 on Bedrock, add the server directly in Minecraft:
 
 Server address: ${SERVER_INFO.bedrockAddress.split(':')[0]}
-Port: 32211
+Port: ${SERVER_INFO.bedrockAddress.split(':')[1]}
 Version support: ${SERVER_INFO.bedrockVersion}
 
 If the direct connection fails, contact staff for help.`,
