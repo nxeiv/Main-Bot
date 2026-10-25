@@ -206,7 +206,7 @@ Current `config.js` settings:
 | Java port | `34159` (current public Java address uses this port) |
 | Public Java address | `the-cottage-c1-s6.playwithbao.com:34159` |
 | Bedrock address | `the-cottage-c1-s6.playwithbao.com:32211` |
-| Bedrock compatibility | Any (Geyser-supported Bedrock versions) |
+| Bedrock compatibility | Any (Geyser-supported Bedrock versions) — direct server entry only |
 | Server software/version | `Minecraft 26.2 / Paper 26.2` |
 | Mineflayer client protocol setting | `1.21.11` (separate from server version) |
 | Bot username | `Server` |
@@ -214,7 +214,7 @@ Current `config.js` settings:
 | Reconnect start | `60 seconds` |
 | Reconnect maximum | `300 seconds` |
 
-The public Java and Bedrock addresses are used for player joining. Keep `config.js`, `ai-knowledge.js`, the join-help shortcuts, and the website in sync if an address, port, or allocation changes. The Mineflayer client protocol is a separate internal setting and must not be changed to `26.2` without a compatible protocol stack and testing.
+The public Java and Bedrock addresses are used for player joining. Bedrock guidance uses direct server entry only; do not advertise alternate invitation-based joining methods. Keep `config.js`, `ai-knowledge.js`, the join-help shortcuts, and the website in sync if an address, port, or allocation changes. The Mineflayer client protocol is a separate internal setting and must not be changed to `26.2` without a compatible protocol stack and testing.
 
 ---
 

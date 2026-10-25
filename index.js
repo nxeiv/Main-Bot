@@ -41,12 +41,6 @@ const runtimeHealth = {
   lastDiscordError: null,
 };
 
-// ============================================================
-// BEDROCK JOIN VIDEO FOLLOW-UP
-// ============================================================
-
-const pendingBedrockVideoRequests = new Set();
-
 const SCHEDULE_FILE = path.join(
   __dirname,
   'scheduled-actions.json',
@@ -1579,31 +1573,6 @@ client.on(Events.MessageCreate, async message => {
     return;
   }
 
-  // ============================================================
-  // BEDROCK JOIN VIDEO FOLLOW-UP
-  // ============================================================
-
-  const normalizedFollowUpMessageText = message.content
-    .replace(new RegExp(`<@!?${client.user?.id}>`, 'g'), '')
-    .trim()
-    .toLowerCase()
-    .replace(/[!?.,]+$/g, '');
-
-  if (
-    message.guild?.id === config.discord.guildId &&
-    pendingBedrockVideoRequests.has(message.author.id) &&
-    message.mentions.users.has(client.user?.id) &&
-    normalizedFollowUpMessageText === 'yes'
-  ) {
-    pendingBedrockVideoRequests.delete(message.author.id);
-
-    await message.reply(
-      `Here's a video demonstration on how to join the server simply!\nhttps://discord.com/channels/1398568016915992667/1478252152169431134/1551948220312190991`,
-    );
-
-    return;
-  }
-
   // AFK STATE CLEANUP
 
   // Any ordinary message means the author has returned.
@@ -1855,23 +1824,14 @@ The joining guide has the setup details.`,
     // ========================================================
 
     if (asksHowToJoin && isBedrockPlayer) {
-      pendingBedrockVideoRequests.add(message.author.id);
-
-      setTimeout(() => {
-        pendingBedrockVideoRequests.delete(message.author.id);
-      }, 10 * 60 * 1000);
-
       await message.reply(
-        `Hello! Here are the Bedrock joining details for The Cottage★ Chapter 1 • Season 6:
+        `Hello! To join The Cottage★ Chapter 1 • Season 6 on Bedrock, add the server directly in Minecraft:
 
-${SERVER_INFO.bedrockJoinLink}
-
-Bedrock address: ${SERVER_INFO.bedrockAddress}
+Server address: ${SERVER_INFO.bedrockAddress.split(':')[0]}
+Port: ${SERVER_INFO.bedrockAddress.split(':')[1]}
 Version support: ${SERVER_INFO.bedrockVersion}
 
-You can also send a Bedrock friend request to Emmcee4483 and accept the invitation through the friends list. If the invitation or login does not work, add the server manually using the address and port above.
-
-If you want a video walkthrough, reply **yes** and I'll send it.`,
+If the direct connection fails, contact staff for help.`,
       );
 
       return;
