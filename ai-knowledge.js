@@ -7,12 +7,15 @@ const SERVER_INFO = {
   // Current Java server information. The Mineflayer protocol setting is separate.
   serverVersion: 'Minecraft 26.2',
   serverSoftware: 'Paper 26.2',
-  javaAddress: 'the-cottage-c1-s6.playwithbao.com',
+  javaAddress: 'the-cottage-c1-s6.playwithbao.com:34159',
+  javaJoinLink: 'https://discord.com/channels/1398568016915992667/1478252152169431134/1563549543365222513',
 
   // Bedrock
-  bedrockVersion: 'Geyser-supported versions; compatibility depends on the installed build and connection settings',
+  bedrockVersion: 'Any (Geyser-supported Bedrock versions)',
+  bedrockAddress: 'the-cottage-c1-s6.playwithbao.com:32211',
+  bedrockJoinLink: 'https://discord.com/channels/1398568016915992667/1478252152169431134/1563549543365222513',
   bedrockJoiningInfo:
-    'Send a Bedrock friend request to "Emmcee4483". After you send the request, Emmcee4483 will invite you through the Bedrock friends list. If the invitation or login does not work, contact staff for help.',
+    'Send a Bedrock friend request to "Emmcee4483". After you send the request, Emmcee4483 will invite you through the Bedrock friends list. If the invitation or login does not work, add the server manually using the address the-cottage-c1-s6.playwithbao.com and port 32211, or contact staff for help.',
 
   // Discord links / channels
   invite: 'https://the-cottage.onrender.com/',
@@ -40,11 +43,15 @@ const SERVER_INFO = {
     'Friendly Neighbors',
     'Quick Restocks',
     'Custom Recipes',
+    'Better Mending',
+    'Vein Mining',
     'String Duplication',
+    'Team System',
     'Cottage Recovery',
     'Skin Support',
     'Fair Play',
     'Cross-Platform Access',
+    'Discord Bridge',
   ],
 
   rulesReminder:
@@ -52,17 +59,21 @@ const SERVER_INFO = {
 };
 
 const FEATURE_GUIDE = {
-  'Fresh Vanilla': 'Season 6 is vanilla-style survival with a few selected quality-of-life additions. Do not describe it as Hardcore or assume old Season 5 restrictions still apply.',
+  'Fresh Vanilla': 'Season 6 is vanilla-style survival with selected quality-of-life additions. Do not describe it as Hardcore or reuse unconfirmed Season 5 restrictions.',
   'Cottage Teleport': 'SimpleTPA lets players request teleportation with /tpa and /tpahere, then respond with /tpaccept or /tpdeny.',
   "Wanderer's Way": 'Simple_RTP provides random teleportation through /rtp. Available destinations depend on the configured GUI and world settings.',
-  'Friendly Neighbors': 'ClickVillagers adds villager interactions such as claiming, anchors, pickup, and trading-partner controls.',
+  'Friendly Neighbors': 'ClickVillagers adds villager interactions and controls. The exact actions available depend on its current configuration.',
   'Quick Restocks': 'InstaRestock changes villager trade restocking behavior for more convenient trading.',
-  'Custom Recipes': 'The server includes additional crafting recipes for golden apples and cobwebs.',
+  'Custom Recipes': 'EzGapsandEzWebs provides the server-specific golden apple and cobweb recipe additions.',
+  'Better Mending': 'BetterMending is installed to adjust the Mending mechanic. Describe exact behavior only when confirmed by the current plugin configuration; do not invent a custom command or repair rate.',
+  'Vein Mining': 'Veinminer is installed and provides a vein-mining feature. The supported blocks, activation method, and limits depend on the current configuration; do not claim every connected block can be mined together.',
   'String Duplication': 'StringDupersReturn enables the server’s string-duplication mechanic.',
+  'Team System': 'UltimateTeams supports player-managed teams, invitations, membership and managers, team homes and warps, team chat, allies and enemies, friendly-fire controls, and team ender chests. Limits follow the server configuration.',
   'Cottage Recovery': 'InventoryRollbackPlus provides inventory backups and staff-managed restoration tools when recovery is appropriate.',
-  'Skin Support': 'SkinsRestorer provides skin support for compatible player setups. Bedrock-specific skin restoration is not currently enabled because Floodgate is not installed.',
-  'Fair Play': 'Server-side anti-cheat and attribute fixes help keep gameplay consistent.',
-  'Cross-Platform Access': 'Geyser bridges supported Bedrock clients to the Java server. Supported versions and login requirements depend on the current build and connection configuration.',
+  'Skin Support': 'SkinsRestorer, Floodgate, and BedrockSkinRestorer are installed. Bedrock skin behavior still depends on current configuration and client compatibility; direct unresolved cases to staff.',
+  'Fair Play': 'GrimAC and AttributeSwapFixer provide server-side anti-cheat and attribute protections.',
+  'Cross-Platform Access': 'Geyser and Floodgate provide the configured Bedrock-to-Java connection path. Bedrock compatibility is listed as Any (Geyser-supported versions); if login fails, direct the player to staff.',
+  'Discord Bridge': 'DiscordSRV bridges configured Discord and Minecraft chat. Relay behavior and destinations follow the current server configuration.',
 };
 
 const FEATURE_TUTORIALS = {
@@ -76,28 +87,40 @@ const FEATURE_TUTORIALS = {
     'Use /rtp and choose one of the configured destinations in the random-teleport menu.',
 
   'Friendly Neighbors':
-    'Interact with the villager and use the available villager controls. Shift-right-click a villager to open its edit interface.',
+    'Interact with villagers and use the controls available in the current setup. If an expected interaction is unavailable, ask staff.',
 
   'Quick Restocks':
-    'Trade with villagers as usual. The restock behavior is handled automatically; there is no player command required.',
+    'Trade with villagers as usual. Restock behavior is handled automatically; there is no player command required.',
 
   'Custom Recipes':
-    'Check the crafting recipes for the additional golden-apple and cobweb recipes available on the server.',
+    'Check the crafting recipes for the additional golden apple and cobweb recipes available on the server.',
+
+  'Better Mending':
+    'Use Mending-enchanted gear normally. BetterMending is installed, but ask staff about the exact configured behavior if it differs from what you expect.',
+
+  'Vein Mining':
+    'Veinminer is installed. Ask staff for the current activation method, supported blocks, and limits; do not assume every ore or connected block is supported.',
 
   'String Duplication':
     'Use the supported string-duplication mechanic through normal gameplay. There is no custom command to activate it.',
+
+  'Team System':
+    'Use /team for help and /team create <name> to create a team. Team owners can manage invitations, members, homes, warps, chat, allies, and enemies through the supported team commands.',
 
   'Cottage Recovery':
     'Contact a moderator and explain what happened. Inventory recovery is staff-managed and depends on whether a suitable backup is available.',
 
   'Skin Support':
-    'SkinsRestorer handles supported player skin setups through its normal workflow. Bedrock-specific skin restoration is not active in the current setup.',
+    'SkinsRestorer, Floodgate, and BedrockSkinRestorer are installed. If a Bedrock skin does not appear correctly, contact staff so they can check the current configuration.',
 
   'Fair Play':
     'There is no player command to activate anti-cheat or attribute fixes; these run on the server.',
 
   'Cross-Platform Access':
-    'Send a Bedrock friend request to Emmcee4483 and follow the server invitation through your Bedrock friends list. If the invitation or login does not work, contact staff. Specific Bedrock-version compatibility is not guaranteed by this message.',
+    'Use the Bedrock address the-cottage-c1-s6.playwithbao.com on port 32211, or send a Bedrock friend request to Emmcee4483 and accept the invitation through the friends list. The joining guide is available at https://discord.com/channels/1398568016915992667/1478252152169431134/1563549543365222513. If login fails, contact staff.',
+
+  'Discord Bridge':
+    'Use the designated Discord and Minecraft chat channels for the configured chat relay. If messages are not relayed, contact staff.',
 };
 
 const FEATURE_ALIASES = {
@@ -117,20 +140,33 @@ const FEATURE_ALIASES = {
   'faster restocks': 'Quick Restocks',
   'golden apple recipe': 'Custom Recipes',
   'cobweb recipe': 'Custom Recipes',
+  'bettermending': 'Better Mending',
+  'mending': 'Better Mending',
+  'veinminer': 'Vein Mining',
+  'vein mining': 'Vein Mining',
   'string duping': 'String Duplication',
   'string duplication': 'String Duplication',
+  'team': 'Team System',
+  'teams': 'Team System',
+  'ultimate teams': 'Team System',
+  'ultimateteams': 'Team System',
   'inventory rollback': 'Cottage Recovery',
   'inventory backup': 'Cottage Recovery',
   'restore inventory': 'Cottage Recovery',
   'skinsrestorer': 'Skin Support',
+  'bedrockskinrestorer': 'Skin Support',
   'skins': 'Skin Support',
   'anti-cheat': 'Fair Play',
   'anticheat': 'Fair Play',
   'grimac': 'Fair Play',
   'bedrock': 'Cross-Platform Access',
   'geyser': 'Cross-Platform Access',
+  'floodgate': 'Cross-Platform Access',
   'crossplay': 'Cross-Platform Access',
   'cross-play': 'Cross-Platform Access',
+  'discordsrv': 'Discord Bridge',
+  'discord bridge': 'Discord Bridge',
+  'minecraft discord chat': 'Discord Bridge',
 };
 
 const BOT_HELP_MESSAGE = `**The Cottage★ Help**
@@ -193,8 +229,8 @@ When answering a question yourself:
 - For server-specific facts, use only the authoritative information below.
 - The current public server identity is The Cottage★ — Chapter 1 • Season 6. Describe it as vanilla-style survival with selected quality-of-life additions, not as Hardcore.
 - Do not claim that cracked/non-premium Java clients are supported; the current public configuration does not confirm that.
-- Do not reuse unconfirmed Season 5 features or restrictions, including the old Netherite restriction, land claims, teams, proximity voice chat, armor-stand customization, custom mace mechanics, or connected-block harvesting.
-- Bedrock players should use the friend-invite instructions below. Do not promise every Bedrock version or authentication path will work; if joining fails, direct the player to staff.
+- Do not reuse unconfirmed Season 5 features or restrictions, including the old Netherite restriction, land claims, proximity voice chat, armor-stand customization, or custom mace mechanics. Team System, Better Mending, and Vein Mining are current Season 6 features; for exact plugin behavior, use only the confirmed details below.
+- Bedrock players can use the friend-invite instructions or direct address below. List version support as Any (Geyser-supported versions), but do not guarantee every client/account setup will work if a login fails; direct the player to staff.
 - Never invent an unlisted interface such as a new command, prefix, or special phrase. Only describe joining methods and bot interactions that are explicitly confirmed below or implemented in the bot.
 - Do not invent commands, links, channels, IPs, ports, rules, features, joining procedures, or permissions.
 - If a server-specific fact is not confirmed below, say you do not know rather than guessing.
@@ -229,13 +265,15 @@ Java:
 Minecraft version: ${SERVER_INFO.serverVersion}
 Server software: ${SERVER_INFO.serverSoftware}
 Public address: ${SERVER_INFO.javaAddress}
+Joining guide: ${SERVER_INFO.javaJoinLink}
 
 Bedrock:
 Version support: ${SERVER_INFO.bedrockVersion}
+Direct address: ${SERVER_INFO.bedrockAddress}
+Joining guide: ${SERVER_INFO.bedrockJoinLink}
 Joining instructions: ${SERVER_INFO.bedrockJoiningInfo}
-A verified direct Bedrock IP/port is not currently published in the public server information. Never invent one or reuse Season 5 connection details.
 
-Do not reveal or discuss internal implementation details behind the Bedrock joining method. Do not guarantee every version or account setup will work; if the invite or login fails, direct the player to staff.
+Use these published joining details. Do not reveal private configuration or guarantee every client/account setup will work; if login fails, direct the player to staff.
 
 Discord/server resources:
 Official Cottage website: ${SERVER_INFO.invite}
