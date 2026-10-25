@@ -20,6 +20,7 @@ const {
 } = require('discord.js');
 
 const config = require('./config');
+const { SERVER_INFO } = require('./ai-knowledge');
 const mc = require('./minecraft');
 const ai = require('./ai');
 const summary = require('./summary');
@@ -1837,11 +1838,13 @@ We hope you have fun here and love being part of The Cottage★! ♥︎`,
 
     if (asksHowToJoin && isJavaPlayer) {
       await message.reply(
-        `Hello! Since you're a Java player, here's the Cottage SMP intro message:
+        `Hello! Here are the Java joining details for The Cottage★ Chapter 1 • Season 6:
 
-https://discord.com/channels/1398568016915992667/1478252152169431134/1545519313606287390
+${SERVER_INFO.javaJoinLink}
 
-Most of the things you need to know about the SMP are there!`,
+Java address: ${SERVER_INFO.javaAddress}
+
+The joining guide has the setup details.`,
       );
 
       return;
@@ -1859,13 +1862,16 @@ Most of the things you need to know about the SMP are there!`,
       }, 10 * 60 * 1000);
 
       await message.reply(
-        `Hello! Since you're a Bedrock player, here's the Cottage SMP intro message:
+        `Hello! Here are the Bedrock joining details for The Cottage★ Chapter 1 • Season 6:
 
-https://discord.com/channels/1398568016915992667/1478252152169431134/1545519313606287390
+${SERVER_INFO.bedrockJoinLink}
 
-Most of the things you need to know about the SMP are there!
+Bedrock address: ${SERVER_INFO.bedrockAddress}
+Version support: ${SERVER_INFO.bedrockVersion}
 
-If you want a simpler way to join on Bedrock, just say **yes** and I'll send you a video!`,
+You can also send a Bedrock friend request to Emmcee4483 and accept the invitation through the friends list. If the invitation or login does not work, add the server manually using the address and port above.
+
+If you want a video walkthrough, reply **yes** and I'll send it.`,
       );
 
       return;
@@ -1967,7 +1973,7 @@ const timestamp = Math.floor(task.executeAt / 1000);
 
 if (adminCommand.action === 'restart') {
   await message.reply(
-    '⚠︎ I can understand restart requests, but The Cottage★ SMP is hosted on Play Hosting, which does not provide the public server-control API needed for the Main Bot to restart the actual server.',
+    'I cannot restart the Minecraft server directly from Discord. Please use the server control panel to restart it.',
   );
 
   return;
