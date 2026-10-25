@@ -34,9 +34,18 @@ test('help text describes opt-in AI and does not advertise removed text shortcut
   assert.doesNotMatch(BOT_HELP_MESSAGE, /who are you\?/i);
   assert.match(SYSTEM_PROMPT, /Chapter 1 • Season 6/);
   assert.doesNotMatch(SYSTEM_PROMPT, /The Cottage★ SMP DOES support cracked/i);
-  assert.match(SERVER_INFO.javaAddress, /the-cottage-c1-s6\.playwithbao\.com/);
+  assert.equal(SERVER_INFO.javaAddress, 'the-cottage-c1-s6.playwithbao.com:34159');
+  assert.equal(SERVER_INFO.bedrockAddress, 'the-cottage-c1-s6.playwithbao.com:32211');
+  assert.equal(SERVER_INFO.bedrockVersion, 'Any (Geyser-supported Bedrock versions)');
+  assert.equal(SERVER_INFO.javaJoinLink, SERVER_INFO.bedrockJoinLink);
+  assert.match(SERVER_INFO.bedrockJoiningInfo, /32211/);
+  assert.match(SYSTEM_PROMPT, /1563549543365222513/);
+  assert.doesNotMatch(SYSTEM_PROMPT, /A verified direct Bedrock IP\/port is not currently published/);
+  assert.doesNotMatch(SYSTEM_PROMPT, /Bedrock-specific skin restoration is not currently enabled because Floodgate is not installed/);
   assert.equal(SERVER_INFO.serverVersion, 'Minecraft 26.2');
-  assert.ok(SERVER_INFO.features.includes('Quick Restocks'));
+  for (const feature of ['Quick Restocks', 'Better Mending', 'Vein Mining', 'Team System', 'Discord Bridge']) {
+    assert.ok(SERVER_INFO.features.includes(feature), feature + ' should be advertised');
+  }
   for (const retired of ['Open Doors', 'True Hardcore', 'Cottage Protection', 'Cottage Voice', 'Cottage Harvest']) {
     assert.ok(!SERVER_INFO.features.includes(retired), retired + ' must not be advertised for Season 6');
   }

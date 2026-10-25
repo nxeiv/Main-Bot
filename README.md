@@ -202,8 +202,11 @@ Current `config.js` settings:
 
 | Setting | Current value |
 | --- | --- |
-| Host | `the-cottage-c1-s6.playwithbao.com` |
-| Port | `34159` (current BaoHost allocation; verify if the allocation changes) |
+| Java host | `the-cottage-c1-s6.playwithbao.com` |
+| Java port | `34159` (current public Java address uses this port) |
+| Public Java address | `the-cottage-c1-s6.playwithbao.com:34159` |
+| Bedrock address | `the-cottage-c1-s6.playwithbao.com:32211` |
+| Bedrock compatibility | Any (Geyser-supported Bedrock versions) |
 | Server software/version | `Minecraft 26.2 / Paper 26.2` |
 | Mineflayer client protocol setting | `1.21.11` (separate from server version) |
 | Bot username | `Server` |
@@ -211,7 +214,7 @@ Current `config.js` settings:
 | Reconnect start | `60 seconds` |
 | Reconnect maximum | `300 seconds` |
 
-The Java hostname above is the current public player-facing address and is also used by the bot. Keep `config.js`, `ai-knowledge.js`, the welcome message, and the website in sync when the address or BaoHost allocation changes.
+The public Java and Bedrock addresses are used for player joining. Keep `config.js`, `ai-knowledge.js`, the join-help shortcuts, and the website in sync if an address, port, or allocation changes. The Mineflayer client protocol is a separate internal setting and must not be changed to `26.2` without a compatible protocol stack and testing.
 
 ---
 
@@ -353,6 +356,11 @@ Create a local `.env`:
 ```env
 DISCORD_TOKEN=your_discord_bot_token
 
+# Comma-separated privileged Discord IDs; at least one list must be configured.
+# Keep actual values in local .env or your hosting provider's environment settings.
+ADMIN_USER_IDS=
+ADMIN_ROLE_IDS=
+
 GEMINI_API_KEY=your_primary_gemini_api_key
 GEMINI_API_KEY_2=your_second_gemini_api_key
 GEMINI_API_KEY_3=your_third_gemini_api_key
@@ -368,7 +376,11 @@ STATUS_ALLOWED_ORIGINS=https://the-cottage.onrender.com
 
 The exact hosting platform may provide `PORT` automatically. When it does, the bot uses that value for the status server.
 
-Never commit real credentials.
+Never commit real credentials or privileged access IDs. The actual `ADMIN_USER_IDS` and `ADMIN_ROLE_IDS` values belong only in the deployment environment or an ignored local `.env` file.
+
+The bot fails closed during configuration if neither admin list is configured, or if the supplied IDs are malformed. Set at least one valid user ID or role ID in your hosting panel before deploying this branch.
+
+The status API is intentionally public and read-only. It exposes only the online state, player count, uptime, reconnection attempts, and timestamp; it does not return the server hostname or port. CORS defaults to the Cottage website origin, but CORS is a browser policy, not authentication.
 
 ---
 

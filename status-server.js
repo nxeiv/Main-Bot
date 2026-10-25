@@ -31,8 +31,11 @@ function getPublicMinecraftStatus(mc) {
   };
 }
 
+const DEFAULT_STATUS_ORIGIN = 'https://the-cottage.onrender.com';
+
 function getAllowedStatusOrigins(env = process.env) {
-  return String(env.STATUS_ALLOWED_ORIGINS || '*')
+  const configuredOrigins = String(env.STATUS_ALLOWED_ORIGINS || '').trim();
+  return String(configuredOrigins || DEFAULT_STATUS_ORIGIN)
     .split(',')
     .map(origin => origin.trim())
     .filter(Boolean);

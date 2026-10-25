@@ -738,6 +738,11 @@ function getKnownAnswer(message) {
     /\bmcxboxbroadcast\b/.test(text) ||
     /\bsimple voice chat\b/.test(text) ||
     /\bveinminer\b/.test(text) ||
+    /\bbettermending\b/.test(text) ||
+    /\bultimateteams\b/.test(text) ||
+    /\bteam system\b/.test(text) ||
+    /\bdiscordsrv\b/.test(text) ||
+    /\bdiscord bridge\b/.test(text) ||
     /\belytra lunge\b/.test(text) ||
     /\bnetherite\b/.test(text);
 
@@ -900,7 +905,7 @@ function getKnownAnswer(message) {
     /\bserver ip information\b/.test(text) ||
     /\bwhere is the server ip\b/.test(text)
   ) {
-    return `Java: ${SERVER_INFO.javaAddress}\nBedrock: ${SERVER_INFO.bedrockJoiningInfo}`;
+    return `Java: ${SERVER_INFO.javaAddress}\nJava joining guide: ${SERVER_INFO.javaJoinLink}\nBedrock: ${SERVER_INFO.bedrockAddress}\nBedrock joining guide: ${SERVER_INFO.bedrockJoinLink}\n${SERVER_INFO.bedrockJoiningInfo}`;
   }
 
   if (
@@ -947,7 +952,7 @@ function getKnownAnswer(message) {
     /\bbedrock server address\b/.test(text) ||
     /\bbedrock port\b/.test(text)
   ) {
-    return `${SERVER_INFO.bedrockJoiningInfo} A verified direct Bedrock IP/port is not currently listed in the public server information.`;
+    return `Bedrock address: ${SERVER_INFO.bedrockAddress}. Version support: ${SERVER_INFO.bedrockVersion}. ${SERVER_INFO.bedrockJoiningInfo} Joining guide: ${SERVER_INFO.bedrockJoinLink}`;
   }
 
   // ============================================================
@@ -986,11 +991,11 @@ function getKnownAnswer(message) {
   }
 
   if (text === 'java?' || text === 'java' || text === 'java server?' || text === 'java server') {
-    return `Java: ${SERVER_INFO.serverVersion} • ${SERVER_INFO.serverSoftware} • ${SERVER_INFO.javaAddress}`;
+    return `Java: ${SERVER_INFO.serverVersion} • ${SERVER_INFO.serverSoftware} • ${SERVER_INFO.javaAddress}\nJoining guide: ${SERVER_INFO.javaJoinLink}`;
   }
 
   if (text === 'bedrock?' || text === 'bedrock' || text === 'bedrock join?' || text === 'bedrock joining?') {
-    return SERVER_INFO.bedrockJoiningInfo;
+    return `Bedrock address: ${SERVER_INFO.bedrockAddress}. Version support: ${SERVER_INFO.bedrockVersion}. ${SERVER_INFO.bedrockJoiningInfo} Joining guide: ${SERVER_INFO.bedrockJoinLink}`;
   }
 
   // ============================================================
@@ -1020,7 +1025,7 @@ function getKnownAnswer(message) {
     text === 'how do i join bedrock?' ||
     /\bjoin.*bedrock\b/.test(text)
   ) {
-    return SERVER_INFO.bedrockJoiningInfo;
+    return `Bedrock address: ${SERVER_INFO.bedrockAddress}. Version support: ${SERVER_INFO.bedrockVersion}. ${SERVER_INFO.bedrockJoiningInfo} Joining guide: ${SERVER_INFO.bedrockJoinLink}`;
   }
 
   return null;

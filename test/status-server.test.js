@@ -65,7 +65,17 @@ test('allowed status origins are parsed and trimmed', () => {
     }),
     ['https://one.example', 'https://two.example'],
   );
-  assert.deepEqual(getAllowedStatusOrigins({}), ['*']);
+  assert.deepEqual(
+    getAllowedStatusOrigins({}),
+    ['https://the-cottage.onrender.com'],
+  );
+});
+
+test('wildcard status origins require explicit opt-in', () => {
+  assert.deepEqual(
+    getAllowedStatusOrigins({ STATUS_ALLOWED_ORIGINS: '*' }),
+    ['*'],
+  );
 });
 
 test('CORS only reflects explicitly allowed origins when wildcard is disabled', () => {
