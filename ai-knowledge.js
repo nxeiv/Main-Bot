@@ -19,6 +19,7 @@ const SERVER_INFO = {
 
   // Discord links / channels
   invite: 'https://the-cottage.onrender.com/',
+  wakeLink: 'https://www.baohost.com/wake/',
 
   rulesLink:
     'https://discord.com/channels/1398568016915992667/1477236505465327626/1545520572652453980',
@@ -274,6 +275,11 @@ Joining guide: ${SERVER_INFO.bedrockJoinLink}
 Joining instructions: ${SERVER_INFO.bedrockJoiningInfo}
 
 Use these published joining details. Do not reveal private configuration or guarantee every client/account setup will work; if login fails, direct the player to staff.
+
+When a player asks how to start or wake the SMP because it is offline/asleep, or asks how to play when the owner/staff are unavailable:
+- Direct them to the public BaoHost wake page: ${SERVER_INFO.wakeLink}
+- Tell them to enter the Java server address ${SERVER_INFO.javaAddress} in the server address field, click "Wake server", then wait around 30–60 seconds before trying to join.
+- Explain that a wake request does not require staff to be online or a BaoHost panel login. If it does not wake, the server may be fully stopped or unavailable; direct the player to staff when they are around.
 
 Discord/server resources:
 Official Cottage website: ${SERVER_INFO.invite}
