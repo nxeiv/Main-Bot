@@ -13,9 +13,8 @@ const SERVER_INFO = {
   // Bedrock
   bedrockVersion: 'Any (Geyser-supported Bedrock versions)',
   bedrockAddress: 'the-cottage-c1-s6.playwithbao.com:32211',
-  bedrockJoinLink: 'https://discord.com/channels/1398568016915992667/1478252152169431134/1563549543365222513',
   bedrockJoiningInfo:
-    'Send a Bedrock friend request to "Emmcee4483". After you send the request, Emmcee4483 will invite you through the Bedrock friends list. If the invitation or login does not work, add the server manually using the address the-cottage-c1-s6.playwithbao.com and port 32211, or contact staff for help.',
+    'On Minecraft Bedrock, add The Cottage★ as a server manually using address the-cottage-c1-s6.playwithbao.com and port 32211. If the direct connection fails, contact staff for help.',
 
   // Discord links / channels
   invite: 'https://the-cottage.onrender.com/',
@@ -118,7 +117,7 @@ const FEATURE_TUTORIALS = {
     'There is no player command to activate anti-cheat or attribute fixes; these run on the server.',
 
   'Cross-Platform Access':
-    'Use the Bedrock address the-cottage-c1-s6.playwithbao.com on port 32211, or send a Bedrock friend request to Emmcee4483 and accept the invitation through the friends list. The joining guide is available at https://discord.com/channels/1398568016915992667/1478252152169431134/1563549543365222513. If login fails, contact staff.',
+    'Bedrock players should connect directly by adding the server using the-cottage-c1-s6.playwithbao.com on port 32211. If direct joining fails, contact staff. Do not offer an alternate invitation-based joining method.',
 
   'Discord Bridge':
     'Use the designated Discord and Minecraft chat channels for the configured chat relay. If messages are not relayed, contact staff.',
@@ -247,7 +246,7 @@ When answering a question yourself:
 - The current public server identity is The Cottage★ — Chapter 1 • Season 6. Describe it as vanilla-style survival with selected quality-of-life additions, not as Hardcore.
 - Do not claim that cracked/non-premium Java clients are supported; the current public configuration does not confirm that.
 - Do not reuse unconfirmed Season 5 features or restrictions, including the old Netherite restriction, land claims, proximity voice chat, armor-stand customization, or custom mace mechanics. Team System, Better Mending, and Vein Mining are current Season 6 features; for exact plugin behavior, use only the confirmed details below.
-- Bedrock players can use the friend-invite instructions or direct address below. List version support as Any (Geyser-supported versions), but do not guarantee every client/account setup will work if a login fails; direct the player to staff.
+- Bedrock joining instructions must use the published direct address and port below as the only supported public method. If direct joining fails, direct the player to staff rather than offering an alternate invitation-based route. List version support as Any (Geyser-supported versions), but do not guarantee every client/account setup will work if a login fails.
 - Never invent an unlisted interface such as a new command, prefix, or special phrase. Only describe joining methods and bot interactions that are explicitly confirmed below or implemented in the bot.
 - Do not invent commands, links, channels, IPs, ports, rules, features, joining procedures, or permissions.
 - If a server-specific fact is not confirmed below, say you do not know rather than guessing.
@@ -287,7 +286,6 @@ Joining guide: ${SERVER_INFO.javaJoinLink}
 Bedrock:
 Version support: ${SERVER_INFO.bedrockVersion}
 Direct address: ${SERVER_INFO.bedrockAddress}
-Joining guide: ${SERVER_INFO.bedrockJoinLink}
 Joining instructions: ${SERVER_INFO.bedrockJoiningInfo}
 
 Use these published joining details. Do not reveal private configuration or guarantee every client/account setup will work; if login fails, direct the player to staff.
