@@ -402,7 +402,7 @@ The Node.js requirement is also declared in `package.json`.
 ```bash
 git clone https://github.com/nxeiv/Main-Bot.git
 cd Main-Bot
-npm install
+npm ci
 ```
 
 Create `.env` using `.env.example`.
@@ -461,7 +461,7 @@ pkg install nodejs git
 
 git clone https://github.com/nxeiv/Main-Bot.git
 cd Main-Bot
-npm install
+npm ci
 ```
 
 Then create `.env` and run:
