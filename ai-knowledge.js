@@ -74,6 +74,7 @@ const FEATURE_GUIDE = {
   'Fair Play': 'GrimAC and AttributeSwapFixer provide server-side anti-cheat and attribute protections.',
   'Cross-Platform Access': 'Geyser and Floodgate provide the configured Bedrock-to-Java connection path. Bedrock compatibility is listed as Any (Geyser-supported versions); if login fails, direct the player to staff.',
   'Discord Bridge': 'DiscordSRV bridges configured Discord and Minecraft chat. Relay behavior and destinations follow the current server configuration.',
+  'Server Wake-Up': 'If the SMP is offline and staff are unavailable, players can send a wake request through BaoHost using the public Java server address.',
 };
 
 const FEATURE_TUTORIALS = {
@@ -121,6 +122,9 @@ const FEATURE_TUTORIALS = {
 
   'Discord Bridge':
     'Use the designated Discord and Minecraft chat channels for the configured chat relay. If messages are not relayed, contact staff.',
+
+  'Server Wake-Up':
+    'Open https://www.baohost.com/wake/ and enter the SMP Java address exactly: the-cottage-c1-s6.playwithbao.com:34159. Submit the wake request, then wait about 30–60 seconds for the server to boot before joining. You do not need the owner to be online.',
 };
 
 const FEATURE_ALIASES = {
@@ -167,6 +171,19 @@ const FEATURE_ALIASES = {
   'discordsrv': 'Discord Bridge',
   'discord bridge': 'Discord Bridge',
   'minecraft discord chat': 'Discord Bridge',
+  'turn on the server': 'Server Wake-Up',
+  'turn on server': 'Server Wake-Up',
+  'start the server': 'Server Wake-Up',
+  'start the smp': 'Server Wake-Up',
+  'wake the server': 'Server Wake-Up',
+  'wake server': 'Server Wake-Up',
+  'wake the smp': 'Server Wake-Up',
+  'wake smp': 'Server Wake-Up',
+  'server is off': 'Server Wake-Up',
+  'server is offline': 'Server Wake-Up',
+  'server is asleep': 'Server Wake-Up',
+  'smp is off': 'Server Wake-Up',
+  'smp is offline': 'Server Wake-Up',
 };
 
 const BOT_HELP_MESSAGE = `**The Cottage★ Help**
