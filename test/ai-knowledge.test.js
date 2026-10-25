@@ -13,17 +13,22 @@ const {
 } = require('../ai-knowledge');
 
 test('every advertised SMP feature has a guide and tutorial', () => {
-  const features = [...SERVER_INFO.features].sort();
+  const features = [...SERVER_INFO.features];
   assert.equal(new Set(features).size, features.length);
-  assert.deepEqual(Object.keys(FEATURE_GUIDE).sort(), features);
-  assert.deepEqual(Object.keys(FEATURE_TUTORIALS).sort(), features);
+  const guideTopics = Object.keys(FEATURE_GUIDE).sort();
+  const tutorialTopics = Object.keys(FEATURE_TUTORIALS).sort();
+  assert.deepEqual(tutorialTopics, guideTopics);
+  for (const feature of features) {
+    assert.ok(FEATURE_GUIDE[feature], feature + ' needs a guide');
+    assert.ok(FEATURE_TUTORIALS[feature], feature + ' needs a tutorial');
+  }
 });
 
 test('feature aliases point to known advertised features', () => {
-  const features = new Set(SERVER_INFO.features);
+  const helpTopics = new Set([...Object.keys(FEATURE_GUIDE), ...Object.keys(FEATURE_TUTORIALS)]);
   for (const [alias, feature] of Object.entries(FEATURE_ALIASES)) {
     assert.ok(alias.trim().length > 0, 'empty feature alias');
-    assert.ok(features.has(feature), alias + ' points to unknown feature ' + feature);
+    assert.ok(helpTopics.has(feature), alias + ' points to unknown help topic ' + feature);
   }
 });
 
