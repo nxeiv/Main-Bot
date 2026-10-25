@@ -905,7 +905,7 @@ function getKnownAnswer(message) {
     /\bserver ip information\b/.test(text) ||
     /\bwhere is the server ip\b/.test(text)
   ) {
-    return `Java: ${SERVER_INFO.javaAddress}\nJava joining guide: ${SERVER_INFO.javaJoinLink}\nBedrock: ${SERVER_INFO.bedrockAddress}\nBedrock joining guide: ${SERVER_INFO.bedrockJoinLink}\n${SERVER_INFO.bedrockJoiningInfo}`;
+    return `Java: ${SERVER_INFO.javaAddress}\nJava joining guide: ${SERVER_INFO.javaJoinLink}\nBedrock: ${SERVER_INFO.bedrockAddress}\n${SERVER_INFO.bedrockJoiningInfo}`;
   }
 
   if (
@@ -952,7 +952,7 @@ function getKnownAnswer(message) {
     /\bbedrock server address\b/.test(text) ||
     /\bbedrock port\b/.test(text)
   ) {
-    return `Bedrock address: ${SERVER_INFO.bedrockAddress}. Version support: ${SERVER_INFO.bedrockVersion}. ${SERVER_INFO.bedrockJoiningInfo} Joining guide: ${SERVER_INFO.bedrockJoinLink}`;
+    return `Bedrock address: ${SERVER_INFO.bedrockAddress}. Version support: ${SERVER_INFO.bedrockVersion}. ${SERVER_INFO.bedrockJoiningInfo}`;
   }
 
   // ============================================================
@@ -995,7 +995,7 @@ function getKnownAnswer(message) {
   }
 
   if (text === 'bedrock?' || text === 'bedrock' || text === 'bedrock join?' || text === 'bedrock joining?') {
-    return `Bedrock address: ${SERVER_INFO.bedrockAddress}. Version support: ${SERVER_INFO.bedrockVersion}. ${SERVER_INFO.bedrockJoiningInfo} Joining guide: ${SERVER_INFO.bedrockJoinLink}`;
+    return `Bedrock address: ${SERVER_INFO.bedrockAddress}. Version support: ${SERVER_INFO.bedrockVersion}. ${SERVER_INFO.bedrockJoiningInfo}`;
   }
 
   // ============================================================
@@ -1025,7 +1025,7 @@ function getKnownAnswer(message) {
     text === 'how do i join bedrock?' ||
     /\bjoin.*bedrock\b/.test(text)
   ) {
-    return `Bedrock address: ${SERVER_INFO.bedrockAddress}. Version support: ${SERVER_INFO.bedrockVersion}. ${SERVER_INFO.bedrockJoiningInfo} Joining guide: ${SERVER_INFO.bedrockJoinLink}`;
+    return `Bedrock address: ${SERVER_INFO.bedrockAddress}. Version support: ${SERVER_INFO.bedrockVersion}. ${SERVER_INFO.bedrockJoiningInfo}`;
   }
 
   return null;
