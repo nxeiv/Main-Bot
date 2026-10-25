@@ -71,7 +71,7 @@ const FEATURE_GUIDE = {
   'Cottage Recovery': 'InventoryRollbackPlus provides inventory backups and staff-managed restoration tools when recovery is appropriate.',
   'Skin Support': 'SkinsRestorer, Floodgate, and BedrockSkinRestorer are installed. Bedrock skin behavior still depends on current configuration and client compatibility; direct unresolved cases to staff.',
   'Fair Play': 'GrimAC and AttributeSwapFixer provide server-side anti-cheat and attribute protections.',
-  'Cross-Platform Access': 'Geyser and Floodgate provide the configured Bedrock-to-Java connection path. Bedrock compatibility is listed as Any (Geyser-supported versions); if login fails, direct the player to staff.',
+  'Cross-Platform Access': 'Geyser and Floodgate allow supported Bedrock clients to play with Java players. Bedrock players must use the direct server-entry details listed below; if login fails, direct the player to staff.',
   'Discord Bridge': 'DiscordSRV bridges configured Discord and Minecraft chat. Relay behavior and destinations follow the current server configuration.',
   'Server Wake-Up': 'If the SMP is offline and staff are unavailable, players can send a wake request through BaoHost using the public Java server address.',
 };
