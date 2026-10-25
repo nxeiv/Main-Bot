@@ -88,7 +88,7 @@ if (invalidAdminIds.length > 0) {
 
 if (missing.length > 0) {
   console.error(
-    `[Config] Missing required environment variables: ${missing.join(', ')}.`,
+    `[Config] Missing or invalid configuration: ${missing.join(', ')}.`,
   );
   console.error('[Config] Add the missing values and restart the bot.');
   process.exit(1);
