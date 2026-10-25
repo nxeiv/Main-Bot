@@ -37,8 +37,10 @@ test('help text describes opt-in AI and does not advertise removed text shortcut
   assert.equal(SERVER_INFO.javaAddress, 'the-cottage-c1-s6.playwithbao.com:34159');
   assert.equal(SERVER_INFO.bedrockAddress, 'the-cottage-c1-s6.playwithbao.com:32211');
   assert.equal(SERVER_INFO.bedrockVersion, 'Any (Geyser-supported Bedrock versions)');
-  assert.equal(SERVER_INFO.javaJoinLink, SERVER_INFO.bedrockJoinLink);
   assert.match(SERVER_INFO.bedrockJoiningInfo, /32211/);
+  assert.match(SERVER_INFO.bedrockJoiningInfo, /add The Cottage★ as a server manually/i);
+  assert.doesNotMatch(SERVER_INFO.bedrockJoiningInfo, /friend request|friends list|Emmcee4483|invite/i);
+  assert.doesNotMatch(SYSTEM_PROMPT, /Emmcee4483|friend request|friends list/i);
   assert.match(SYSTEM_PROMPT, /1563549543365222513/);
   assert.doesNotMatch(SYSTEM_PROMPT, /A verified direct Bedrock IP\/port is not currently published/);
   assert.doesNotMatch(SYSTEM_PROMPT, /Bedrock-specific skin restoration is not currently enabled because Floodgate is not installed/);
