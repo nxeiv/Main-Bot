@@ -297,7 +297,6 @@ specific administrative actions:
 - start = start the AFK Minecraft bot
 - stop = stop the AFK Minecraft bot
 - status = check the AFK Minecraft bot status
-- maintenance = put the server into maintenance / run the approved maintenance action
 - restart = restart the Minecraft server
 - scheduled = show currently scheduled administrative actions
 - cancel = cancel a previously scheduled administrative action
@@ -310,8 +309,8 @@ Do not explain your answer.
 The JSON MUST have exactly this structure:
 
 {
-  "action": "start|stop|status|maintenance|restart|scheduled|cancel|none",
-  "targetAction": "start|stop|status|maintenance|restart|all|none",
+  "action": "start|stop|status|restart|scheduled|cancel|none",
+  "targetAction": "start|stop|status|restart|all|none",
   "delayMinutes": number,
   "confidence": number
 }
@@ -337,10 +336,6 @@ User: restart the server in 10 minutes
 Output:
 {"action":"restart","targetAction":"none","delayMinutes":10,"confidence":0.99}
 
-User: put the server into maintenance after 5 minutes
-Output:
-{"action":"maintenance","targetAction":"none","delayMinutes":5,"confidence":0.99}
-
 User: stop the AFK bot
 Output:
 {"action":"stop","targetAction":"none","delayMinutes":0,"confidence":0.99}
@@ -364,10 +359,6 @@ Output:
 User: what do you have scheduled?
 Output:
 {"action":"scheduled","targetAction":"none","delayMinutes":0,"confidence":0.98}
-
-User: cancel the maintenance
-Output:
-{"action":"cancel","targetAction":"maintenance","delayMinutes":0,"confidence":0.99}
 
 User: what's the weather like?
 Output:
@@ -627,7 +618,6 @@ ${text}`,
   'start',
   'stop',
   'status',
-  'maintenance',
   'restart',
   'scheduled',
   'cancel',
@@ -638,7 +628,6 @@ const allowedTargetActions = new Set([
   'start',
   'stop',
   'status',
-  'maintenance',
   'restart',
   'all',
   'none',
@@ -801,28 +790,13 @@ function getKnownAnswer(message) {
   }
 
   // ============================================================
-  // SMP FEATURE QUESTIONS
+  // PLUGIN LIST
   // ============================================================
 
-  if (
-    text === 'server features?' ||
-    text === 'server features' ||
-    text === 'smp features?' ||
-    text === 'smp features' ||
-    text === 'minecraft features?' ||
-    text === 'minecraft features' ||
-    text === 'what are the server features?' ||
-    text === 'what are the server features' ||
-    text === 'what are the smp features?' ||
-    text === 'what are the smp features' ||
-    text === 'what are the minecraft features?' ||
-    text === 'what are the minecraft features'
-  ) {
+  if (text === 'plugins?' || text === 'plugins') {
     return [
-      '**The Cottage★ Chapter 1 Season 6 features:**',
-      ...SERVER_INFO.features.map(
-        feature => `• **${feature}** — ${FEATURE_GUIDE[feature]}`,
-      ),
+      '**The Cottage★ SMP plugins:**',
+      ...SERVER_INFO.plugins.map(plugin => \`• \${plugin}\`),
     ].join('\n');
   }
 
@@ -899,9 +873,6 @@ function getKnownAnswer(message) {
   // ============================================================
 
   if (
-    text === 'ip?' ||
-    text === 'server ip?' ||
-    text === 'smp ip?' ||
     /\bserver ip information\b/.test(text) ||
     /\bwhere is the server ip\b/.test(text)
   ) {
@@ -979,16 +950,14 @@ function getKnownAnswer(message) {
   }
 
   if (text === 'world download?' || text === 'world download' || text === 'download world?' || text === 'download world') {
-    return 'A Season 6 world download has not been published yet. Do not use a previous-season download as the current world.';
+    return 'The Cottage★ Chapter 1 • Season 6 world download is available in this Discord post: ' + SERVER_INFO.worldDownloadLink;
   }
 
   if (text === 'join?' || text === 'join') {
     return 'For the Cottage★ community, use the official website. For Chapter 1 Season 6 joining instructions, ask **how do I join the server?**';
   }
 
-  if (text === 'smp join?' || text === 'smp join' || text === 'join the smp?' || text === 'join the smp' || text === 'how do i join the smp?' || text === 'how do i join the smp') {
-    return `The Cottage★ Chapter 1 Season 6 is invite-only. Start here: ${SERVER_INFO.invite}`;
-  }
+
 
   if (text === 'java?' || text === 'java' || text === 'java server?' || text === 'java server') {
     return `Java: ${SERVER_INFO.serverVersion} • ${SERVER_INFO.serverSoftware} • ${SERVER_INFO.javaAddress}\nJoining guide: ${SERVER_INFO.javaJoinLink}`;
