@@ -1711,7 +1711,10 @@ client.on(Events.MessageCreate, async message => {
         new RegExp('<@!?' + client.user.id + '>').test(message.content)
       );
 
-    if (isBotMentionedForRejoin) {
+    if (
+      isBotMentionedForRejoin &&
+      message.guild?.id === config.discord.guildId
+    ) {
       await handleTextShortcut({ message, shortcut: 'rejoin' });
     }
 
@@ -2327,20 +2330,25 @@ client.on(Events.InteractionCreate, async interaction => {
 
       const sourceMessageIsEphemeral =
         Boolean(interaction.message?.flags?.has?.(MessageFlags.Ephemeral));
+
+      const updatedMessage = await interaction.update({
+        content: 'Retrying... A fresh 30-second disconnect window has started.',
+        components: [],
+      });
+
       if (sourceMessageIsEphemeral) {
         await publishRejoinNotice(interaction.channel);
       }
 
-      return interaction.update({
-        content: 'Retrying... A fresh 30-second disconnect window has started.',
-        components: [],
-      });
+      return updatedMessage;
     } catch (error) {
       log('Admin', `Rejoin retry failed: ${error.message}`);
-      return interaction.reply({
-        content: '✕ Error: the AFK bot could not be scheduled to rejoin.',
-        flags: MessageFlags.Ephemeral,
-      });
+      if (!interaction.replied && !interaction.deferred) {
+        return interaction.reply({
+          content: '✕ Error: the AFK bot could not be scheduled to rejoin.',
+          flags: MessageFlags.Ephemeral,
+        });
+      }
     }
   }
 
@@ -2542,28 +2550,29 @@ client.on(Events.InteractionCreate, async interaction => {
         });
       }
 
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
       try {
         const result = mc.rejoin(REJOIN_DELAY_MS);
         if (!result.scheduled) {
-          return interaction.reply({
+          return interaction.editReply({
             content: 'ⓘ A rejoin is already in progress.',
-            flags: MessageFlags.Ephemeral,
+            components: [],
           });
         }
 
         log('Admin', `Verified /rejoin request from ${interaction.user.tag} (${interaction.user.id}).`);
         await publishRejoinNotice(interaction.channel);
 
-        return interaction.reply({
+        return interaction.editReply({
           content: 'Rejoining... The AFK bot will stay disconnected for 30 seconds before reconnecting.',
           components: [buildRejoinComponents()],
-          flags: MessageFlags.Ephemeral,
         });
       } catch (error) {
         log('Admin', `/rejoin failed: ${error.message}`);
-        return interaction.reply({
+        return interaction.editReply({
           content: '✕ Error: the AFK bot could not be scheduled to rejoin.',
-          flags: MessageFlags.Ephemeral,
+          components: [],
         });
       }
     }
