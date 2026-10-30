@@ -15,6 +15,10 @@ const commands = [
     .setDescription('■ Stops the Minecraft AFK session'),
 
   new SlashCommandBuilder()
+    .setName('rejoin')
+    .setDescription('Disconnects the Minecraft AFK session and reconnects after 30 seconds'),
+
+  new SlashCommandBuilder()
     .setName('status')
     .setDescription('ⓘ Shows Minecraft AFK status'),
 
