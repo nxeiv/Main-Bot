@@ -22,6 +22,31 @@ const SERVER_INFO = {
 
   rulesLink:
     'https://discord.com/channels/1398568016915992667/1477236505465327626/1545520572652453980',
+  worldDownloadLink:
+    'https://discord.com/channels/1398568016915992667/1478252152169431134/1507948745122381824',
+
+  plugins: [
+    'Geyser',
+    'Floodgate',
+    'BedrockSkinRestorer',
+    'SkinsRestorer',
+    'DiscordSRV',
+    'SimpleTPA',
+    'Simple_RTP',
+    'ClickVillagers',
+    'DreamDisplays',
+    'InstaRestock',
+    'EzGapsandEzWebs',
+    'BetterMending',
+    'Veinminer',
+    'StringDupersReturn',
+    'UltimateTeams',
+    'InventoryRollbackPlus',
+    'GrimAC',
+    'AttributeSwapFixer',
+    'Faster, Better, Happy Ghasts',
+    'Dynamic Lighting',
+  ],
 
   rulesChannel: '<#1478166898020585592>',
   minecraftChannel: '<#1533883039287873566>',
@@ -194,14 +219,11 @@ Mention me or reply to one of my messages when you want an AI answer. I stay qui
 • \`/help\` — show this help
 • \`/afk [reason]\` — mark yourself AFK or update your reason
 • \`/forget\` — clear your own AI conversation context
-• \`/remind <duration> <message>\` — set a personal reminder
-• \`/reminders\` — list your active reminders
-• \`/remind-cancel <id>\` — cancel one of your reminders
 • \`/summarize <channel>\` — create a temporary private summary
 
 **Admin commands**
 • \`/start\` · \`/stop\` · \`/status\` — control or check the Minecraft AFK session
-• \`/maintenance\` — announce planned server maintenance
+• \`/rejoin\` — disconnect and reconnect the AFK session after 30 seconds (restricted access)
 • \`/dashboard\` — check Discord, Minecraft, and AI health
 • \`/ping\` — check bot latency
 • \`/aforget\` — clear all AI conversation contexts
@@ -212,8 +234,11 @@ Slash-command access depends on the configured permissions.
 **Text shortcuts**
 • ?ip — asks whether you use Java or Bedrock; reply to the prompt with your choice
 • ?java / ?bedrock — shows the corresponding server address
+• ?plugins — lists the current SMP plugins
+• ?world download — opens the Season 6 world download post
 • ?help, ?invite, ?roles, ?channels, and ?rules — quick information
 • ?start, ?stop, ?status, ?dashboard, and ?ai status — admin-only shortcuts
+• Mention me and use \`?rejoin\` to reconnect the AFK session (restricted access)
 • ?summarize <channel> — creates a temporary summary
 
 Shortcuts are case-insensitive and begin with ?. Ordinary conversation still requires a direct mention or reply to the bot.`;
@@ -257,7 +282,7 @@ When answering a question yourself:
 - Do not claim that cracked/non-premium Java clients are supported; the current public configuration does not confirm that.
 - Do not reuse unconfirmed Season 5 features or restrictions, including the old Netherite restriction, land claims, proximity voice chat, armor-stand customization, or custom mace mechanics. Team System, Better Mending, and Vein Mining are current Season 6 features; for exact plugin behavior, use only the confirmed details below.
 - Bedrock joining instructions must use the published direct address and port below as the only supported public method. If direct joining fails, direct the player to staff rather than offering an alternate invitation-based route. List version support as Any (Geyser-supported versions), but do not guarantee every client/account setup will work if a login fails.
-- Never invent an unlisted interface such as a new command, prefix, or special phrase. Confirmed Discord text shortcuts begin with ? and are case-insensitive; examples include ?ip, ?java, ?bedrock, ?help, ?invite, ?roles, ?channels, ?rules, ?start, ?stop, ?status, ?dashboard, ?ai status, and ?summarize <channel>. ?ip asks the user to reply to its prompt with Java or Bedrock. Only describe joining methods and bot interactions that are explicitly confirmed below or implemented in the bot.
+- Never invent an unlisted interface such as a new command, prefix, or special phrase. Confirmed Discord text shortcuts begin with ? and are case-insensitive; examples include ?ip, ?java, ?bedrock, ?plugins, ?world download, ?help, ?invite, ?roles, ?channels, ?rules, ?start, ?stop, ?status, ?dashboard, ?ai status, and ?summarize <channel>. The restricted ?rejoin shortcut requires a direct mention of the bot. ?ip asks the user to reply to its prompt with Java or Bedrock. Only describe joining methods and bot interactions that are explicitly confirmed below or implemented in the bot.
 - Do not invent commands, links, channels, IPs, ports, rules, features, joining procedures, or permissions.
 - If a server-specific fact is not confirmed below, say you do not know rather than guessing.
 - Do not contradict the deterministic bot answers.
@@ -312,7 +337,11 @@ Minecraft/status channel: ${SERVER_INFO.minecraftChannel}
 Minecraft-related community channel: ${SERVER_INFO.minecraftCommunityChannel}
 Minecraft access role: ${SERVER_INFO.accessRole}
 
-A Season 6 world download has not been published in the current knowledge. Do not share an old-season download as current.
+The current Season 6 world download announcement is available here: ${SERVER_INFO.worldDownloadLink}. Direct players to that Discord post; do not invent or claim a direct file URL.
+
+PUBLIC SEASON 6 PLUGINS
+
+${SERVER_INFO.plugins.map(plugin => `- ${plugin}`).join('\n')}
 
 PUBLIC SEASON 6 FEATURES
 

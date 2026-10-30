@@ -52,7 +52,7 @@ The goal is the same as the website: **quiet, warm, recognizable, and not overly
 - Minecraft/SMP help
 - feature descriptions and tutorials
 - Minecraft connection and player-count status
-- administrative `/start`, `/stop`, `/status`, `/dashboard`, and `/maintenance`
+- administrative `/start`, `/stop`, `/rejoin`, `/status`, and `/dashboard`
 - `/ping` for a quick Discord latency check
 - `/summarize <channel>` for private channel summaries
 - admin-verified AI administrative requests
@@ -60,7 +60,6 @@ The goal is the same as the website: **quiet, warm, recognizable, and not overly
 - `/forget` and `/aforget`
 - administrator-only `/ai status`
 - public `/afk [reason]`
-- public `/remind <duration> <message>`, `/reminders`, and `/remind-cancel <id>`
 - daily Minecraft player welcomes
 - Discord ↔ Minecraft chat integration
 - optional private error reporting
@@ -96,6 +95,8 @@ The configured Minecraft account is **Server**.
 | `afk-store.js` | Persistent per-user Discord AFK state and validation |
 | `shutdown.js` | Idempotent cleanup of Minecraft, Discord, and HTTP connections |
 | `minecraft.js` | Mineflayer connection, reconnect logic, player tracking, chat, and anti-AFK behavior |
+| `rejoin-controller.js` | Delayed manual disconnect/reconnect cycle |
+| `rejoin-access.js` | Dedicated user/role allow-list for the rejoin command |
 | `ai.js` | Gemini clients, conversation memory, AI requests, rate limiting, and administrative request parsing |
 | `ai-knowledge.js` | Confirmed server facts, feature guides, aliases, help text, and AI system prompt |
 | `summary.js` | Channel-summary generation and dismiss-button behavior |
@@ -122,9 +123,9 @@ Current access levels include:
 | `/afk` | Public |
 | `/start` | Admin |
 | `/stop` | Admin |
+| `/rejoin` | Dedicated allow-list (one user ID or the specified role) |
 | `/status` | Admin |
 | `/dashboard` | Admin |
-| `/maintenance` | Admin |
 | `/aforget` | Admin |
 | `/ai status` | Admin |
 
@@ -226,15 +227,12 @@ The public Java and Bedrock addresses are used for player joining. Bedrock guida
 | `/forget` | Public | Clears the requesting user's AI conversation |
 | `/summarize <channel>` | Public | Privately summarizes recent messages |
 | `/afk [reason]` | Public | Marks the requesting user as AFK; response is public |
-| `/remind <duration> <message>` | Public | Creates a personal reminder |
-| `/reminders` | Public | Lists your active reminders |
-| `/remind-cancel <id>` | Public | Cancels one of your reminders |
 | `/ping` | Admin | Shows the current Discord bot latency |
 | `/start` | Admin | Starts the Minecraft AFK session |
 | `/stop` | Admin | Stops the Minecraft AFK session |
+| `/rejoin` | Dedicated allow-list | Disconnects the AFK client, waits 30 seconds, then reconnects |
 | `/status` | Admin | Shows Minecraft status |
 | `/dashboard` | Admin | Shows Discord, Minecraft, and AI health |
-| `/maintenance` | Admin | Sends the configured maintenance announcement |
 | `/aforget` | Admin | Clears all AI conversations |
 | `/ai status` | Admin | Shows AI health and queue diagnostics |
 
@@ -242,7 +240,7 @@ The bot's `/help` response mirrors the supported commands directly in Discord.
 
 **Conversational AI is opt-in.** Members must directly mention the bot or reply to one of its messages in a normal conversation channel. Ordinary chat and messages that merely contain a keyword do not trigger AI. DiscordSRV webhook messages, replies to Minecraft relay messages, and the configured Discord-to-Minecraft relay channel are excluded from conversational AI.
 
-**Case-insensitive text shortcuts** begin with `?` and do not require a bot mention. Examples: `?ip` (then reply to the bot's prompt with `Java` or `Bedrock`), `?java`, `?bedrock`, `?help`, `?invite`, `?roles`, `?channels`, `?rules`, `?start`, `?stop`, `?status`, `?dashboard`, `?ai status`, and `?summarize <#channel>`. Administrative shortcuts still enforce the same configured permissions as their slash-command equivalents. Use slash commands for AFK and reminders.
+**Case-insensitive text shortcuts** begin with `?` and do not require a bot mention. Examples: `?ip` (then reply to the bot's prompt with `Java` or `Bedrock`), `?java`, `?bedrock`, `?plugins`, `?world download`, `?help`, `?invite`, `?roles`, `?channels`, `?rules`, `?start`, `?stop`, `?status`, `?dashboard`, `?ai status`, and `?summarize <#channel>`. Administrative shortcuts still enforce their configured permissions. Use slash commands for AFK and summaries. The special `?rejoin` shortcut requires a direct mention of the Main Bot and the dedicated rejoin allow-list. The slash form uses the same allow-list. The command disconnects the Minecraft AFK client for 30 seconds, then reconnects it. The Retry button starts a fresh 30-second rejoin cycle.
 
 The configured Mineflayer client protocol is separate from the server version. The project currently depends on upstream `mineflayer` 4.39.x, which does not yet natively support Minecraft Java 26.2; do not change the client protocol to `26.2` until a compatible protocol stack is installed and tested.
 
@@ -332,7 +330,6 @@ Supported persisted actions include:
 
 - `start`
 - `stop`
-- `maintenance`
 
 Scheduled administrative actions are saved locally so they can survive a restart.
 
@@ -488,110 +485,18 @@ The GitHub Actions validation workflow runs JavaScript syntax checks and `npm te
 
 A practical manual test order is:
 
-1. Start the bot and verify Discord login.
-2. Verify slash-command reconciliation.
-3. Run `/help` as a public user.
-4. Test deterministic Cottage★ questions.
-5. Test `/afk`.
-6. Test a normal AI mention and a reply-aware follow-up.
-7. Test `/forget` and `/summarize`.
-8. Test `?IP`, `?Ip`, and `?ip`; confirm each starts the Java/Bedrock prompt, then reply with `Java` and `Bedrock` in separate tests.
-9. Test `?java`, `?bedrock`, `?help`, `?invite`, `?roles`, `?channels`, `?rules`, and the other advertised prefix shortcuts.
-10. Test `?status`, `?dashboard`, `?ai status`, `?start`, `?stop`, and `?summarize <#channel>` with authorized and unauthorized accounts.
-11. Test `/status`, `/dashboard`, and `/ai status` as admin.
-12. Test `/start` and `/stop` only during a safe maintenance window.
-13. Verify a normal DiscordSRV Minecraft message does not trigger AI when someone replies to it; also verify a direct bot mention in the relay channel gets no AI response.
-14. Verify normal direct mentions and replies to ordinary Main Bot messages still work in normal conversation channels.
-15. Verify ordinary unpinged chat does not trigger conversational replies or welcome messages.
-16. Verify the website can reach `/api/status`.
-13. Review logs for Discord, Minecraft, Gemini, network, and permission errors.
-
----
-
-# Troubleshooting
-
-## Slash commands are missing
-
-Check:
-
-- `DISCORD_TOKEN`
-- `clientId`
-- `guildId`
-- Discord permissions
-- bot connectivity
-
-The slash-command watchdog periodically checks the configured guild command set.
-
-## Gemini requests fail
-
-Check:
-
-- Gemini API keys
-- quota/rate limits
-- temporary provider availability
-- network connectivity
-
-Configured failover keys are used for supported quota and temporary availability failures.
-
-## Minecraft disconnects
-
-Check the Minecraft server and review the disconnect reason.
-
-Unexpected disconnects automatically enter the reconnect system unless the Minecraft session was deliberately stopped.
-
-## `EAI_AGAIN`
-
-This usually indicates temporary DNS or network resolution trouble.
-
-Because the Minecraft connection manager already retries, temporary failures normally do not require a manual restart.
-
-## Website status is unavailable
-
-Check:
-
-1. the Main Bot process is running
-2. the HTTP status listener is bound successfully
-3. the host-provided port / `STATUS_PORT` is correct
-4. `STATUS_ALLOWED_ORIGINS` allows the website origin
-5. `/health` and `/api/status` respond normally
-
----
-
-# Development guidelines
-
-When changing the bot:
-
-- keep Discord orchestration in `index.js`
-- keep slash-command definitions in `commands.js`
-- keep conversational invocation rules in `message-routing.js`
-- keep the public HTTP status bridge in `status-server.js`
-- keep persisted user AFK state in `afk-store.js`
-- keep connection cleanup in `shutdown.js`
-- keep Minecraft connection logic in `minecraft.js`
-- keep AI request behavior in `ai.js`
-- keep confirmed server knowledge and the system prompt in `ai-knowledge.js`
-- keep summaries in `summary.js`
-- keep Unicode presentation logic in `unicode.js`
-- keep secrets in environment variables
-- keep runtime state out of Git
-- centralize feature access in `config.js`
-- do not add unconfirmed server facts to the AI knowledge base
-- test reconnect and status behavior after network-related changes
-- keep public API responses limited to information that is safe to expose
-- preserve the Cottage★ Unicode theme in user-facing responses
-
-## Theme rule
-
-When adding a new command, embed, error message, or AI-facing response, ask:
-
-**Does this look like something that belongs in the Cottage★?**
-
-Prefer calm, readable, human phrasing and restrained Unicode symbols over noisy emoji-heavy formatting.
-
----
-
-# Repository
-
-https://github.com/nxeiv/Main-Bot
-
-The bot is maintained as infrastructure for **The Cottage★** and its backyard, **The Cottage★ SMP**.
+1. Start the bot and verify Discord login and slash-command reconciliation.
+2. Run `/help` as a public user; confirm the new `/rejoin` entry appears.
+3. Test `/afk`, `/forget`, and `/summarize`.
+4. Test a normal AI mention and a reply-aware follow-up.
+5. Test `?IP`, `?Ip`, and `?ip`; reply to each prompt with Java and Bedrock in separate tests.
+6. Test `?java`, `?bedrock`, `?plugins`, `?world download`, `?help`, `?invite`, `?roles`, `?channels`, and `?rules`.
+7. Confirm `?server features`, `?server ip`, and `?smp join` are no longer handled as shortcuts.
+8. Test existing admin shortcuts and slash commands with authorized and unauthorized accounts.
+9. Test `/rejoin` using the explicitly allowed user ID and a member with the required role; other users should receive a generic unavailable response.
+10. Test `@Main Bot ?rejoin` with an authorized account. Confirm plain, unpinged `?rejoin` is ignored.
+11. Confirm the AFK client disconnects immediately, stays offline for 30 seconds, then reconnects. Test the Retry button and verify unauthorized users cannot use it.
+12. Verify DiscordSRV relay messages and replies remain excluded from conversational AI.
+13. Verify ordinary direct mentions and replies to Main Bot messages still work in normal conversation channels.
+14. Verify the website can reach `/api/status`.
+15. Review logs for Discord, Minecraft, Gemini, network, and permission errors.

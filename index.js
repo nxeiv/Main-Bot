@@ -27,13 +27,14 @@ const summary = require('./summary');
 const { applyUnicodeTheme } = require('./unicode');
 const { shouldHandleConversationalMessage, isMinecraftRelayMessage } = require('./message-routing');
 const { parseTextShortcut, normalizeIpChoice } = require('./text-shortcuts');
+const { isRejoinAuthorized } = require('./rejoin-access');
 const { startStatusServer } = require('./status-server');
 const { createAfkStore } = require('./afk-store');
 const { createShutdownHandler } = require('./shutdown');
-const reminders = require('./reminders');
 
 const scheduledAdminActions = new Map();
 const pendingIpChoices = new Map();
+const REJOIN_DELAY_MS = 30_000;
 
 const runtimeHealth = {
   lastMinecraftConnectedAt: null,
@@ -159,7 +160,6 @@ loadDailyWelcomeState();
 const PERSISTABLE_ADMIN_ACTIONS = new Set([
   'start',
   'stop',
-  'maintenance',
 ]);
 
 function saveScheduledAdminActions() {
@@ -402,17 +402,13 @@ function isLikelyAdminRequest(text) {
     /\b(server|bot|afk|session)\b.*\b(status|state|uptime)\b/,
     /^\s*(status|state|uptime)\??\s*$/,
 
-    // Maintenance
-    /\b(maintenance|maint)\b/,
-    /\b(put|place|set|take)\b.*\bserver\b.*\bmaintenance\b/,
-
     // Restart
     /\b(restart|reboot)\b.*\b(server|bot|afk|session)\b/,
     /\b(server|bot|afk|session)\b.*\b(restart|reboot)\b/,
 
     // Cancel / scheduling
     /\b(cancel|unschedule)\b.*\b(all|everything|every|schedule|schedules|scheduled actions|scheduled tasks)\b/,
-    /\b(cancel|unschedule)\b.*\b(start|stop|status|maintenance|restart|reboot)\b/,
+    /\b(cancel|unschedule)\b.*\b(start|stop|status|restart|reboot)\b/,
     /\b(schedule|scheduled|in \d+ ?(second|seconds|minute|minutes|hour|hours)|after \d+ ?(second|seconds|minute|minutes|hour|hours))\b/,
   ];
 
@@ -632,23 +628,7 @@ async function executeAdministrativeAction(action) {
       return 'stopped';
     }
 
-    case 'maintenance': {
-      const maintenanceChannel = await client.channels.fetch(
-        config.discord.maintenanceChannelId,
-      );
 
-      if (!maintenanceChannel?.isTextBased()) {
-        throw new Error(
-          'The configured maintenance channel is not a text channel.',
-        );
-      }
-
-      await maintenanceChannel.send(
-        '# 🛠️ **Server is under maintenance** <@&1447218476795166791>',
-      );
-
-      return 'maintenance announced';
-    }
 
     default:
           
@@ -846,6 +826,30 @@ function buildDashboardComponents() {
       .setLabel('↻ Refresh')
       .setStyle(ButtonStyle.Secondary),
   );
+}
+
+function buildRejoinComponents() {
+  return new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId('rejoin:retry')
+      .setLabel('Retry')
+      .setStyle(ButtonStyle.Secondary),
+  );
+}
+
+async function publishRejoinNotice(channel) {
+  if (!channel?.isTextBased?.() || typeof channel.send !== 'function') return false;
+
+  try {
+    await channel.send({
+      content: '⌁ The Cottage★ AFK bot is rejoining. It will reconnect in about 30 seconds.',
+      allowedMentions: { parse: [] },
+    });
+    return true;
+  } catch (error) {
+    log('Admin', 'Unable to publish the rejoin notice: ' + error.message);
+    return false;
+  }
 }
 
 function shorten(text, limit = 1000) {
@@ -1401,6 +1405,7 @@ async function handleTextShortcut({ message, shortcut }) {
   const isShortcut =
     normalizedQuestion === 'start' ||
     normalizedQuestion === 'stop' ||
+    normalizedQuestion === 'rejoin' ||
     normalizedQuestion === 'status' ||
     normalizedQuestion === 'ai status' ||
     normalizedQuestion === 'dashboard' ||
@@ -1417,6 +1422,34 @@ async function handleTextShortcut({ message, shortcut }) {
       await message.reply(
         `I don't recognize the shortcut \`?${normalizedQuestion}\`. Try \`?help\` to see the available shortcuts.`,
       );
+    }
+
+    return true;
+  }
+
+  if (normalizedQuestion === 'rejoin') {
+    if (!isRejoinAuthorized(message.author.id, message.member)) {
+      log('Admin', `Rejected ?rejoin from ${message.author.tag} (${message.author.id}).`);
+      await message.reply('Unknown or unavailable command.');
+      return true;
+    }
+
+    try {
+      const result = mc.rejoin(REJOIN_DELAY_MS);
+      if (!result.scheduled) {
+        await message.reply('ⓘ A rejoin is already in progress.');
+        return true;
+      }
+
+      log('Admin', `Verified ?rejoin request from ${message.author.tag} (${message.author.id}).`);
+      await message.reply({
+        content: 'Rejoining... The AFK bot will stay disconnected for 30 seconds before reconnecting.',
+        components: [buildRejoinComponents()],
+        allowedMentions: { parse: [] },
+      });
+    } catch (error) {
+      log('Admin', `Text shortcut rejoin failed: ${error.message}`);
+      await message.reply('✕ Error: the AFK bot could not be scheduled to rejoin.');
     }
 
     return true;
@@ -1661,7 +1694,34 @@ client.on(Events.MessageCreate, async message => {
     return;
   }
 
-  // Case-insensitive ?-prefix shortcuts do not require a bot mention.
+  // ?rejoin is intentionally different from the other shortcuts: it requires
+  // an actual mention of this bot, either before or after the shortcut text.
+  const contentWithoutBotMention = client.user
+    ? message.content
+      .replace(new RegExp('<@!?' + client.user.id + '>', 'g'), '')
+      .trim()
+    : message.content;
+  const rejoinShortcut = parseTextShortcut(contentWithoutBotMention);
+
+  if (rejoinShortcut === 'rejoin') {
+    const isBotMentionedForRejoin =
+      Boolean(client.user) &&
+      (
+        message.mentions.users.has(client.user.id) ||
+        new RegExp('<@!?' + client.user.id + '>').test(message.content)
+      );
+
+    if (
+      isBotMentionedForRejoin &&
+      message.guild?.id === config.discord.guildId
+    ) {
+      await handleTextShortcut({ message, shortcut: 'rejoin' });
+    }
+
+    return;
+  }
+
+  // Other case-insensitive ?-prefix shortcuts do not require a bot mention.
   const textShortcut = parseTextShortcut(message.content);
 
   if (textShortcut !== null && message.guild?.id === config.discord.guildId) {
@@ -2127,14 +2187,9 @@ if (adminCommand.delayMinutes === 0) {
           ? 'ⓘ The Minecraft AFK bot is already stopped.'
           : '✓ Minecraft AFK bot stopped.',
       );
-    } else if (adminCommand.action === 'maintenance') {
-      await message.reply(
-        '✓ Maintenance announcement sent.',
-      );
     }
 
     return;
-
   } catch (error) {
     log(
       'Admin',
@@ -2254,6 +2309,49 @@ const response = await ai.ask(contextualAiQuestion, {
 
 });
 client.on(Events.InteractionCreate, async interaction => {
+  if (interaction.isButton() && interaction.customId === 'rejoin:retry') {
+    if (!isRejoinAuthorized(interaction.user.id, interaction.member)) {
+      return interaction.reply({
+        content: 'Unknown or unavailable command.',
+        flags: MessageFlags.Ephemeral,
+      });
+    }
+
+    try {
+      const result = mc.rejoin(REJOIN_DELAY_MS, { replacePending: true });
+      if (!result.scheduled) {
+        return interaction.reply({
+          content: 'ⓘ A rejoin is already in progress.',
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+
+      log('Admin', `Rejoin retry requested by ${interaction.user.tag} (${interaction.user.id}).`);
+
+      const sourceMessageIsEphemeral =
+        Boolean(interaction.message?.flags?.has?.(MessageFlags.Ephemeral));
+
+      const updatedMessage = await interaction.update({
+        content: 'Retrying... A fresh 30-second disconnect window has started.',
+        components: [],
+      });
+
+      if (sourceMessageIsEphemeral) {
+        await publishRejoinNotice(interaction.channel);
+      }
+
+      return updatedMessage;
+    } catch (error) {
+      log('Admin', `Rejoin retry failed: ${error.message}`);
+      if (!interaction.replied && !interaction.deferred) {
+        return interaction.reply({
+          content: '✕ Error: the AFK bot could not be scheduled to rejoin.',
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+    }
+  }
+
   if (interaction.isButton() && interaction.customId === 'dashboard:refresh') {
     return interaction.update({
       embeds: [buildDashboardEmbed()],
@@ -2326,39 +2424,6 @@ client.on(Events.InteractionCreate, async interaction => {
         flags: MessageFlags.Ephemeral,
       });
     }
-    case 'maintenance': {
-      if (!hasFeatureAccess('maintenance', interaction.user.id, interaction.member)) {
-        log(
-          'Admin',
-          `Rejected /maintenance from unauthorized user ${interaction.user.tag} (${interaction.user.id}).`,
-        );
-        return interaction.reply({
-          content: '✕ You are not authorized to use this command.',
-          flags: MessageFlags.Ephemeral,
-        });
-      }
-
-      try {
-        await executeAdministrativeAction('maintenance');
-        runtimeHealth.maintenance = true;
-
-        return interaction.reply({
-          content: '✓ Maintenance announcement sent.',
-          flags: MessageFlags.Ephemeral,
-        });
-      } catch (error) {
-        log(
-          'Discord',
-          `Unable to send maintenance announcement: ${error.message}`,
-        );
-
-        return interaction.reply({
-          content:
-            '✕ Failed to send the maintenance announcement.',          flags: MessageFlags.Ephemeral,
-        });
-      }
-    }
-
     case 'start': {
       if (!hasFeatureAccess('start', interaction.user.id, interaction.member)) {
         log(
@@ -2476,6 +2541,42 @@ client.on(Events.InteractionCreate, async interaction => {
       });
     }
 
+    case 'rejoin': {
+      if (!isRejoinAuthorized(interaction.user.id, interaction.member)) {
+        log('Admin', `Rejected /rejoin from ${interaction.user.tag} (${interaction.user.id}).`);
+        return interaction.reply({
+          content: 'Unknown or unavailable command.',
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
+      try {
+        const result = mc.rejoin(REJOIN_DELAY_MS);
+        if (!result.scheduled) {
+          return interaction.editReply({
+            content: 'ⓘ A rejoin is already in progress.',
+            components: [],
+          });
+        }
+
+        log('Admin', `Verified /rejoin request from ${interaction.user.tag} (${interaction.user.id}).`);
+        await publishRejoinNotice(interaction.channel);
+
+        return interaction.editReply({
+          content: 'Rejoining... The AFK bot will stay disconnected for 30 seconds before reconnecting.',
+          components: [buildRejoinComponents()],
+        });
+      } catch (error) {
+        log('Admin', `/rejoin failed: ${error.message}`);
+        return interaction.editReply({
+          content: '✕ Error: the AFK bot could not be scheduled to rejoin.',
+          components: [],
+        });
+      }
+    }
+
     case 'status': {
       if (!(await requireFeatureAccess(interaction, 'status'))) {
         return;
@@ -2514,89 +2615,6 @@ client.on(Events.InteractionCreate, async interaction => {
       });
     }
 
-    case 'remind': {
-      const durationInput = interaction.options.getString('duration', true).trim();
-      const message = interaction.options.getString('message', true).trim();
-
-      try {
-        const durationMs = reminders.parseDuration(durationInput);
-        const reminder = reminders.createReminder({
-          userId: interaction.user.id,
-          userTag: interaction.user.tag,
-          guildId: interaction.guildId,
-          channelId: interaction.channelId,
-          durationMs,
-          message,
-        });
-
-        const timestamp = Math.floor(reminder.executeAt / 1000);
-
-        return interaction.reply({
-          content:
-            `✓ Reminder \`${reminder.id}\` set for <t:${timestamp}:F> (<t:${timestamp}:R>).\nReminder: **${reminder.message}**\nUse \`/reminders\` to view it or \`/remind-cancel\` to cancel it.`,
-          flags: MessageFlags.Ephemeral,
-        });
-      } catch (error) {
-        return interaction.reply({
-          content: `✕ ${error.message}`,
-          flags: MessageFlags.Ephemeral,
-        });
-      }
-    }
-
-    case 'reminders': {
-      const activeReminders = reminders.getUserReminders(interaction.user.id);
-
-      if (activeReminders.length === 0) {
-        return interaction.reply({
-          content: 'ⓘ You have no active reminders.',
-          flags: MessageFlags.Ephemeral,
-        });
-      }
-
-      const embed = createEmbed('Your Reminders', Colors.Blurple)
-        .setDescription('Active reminders are shown below. Times use your Discord locale.');
-
-      for (const reminder of activeReminders.slice(0, 25)) {
-        const timestamp = Math.floor(reminder.executeAt / 1000);
-
-        embed.addFields({
-          name: reminder.id,
-          value:
-            `<t:${timestamp}:F> (<t:${timestamp}:R>)\n${reminder.message}`,
-          inline: false,
-        });
-      }
-
-      return interaction.reply({
-        embeds: [embed],
-        flags: MessageFlags.Ephemeral,
-      });
-    }
-
-    case 'remind-cancel': {
-      const reminderId = interaction.options.getString('id', true).trim();
-      const result = reminders.cancelReminder(
-        interaction.user.id,
-        reminderId,
-      );
-
-      if (!result.ok) {
-        return interaction.reply({
-          content:
-            result.reason === 'not_owner'
-              ? '✕ You can only cancel your own reminders.'
-              : '✕ I could not find that reminder. Use /reminders to see your active reminders.',
-          flags: MessageFlags.Ephemeral,
-        });
-      }
-
-      return interaction.reply({
-        content:
-          `✓ Cancelled reminder \`${result.reminder.id}\`: **${result.reminder.message}**`,
-        flags: MessageFlags.Ephemeral,
-      });
-    }
     case 'dashboard': {
       if (!hasFeatureAccess('dashboard', interaction.user.id, interaction.member)) {
         return interaction.reply({
@@ -2756,8 +2774,6 @@ client.once(Events.ClientReady, async readyClient => {
   updatePresence();
 
   restoreScheduledAdminActions();
-
-  reminders.initialize(readyClient);
 
   log('Bot', 'Starting AFK session.');
   mc.start();
