@@ -52,7 +52,7 @@ The goal is the same as the website: **quiet, warm, recognizable, and not overly
 - Minecraft/SMP help
 - feature descriptions and tutorials
 - Minecraft connection and player-count status
-- administrative `/start`, `/stop`, `/status`, `/dashboard`, and `/maintenance`
+- administrative `/start`, `/stop`, `/status`, and `/dashboard`
 - `/ping` for a quick Discord latency check
 - `/summarize <channel>` for private channel summaries
 - admin-verified AI administrative requests
@@ -60,7 +60,6 @@ The goal is the same as the website: **quiet, warm, recognizable, and not overly
 - `/forget` and `/aforget`
 - administrator-only `/ai status`
 - public `/afk [reason]`
-- public `/remind <duration> <message>`, `/reminders`, and `/remind-cancel <id>`
 - daily Minecraft player welcomes
 - Discord ↔ Minecraft chat integration
 - optional private error reporting
@@ -124,7 +123,6 @@ Current access levels include:
 | `/stop` | Admin |
 | `/status` | Admin |
 | `/dashboard` | Admin |
-| `/maintenance` | Admin |
 | `/aforget` | Admin |
 | `/ai status` | Admin |
 
@@ -226,15 +224,11 @@ The public Java and Bedrock addresses are used for player joining. Bedrock guida
 | `/forget` | Public | Clears the requesting user's AI conversation |
 | `/summarize <channel>` | Public | Privately summarizes recent messages |
 | `/afk [reason]` | Public | Marks the requesting user as AFK; response is public |
-| `/remind <duration> <message>` | Public | Creates a personal reminder |
-| `/reminders` | Public | Lists your active reminders |
-| `/remind-cancel <id>` | Public | Cancels one of your reminders |
 | `/ping` | Admin | Shows the current Discord bot latency |
 | `/start` | Admin | Starts the Minecraft AFK session |
 | `/stop` | Admin | Stops the Minecraft AFK session |
 | `/status` | Admin | Shows Minecraft status |
 | `/dashboard` | Admin | Shows Discord, Minecraft, and AI health |
-| `/maintenance` | Admin | Sends the configured maintenance announcement |
 | `/aforget` | Admin | Clears all AI conversations |
 | `/ai status` | Admin | Shows AI health and queue diagnostics |
 
@@ -242,7 +236,7 @@ The bot's `/help` response mirrors the supported commands directly in Discord.
 
 **Conversational AI is opt-in.** Members must directly mention the bot or reply to one of its messages in a normal conversation channel. Ordinary chat and messages that merely contain a keyword do not trigger AI. DiscordSRV webhook messages, replies to Minecraft relay messages, and the configured Discord-to-Minecraft relay channel are excluded from conversational AI.
 
-**Case-insensitive text shortcuts** begin with `?` and do not require a bot mention. Examples: `?ip` (then reply to the bot's prompt with `Java` or `Bedrock`), `?java`, `?bedrock`, `?help`, `?invite`, `?roles`, `?channels`, `?rules`, `?start`, `?stop`, `?status`, `?dashboard`, `?ai status`, and `?summarize <#channel>`. Administrative shortcuts still enforce the same configured permissions as their slash-command equivalents. Use slash commands for AFK and reminders.
+**Case-insensitive text shortcuts** begin with `?` and do not require a bot mention. Examples: `?ip` (then reply to the bot's prompt with `Java` or `Bedrock`), `?java`, `?bedrock`, `?plugins`, `?world download`, `?help`, `?invite`, `?roles`, `?channels`, `?rules`, `?start`, `?stop`, `?status`, `?dashboard`, `?ai status`, and `?summarize <#channel>`. Administrative shortcuts still enforce the same configured permissions as their slash-command equivalents. Use slash commands for AFK and summaries.
 
 The configured Mineflayer client protocol is separate from the server version. The project currently depends on upstream `mineflayer` 4.39.x, which does not yet natively support Minecraft Java 26.2; do not change the client protocol to `26.2` until a compatible protocol stack is installed and tested.
 
@@ -332,7 +326,6 @@ Supported persisted actions include:
 
 - `start`
 - `stop`
-- `maintenance`
 
 Scheduled administrative actions are saved locally so they can survive a restart.
 
@@ -496,10 +489,17 @@ A practical manual test order is:
 6. Test a normal AI mention and a reply-aware follow-up.
 7. Test `/forget` and `/summarize`.
 8. Test `?IP`, `?Ip`, and `?ip`; confirm each starts the Java/Bedrock prompt, then reply with `Java` and `Bedrock` in separate tests.
-9. Test `?java`, `?bedrock`, `?help`, `?invite`, `?roles`, `?channels`, `?rules`, and the other advertised prefix shortcuts.
-10. Test `?status`, `?dashboard`, `?ai status`, `?start`, `?stop`, and `?summarize <#channel>` with authorized and unauthorized accounts.
-11. Test `/status`, `/dashboard`, and `/ai status` as admin.
-12. Test `/start` and `/stop` only during a safe maintenance window.
+9. Test `?java`, `?bedrock`, `?plugins`, `?world download`, `?help`, `?invite`, `?roles`, `?channels`, and `?rules`.
+10. Confirm `?server features`, `?server ip`, and `?smp join` are no longer handled as shortcuts.
+11. Test `?status`, `?dashboard`, `?ai status`, `?start`, `?stop`, and `?summarize <#channel>` with authorized and unauthorized accounts.
+12. Test `/status`, `/dashboard`, and `/ai status` as admin.
+13. Test `/start` and `/stop` only during a safe maintenance window.
+14. Verify a normal DiscordSRV Minecraft message does not trigger AI when someone replies to it; also verify a direct bot mention in the relay channel gets no AI response.
+15. Verify normal direct mentions and replies to ordinary Main Bot messages still work in normal conversation channels.
+16. Verify ordinary unpinged chat does not trigger conversational replies or welcome messages.
+17. Verify the website can reach `/api/status`.
+18. Review logs for Discord, Minecraft, Gemini, network, and permission errors.
+
 13. Verify a normal DiscordSRV Minecraft message does not trigger AI when someone replies to it; also verify a direct bot mention in the relay channel gets no AI response.
 14. Verify normal direct mentions and replies to ordinary Main Bot messages still work in normal conversation channels.
 15. Verify ordinary unpinged chat does not trigger conversational replies or welcome messages.
