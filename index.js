@@ -27,12 +27,14 @@ const summary = require('./summary');
 const { applyUnicodeTheme } = require('./unicode');
 const { shouldHandleConversationalMessage, isMinecraftRelayMessage } = require('./message-routing');
 const { parseTextShortcut, normalizeIpChoice } = require('./text-shortcuts');
+const { isRejoinAuthorized } = require('./rejoin-access');
 const { startStatusServer } = require('./status-server');
 const { createAfkStore } = require('./afk-store');
 const { createShutdownHandler } = require('./shutdown');
 
 const scheduledAdminActions = new Map();
 const pendingIpChoices = new Map();
+const REJOIN_DELAY_MS = 30_000;
 
 const runtimeHealth = {
   lastMinecraftConnectedAt: null,
@@ -826,6 +828,30 @@ function buildDashboardComponents() {
   );
 }
 
+function buildRejoinComponents() {
+  return new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId('rejoin:retry')
+      .setLabel('Retry')
+      .setStyle(ButtonStyle.Secondary),
+  );
+}
+
+async function publishRejoinNotice(channel) {
+  if (!channel?.isTextBased?.() || typeof channel.send !== 'function') return false;
+
+  try {
+    await channel.send({
+      content: '⌁ The Cottage★ AFK bot is rejoining. It will reconnect in about 30 seconds.',
+      allowedMentions: { parse: [] },
+    });
+    return true;
+  } catch (error) {
+    log('Admin', 'Unable to publish the rejoin notice: ' + error.message);
+    return false;
+  }
+}
+
 function shorten(text, limit = 1000) {
   const normalized = String(text || 'Unknown reason').replace(/\s+/g, ' ').trim();
   return normalized.length > limit
@@ -1379,6 +1405,7 @@ async function handleTextShortcut({ message, shortcut }) {
   const isShortcut =
     normalizedQuestion === 'start' ||
     normalizedQuestion === 'stop' ||
+    normalizedQuestion === 'rejoin' ||
     normalizedQuestion === 'status' ||
     normalizedQuestion === 'ai status' ||
     normalizedQuestion === 'dashboard' ||
@@ -1395,6 +1422,34 @@ async function handleTextShortcut({ message, shortcut }) {
       await message.reply(
         `I don't recognize the shortcut \`?${normalizedQuestion}\`. Try \`?help\` to see the available shortcuts.`,
       );
+    }
+
+    return true;
+  }
+
+  if (normalizedQuestion === 'rejoin') {
+    if (!isRejoinAuthorized(message.author.id, message.member)) {
+      log('Admin', `Rejected ?rejoin from ${message.author.tag} (${message.author.id}).`);
+      await message.reply('Unknown or unavailable command.');
+      return true;
+    }
+
+    try {
+      const result = mc.rejoin(REJOIN_DELAY_MS);
+      if (!result.scheduled) {
+        await message.reply('ⓘ A rejoin is already in progress.');
+        return true;
+      }
+
+      log('Admin', `Verified ?rejoin request from ${message.author.tag} (${message.author.id}).`);
+      await message.reply({
+        content: 'Rejoining... The AFK bot will stay disconnected for 30 seconds before reconnecting.',
+        components: [buildRejoinComponents()],
+        allowedMentions: { parse: [] },
+      });
+    } catch (error) {
+      log('Admin', `Text shortcut rejoin failed: ${error.message}`);
+      await message.reply('✕ Error: the AFK bot could not be scheduled to rejoin.');
     }
 
     return true;
@@ -1639,7 +1694,31 @@ client.on(Events.MessageCreate, async message => {
     return;
   }
 
-  // Case-insensitive ?-prefix shortcuts do not require a bot mention.
+  // ?rejoin is intentionally different from the other shortcuts: it requires
+  // an actual mention of this bot, either before or after the shortcut text.
+  const contentWithoutBotMention = client.user
+    ? message.content
+      .replace(new RegExp('<@!?' + client.user.id + '>', 'g'), '')
+      .trim()
+    : message.content;
+  const rejoinShortcut = parseTextShortcut(contentWithoutBotMention);
+
+  if (rejoinShortcut === 'rejoin') {
+    const isBotMentionedForRejoin =
+      Boolean(client.user) &&
+      (
+        message.mentions.users.has(client.user.id) ||
+        new RegExp('<@!?' + client.user.id + '>').test(message.content)
+      );
+
+    if (isBotMentionedForRejoin) {
+      await handleTextShortcut({ message, shortcut: 'rejoin' });
+    }
+
+    return;
+  }
+
+  // Other case-insensitive ?-prefix shortcuts do not require a bot mention.
   const textShortcut = parseTextShortcut(message.content);
 
   if (textShortcut !== null && message.guild?.id === config.discord.guildId) {
@@ -2227,6 +2306,44 @@ const response = await ai.ask(contextualAiQuestion, {
 
 });
 client.on(Events.InteractionCreate, async interaction => {
+  if (interaction.isButton() && interaction.customId === 'rejoin:retry') {
+    if (!isRejoinAuthorized(interaction.user.id, interaction.member)) {
+      return interaction.reply({
+        content: 'Unknown or unavailable command.',
+        flags: MessageFlags.Ephemeral,
+      });
+    }
+
+    try {
+      const result = mc.rejoin(REJOIN_DELAY_MS, { replacePending: true });
+      if (!result.scheduled) {
+        return interaction.reply({
+          content: 'ⓘ A rejoin is already in progress.',
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+
+      log('Admin', `Rejoin retry requested by ${interaction.user.tag} (${interaction.user.id}).`);
+
+      const sourceMessageIsEphemeral =
+        Boolean(interaction.message?.flags?.has?.(MessageFlags.Ephemeral));
+      if (sourceMessageIsEphemeral) {
+        await publishRejoinNotice(interaction.channel);
+      }
+
+      return interaction.update({
+        content: 'Retrying... A fresh 30-second disconnect window has started.',
+        components: [],
+      });
+    } catch (error) {
+      log('Admin', `Rejoin retry failed: ${error.message}`);
+      return interaction.reply({
+        content: '✕ Error: the AFK bot could not be scheduled to rejoin.',
+        flags: MessageFlags.Ephemeral,
+      });
+    }
+  }
+
   if (interaction.isButton() && interaction.customId === 'dashboard:refresh') {
     return interaction.update({
       embeds: [buildDashboardEmbed()],
@@ -2414,6 +2531,41 @@ client.on(Events.InteractionCreate, async interaction => {
           ),
         ],
       });
+    }
+
+    case 'rejoin': {
+      if (!isRejoinAuthorized(interaction.user.id, interaction.member)) {
+        log('Admin', `Rejected /rejoin from ${interaction.user.tag} (${interaction.user.id}).`);
+        return interaction.reply({
+          content: 'Unknown or unavailable command.',
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+
+      try {
+        const result = mc.rejoin(REJOIN_DELAY_MS);
+        if (!result.scheduled) {
+          return interaction.reply({
+            content: 'ⓘ A rejoin is already in progress.',
+            flags: MessageFlags.Ephemeral,
+          });
+        }
+
+        log('Admin', `Verified /rejoin request from ${interaction.user.tag} (${interaction.user.id}).`);
+        await publishRejoinNotice(interaction.channel);
+
+        return interaction.reply({
+          content: 'Rejoining... The AFK bot will stay disconnected for 30 seconds before reconnecting.',
+          components: [buildRejoinComponents()],
+          flags: MessageFlags.Ephemeral,
+        });
+      } catch (error) {
+        log('Admin', `/rejoin failed: ${error.message}`);
+        return interaction.reply({
+          content: '✕ Error: the AFK bot could not be scheduled to rejoin.',
+          flags: MessageFlags.Ephemeral,
+        });
+      }
     }
 
     case 'status': {
