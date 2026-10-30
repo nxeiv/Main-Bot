@@ -223,7 +223,7 @@ Mention me or reply to one of my messages when you want an AI answer. I stay qui
 
 **Admin commands**
 • \`/start\` · \`/stop\` · \`/status\` — control or check the Minecraft AFK session
-• `/rejoin` — disconnect and reconnect the AFK session after 30 seconds (restricted access)
+• \`/rejoin\` — disconnect and reconnect the AFK session after 30 seconds (restricted access)
 • \`/dashboard\` — check Discord, Minecraft, and AI health
 • \`/ping\` — check bot latency
 • \`/aforget\` — clear all AI conversation contexts
@@ -238,7 +238,7 @@ Slash-command access depends on the configured permissions.
 • ?world download — opens the Season 6 world download post
 • ?help, ?invite, ?roles, ?channels, and ?rules — quick information
 • ?start, ?stop, ?status, ?dashboard, and ?ai status — admin-only shortcuts
-• Mention me and use `?rejoin` to reconnect the AFK session (restricted access)
+• Mention me and use \`?rejoin\` to reconnect the AFK session (restricted access)
 • ?summarize <channel> — creates a temporary summary
 
 Shortcuts are case-insensitive and begin with ?. Ordinary conversation still requires a direct mention or reply to the bot.`;
