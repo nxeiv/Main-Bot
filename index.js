@@ -30,7 +30,6 @@ const { parseTextShortcut, normalizeIpChoice } = require('./text-shortcuts');
 const { startStatusServer } = require('./status-server');
 const { createAfkStore } = require('./afk-store');
 const { createShutdownHandler } = require('./shutdown');
-const reminders = require('./reminders');
 
 const scheduledAdminActions = new Map();
 const pendingIpChoices = new Map();
@@ -159,7 +158,6 @@ loadDailyWelcomeState();
 const PERSISTABLE_ADMIN_ACTIONS = new Set([
   'start',
   'stop',
-  'maintenance',
 ]);
 
 function saveScheduledAdminActions() {
@@ -402,17 +400,13 @@ function isLikelyAdminRequest(text) {
     /\b(server|bot|afk|session)\b.*\b(status|state|uptime)\b/,
     /^\s*(status|state|uptime)\??\s*$/,
 
-    // Maintenance
-    /\b(maintenance|maint)\b/,
-    /\b(put|place|set|take)\b.*\bserver\b.*\bmaintenance\b/,
-
     // Restart
     /\b(restart|reboot)\b.*\b(server|bot|afk|session)\b/,
     /\b(server|bot|afk|session)\b.*\b(restart|reboot)\b/,
 
     // Cancel / scheduling
     /\b(cancel|unschedule)\b.*\b(all|everything|every|schedule|schedules|scheduled actions|scheduled tasks)\b/,
-    /\b(cancel|unschedule)\b.*\b(start|stop|status|maintenance|restart|reboot)\b/,
+    /\b(cancel|unschedule)\b.*\b(start|stop|status|restart|reboot)\b/,
     /\b(schedule|scheduled|in \d+ ?(second|seconds|minute|minutes|hour|hours)|after \d+ ?(second|seconds|minute|minutes|hour|hours))\b/,
   ];
 
@@ -632,23 +626,7 @@ async function executeAdministrativeAction(action) {
       return 'stopped';
     }
 
-    case 'maintenance': {
-      const maintenanceChannel = await client.channels.fetch(
-        config.discord.maintenanceChannelId,
-      );
 
-      if (!maintenanceChannel?.isTextBased()) {
-        throw new Error(
-          'The configured maintenance channel is not a text channel.',
-        );
-      }
-
-      await maintenanceChannel.send(
-        '# 🛠️ **Server is under maintenance** <@&1447218476795166791>',
-      );
-
-      return 'maintenance announced';
-    }
 
     default:
           
@@ -2127,11 +2105,6 @@ if (adminCommand.delayMinutes === 0) {
           ? 'ⓘ The Minecraft AFK bot is already stopped.'
           : '✓ Minecraft AFK bot stopped.',
       );
-    } else if (adminCommand.action === 'maintenance') {
-      await message.reply(
-        '✓ Maintenance announcement sent.',
-      );
-    }
 
     return;
 
@@ -2326,39 +2299,6 @@ client.on(Events.InteractionCreate, async interaction => {
         flags: MessageFlags.Ephemeral,
       });
     }
-    case 'maintenance': {
-      if (!hasFeatureAccess('maintenance', interaction.user.id, interaction.member)) {
-        log(
-          'Admin',
-          `Rejected /maintenance from unauthorized user ${interaction.user.tag} (${interaction.user.id}).`,
-        );
-        return interaction.reply({
-          content: '✕ You are not authorized to use this command.',
-          flags: MessageFlags.Ephemeral,
-        });
-      }
-
-      try {
-        await executeAdministrativeAction('maintenance');
-        runtimeHealth.maintenance = true;
-
-        return interaction.reply({
-          content: '✓ Maintenance announcement sent.',
-          flags: MessageFlags.Ephemeral,
-        });
-      } catch (error) {
-        log(
-          'Discord',
-          `Unable to send maintenance announcement: ${error.message}`,
-        );
-
-        return interaction.reply({
-          content:
-            '✕ Failed to send the maintenance announcement.',          flags: MessageFlags.Ephemeral,
-        });
-      }
-    }
-
     case 'start': {
       if (!hasFeatureAccess('start', interaction.user.id, interaction.member)) {
         log(
@@ -2514,89 +2454,6 @@ client.on(Events.InteractionCreate, async interaction => {
       });
     }
 
-    case 'remind': {
-      const durationInput = interaction.options.getString('duration', true).trim();
-      const message = interaction.options.getString('message', true).trim();
-
-      try {
-        const durationMs = reminders.parseDuration(durationInput);
-        const reminder = reminders.createReminder({
-          userId: interaction.user.id,
-          userTag: interaction.user.tag,
-          guildId: interaction.guildId,
-          channelId: interaction.channelId,
-          durationMs,
-          message,
-        });
-
-        const timestamp = Math.floor(reminder.executeAt / 1000);
-
-        return interaction.reply({
-          content:
-            `✓ Reminder \`${reminder.id}\` set for <t:${timestamp}:F> (<t:${timestamp}:R>).\nReminder: **${reminder.message}**\nUse \`/reminders\` to view it or \`/remind-cancel\` to cancel it.`,
-          flags: MessageFlags.Ephemeral,
-        });
-      } catch (error) {
-        return interaction.reply({
-          content: `✕ ${error.message}`,
-          flags: MessageFlags.Ephemeral,
-        });
-      }
-    }
-
-    case 'reminders': {
-      const activeReminders = reminders.getUserReminders(interaction.user.id);
-
-      if (activeReminders.length === 0) {
-        return interaction.reply({
-          content: 'ⓘ You have no active reminders.',
-          flags: MessageFlags.Ephemeral,
-        });
-      }
-
-      const embed = createEmbed('Your Reminders', Colors.Blurple)
-        .setDescription('Active reminders are shown below. Times use your Discord locale.');
-
-      for (const reminder of activeReminders.slice(0, 25)) {
-        const timestamp = Math.floor(reminder.executeAt / 1000);
-
-        embed.addFields({
-          name: reminder.id,
-          value:
-            `<t:${timestamp}:F> (<t:${timestamp}:R>)\n${reminder.message}`,
-          inline: false,
-        });
-      }
-
-      return interaction.reply({
-        embeds: [embed],
-        flags: MessageFlags.Ephemeral,
-      });
-    }
-
-    case 'remind-cancel': {
-      const reminderId = interaction.options.getString('id', true).trim();
-      const result = reminders.cancelReminder(
-        interaction.user.id,
-        reminderId,
-      );
-
-      if (!result.ok) {
-        return interaction.reply({
-          content:
-            result.reason === 'not_owner'
-              ? '✕ You can only cancel your own reminders.'
-              : '✕ I could not find that reminder. Use /reminders to see your active reminders.',
-          flags: MessageFlags.Ephemeral,
-        });
-      }
-
-      return interaction.reply({
-        content:
-          `✓ Cancelled reminder \`${result.reminder.id}\`: **${result.reminder.message}**`,
-        flags: MessageFlags.Ephemeral,
-      });
-    }
     case 'dashboard': {
       if (!hasFeatureAccess('dashboard', interaction.user.id, interaction.member)) {
         return interaction.reply({
@@ -2756,8 +2613,6 @@ client.once(Events.ClientReady, async readyClient => {
   updatePresence();
 
   restoreScheduledAdminActions();
-
-  reminders.initialize(readyClient);
 
   log('Bot', 'Starting AFK session.');
   mc.start();
