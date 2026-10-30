@@ -4,12 +4,17 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const {
+  isMinecraftRelayMessage,
   shouldHandleConversationalMessage,
 } = require('../message-routing');
 
 const base = {
   guildId: 'cottage-guild',
   configuredGuildId: 'cottage-guild',
+  channelId: 'general',
+  excludedChannelId: 'minecraft-chat',
+  isWebhookMessage: false,
+  isReplyToMinecraftRelay: false,
   isDirectBotMention: false,
   isReplyToBot: false,
 };
@@ -32,7 +37,7 @@ test('a direct reply to the bot invokes conversational handling', () => {
   }), true);
 });
 
-test('a mention or reply in another guild does not invoke the Cottage bot', () => {
+test('mentions and replies in another guild do not invoke the Cottage bot', () => {
   assert.equal(shouldHandleConversationalMessage({
     ...base,
     guildId: 'another-guild',
@@ -50,5 +55,57 @@ test('missing guild context never invokes conversational handling', () => {
     ...base,
     guildId: null,
     isDirectBotMention: true,
+  }), false);
+});
+
+test('the configured Discord-Minecraft relay channel never invokes AI', () => {
+  assert.equal(shouldHandleConversationalMessage({
+    ...base,
+    channelId: 'minecraft-chat',
+    isDirectBotMention: true,
+  }), false);
+  assert.equal(shouldHandleConversationalMessage({
+    ...base,
+    channelId: 'minecraft-chat',
+    isReplyToBot: true,
+  }), false);
+});
+
+test('webhook messages and replies to Minecraft relay messages never invoke AI', () => {
+  assert.equal(shouldHandleConversationalMessage({
+    ...base,
+    isWebhookMessage: true,
+    isDirectBotMention: true,
+  }), false);
+  assert.equal(shouldHandleConversationalMessage({
+    ...base,
+    isReplyToMinecraftRelay: true,
+    isReplyToBot: true,
+  }), false);
+});
+
+test('Discord webhook messages are recognized as relay messages', () => {
+  assert.equal(isMinecraftRelayMessage({
+    webhookId: 'webhook-id',
+    author: { bot: false },
+    content: 'makkrabb » hello',
+  }), true);
+});
+
+test('bot-authored Minecraft relay formatting is recognized', () => {
+  assert.equal(isMinecraftRelayMessage({
+    author: { bot: true },
+    content: 'makkrabb » HHAH',
+  }), true);
+});
+
+test('ordinary bot messages are not misidentified as Minecraft relays', () => {
+  assert.equal(isMinecraftRelayMessage({
+    author: { bot: true },
+    content: 'Did you need help with anything?',
+  }), false);
+  assert.equal(isMinecraftRelayMessage({
+    author: { bot: false },
+    content: 'makkrabb » hello',
   }), false);
 });
