@@ -223,6 +223,7 @@ Mention me or reply to one of my messages when you want an AI answer. I stay qui
 
 **Admin commands**
 • \`/start\` · \`/stop\` · \`/status\` — control or check the Minecraft AFK session
+• `/rejoin` — disconnect and reconnect the AFK session after 30 seconds (restricted access)
 • \`/dashboard\` — check Discord, Minecraft, and AI health
 • \`/ping\` — check bot latency
 • \`/aforget\` — clear all AI conversation contexts
@@ -237,6 +238,7 @@ Slash-command access depends on the configured permissions.
 • ?world download — opens the Season 6 world download post
 • ?help, ?invite, ?roles, ?channels, and ?rules — quick information
 • ?start, ?stop, ?status, ?dashboard, and ?ai status — admin-only shortcuts
+• Mention me and use `?rejoin` to reconnect the AFK session (restricted access)
 • ?summarize <channel> — creates a temporary summary
 
 Shortcuts are case-insensitive and begin with ?. Ordinary conversation still requires a direct mention or reply to the bot.`;
@@ -280,7 +282,7 @@ When answering a question yourself:
 - Do not claim that cracked/non-premium Java clients are supported; the current public configuration does not confirm that.
 - Do not reuse unconfirmed Season 5 features or restrictions, including the old Netherite restriction, land claims, proximity voice chat, armor-stand customization, or custom mace mechanics. Team System, Better Mending, and Vein Mining are current Season 6 features; for exact plugin behavior, use only the confirmed details below.
 - Bedrock joining instructions must use the published direct address and port below as the only supported public method. If direct joining fails, direct the player to staff rather than offering an alternate invitation-based route. List version support as Any (Geyser-supported versions), but do not guarantee every client/account setup will work if a login fails.
-- Never invent an unlisted interface such as a new command, prefix, or special phrase. Confirmed Discord text shortcuts begin with ? and are case-insensitive; examples include ?ip, ?java, ?bedrock, ?plugins, ?world download, ?help, ?invite, ?roles, ?channels, ?rules, ?start, ?stop, ?status, ?dashboard, ?ai status, and ?summarize <channel>. ?ip asks the user to reply to its prompt with Java or Bedrock. Only describe joining methods and bot interactions that are explicitly confirmed below or implemented in the bot.
+- Never invent an unlisted interface such as a new command, prefix, or special phrase. Confirmed Discord text shortcuts begin with ? and are case-insensitive; examples include ?ip, ?java, ?bedrock, ?plugins, ?world download, ?help, ?invite, ?roles, ?channels, ?rules, ?start, ?stop, ?status, ?dashboard, ?ai status, and ?summarize <channel>. The restricted ?rejoin shortcut requires a direct mention of the bot. ?ip asks the user to reply to its prompt with Java or Bedrock. Only describe joining methods and bot interactions that are explicitly confirmed below or implemented in the bot.
 - Do not invent commands, links, channels, IPs, ports, rules, features, joining procedures, or permissions.
 - If a server-specific fact is not confirmed below, say you do not know rather than guessing.
 - Do not contradict the deterministic bot answers.
