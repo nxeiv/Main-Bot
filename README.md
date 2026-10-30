@@ -240,7 +240,9 @@ The public Java and Bedrock addresses are used for player joining. Bedrock guida
 
 The bot's `/help` response mirrors the supported commands directly in Discord.
 
-**Conversational AI is opt-in.** Members must directly mention the bot or reply to one of its messages to start a conversational response. Ordinary chat, questions about other members, and messages that merely contain a keyword must not trigger the bot. Dedicated Discord-to-Minecraft relay behavior is separate from conversational AI. Use slash commands for AFK, reminders, summaries, and other supported tools.
+**Conversational AI is opt-in.** Members must directly mention the bot or reply to one of its messages in a normal conversation channel. Ordinary chat and messages that merely contain a keyword do not trigger AI. DiscordSRV webhook messages, replies to Minecraft relay messages, and the configured Discord-to-Minecraft relay channel are excluded from conversational AI.
+
+**Case-insensitive text shortcuts** begin with `?` and do not require a bot mention. Examples: `?ip` (then reply to the bot's prompt with `Java` or `Bedrock`), `?java`, `?bedrock`, `?help`, `?invite`, `?roles`, `?channels`, `?rules`, `?start`, `?stop`, `?status`, `?dashboard`, `?ai status`, and `?summarize <#channel>`. Administrative shortcuts still enforce the same configured permissions as their slash-command equivalents. Use slash commands for AFK and reminders.
 
 The configured Mineflayer client protocol is separate from the server version. The project currently depends on upstream `mineflayer` 4.39.x, which does not yet natively support Minecraft Java 26.2; do not change the client protocol to `26.2` until a compatible protocol stack is installed and tested.
 
@@ -493,11 +495,15 @@ A practical manual test order is:
 5. Test `/afk`.
 6. Test a normal AI mention and a reply-aware follow-up.
 7. Test `/forget` and `/summarize`.
-8. Test `/status`, `/dashboard`, and `/ai status` as admin.
-9. Test `/start` and `/stop` only during a safe maintenance window.
-10. Verify ordinary unpinged chat does not trigger conversational replies or welcome messages.
-11. Verify a direct mention and a direct reply to the bot can trigger conversational replies.
-12. Verify the website can reach `/api/status`.
+8. Test `?IP`, `?Ip`, and `?ip`; confirm each starts the Java/Bedrock prompt, then reply with `Java` and `Bedrock` in separate tests.
+9. Test `?java`, `?bedrock`, `?help`, `?invite`, `?roles`, `?channels`, `?rules`, and the other advertised prefix shortcuts.
+10. Test `?status`, `?dashboard`, `?ai status`, `?start`, `?stop`, and `?summarize <#channel>` with authorized and unauthorized accounts.
+11. Test `/status`, `/dashboard`, and `/ai status` as admin.
+12. Test `/start` and `/stop` only during a safe maintenance window.
+13. Verify a normal DiscordSRV Minecraft message does not trigger AI when someone replies to it; also verify a direct bot mention in the relay channel gets no AI response.
+14. Verify normal direct mentions and replies to ordinary Main Bot messages still work in normal conversation channels.
+15. Verify ordinary unpinged chat does not trigger conversational replies or welcome messages.
+16. Verify the website can reach `/api/status`.
 13. Review logs for Discord, Minecraft, Gemini, network, and permission errors.
 
 ---

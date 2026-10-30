@@ -25,13 +25,15 @@ const mc = require('./minecraft');
 const ai = require('./ai');
 const summary = require('./summary');
 const { applyUnicodeTheme } = require('./unicode');
-const { shouldHandleConversationalMessage } = require('./message-routing');
+const { shouldHandleConversationalMessage, isMinecraftRelayMessage } = require('./message-routing');
+const { parseTextShortcut, normalizeIpChoice } = require('./text-shortcuts');
 const { startStatusServer } = require('./status-server');
 const { createAfkStore } = require('./afk-store');
 const { createShutdownHandler } = require('./shutdown');
 const reminders = require('./reminders');
 
 const scheduledAdminActions = new Map();
+const pendingIpChoices = new Map();
 
 const runtimeHealth = {
   lastMinecraftConnectedAt: null,
@@ -1363,25 +1365,65 @@ mc.emitter.on('minecraftPlayerLeft', async ({ username }) => {
 });
 
 
-async function handlePingGatedTextShortcut({ message, question }) {
-  const normalizedQuestion = String(question || '')
+function getIpPromptKey(message) {
+  return `${message.guild?.id || 'dm'}:${message.channel.id}:${message.author.id}`;
+}
+
+async function handleTextShortcut({ message, shortcut }) {
+  const normalizedQuestion = String(shortcut || '')
     .trim()
-    .toLowerCase();
+    .toLowerCase()
+    .replace(/\s+/g, ' ');
 
-  const isShortcut =
-    normalizedQuestion === 'start?' ||
-    normalizedQuestion === 'stop?' ||
-    normalizedQuestion === 'status?' ||
-    normalizedQuestion === 'ai status?' ||
-    normalizedQuestion === 'dashboard?' ||
-    /^summarize\?\s+<\#\d+>$/.test(normalizedQuestion);
+  if (normalizedQuestion === 'ip') {
+    const prompt = await message.reply(
+      'Java or Bedrock?\nReply to this message with Java or Bedrock.',
+    );
 
-  if (!isShortcut) {
-    return false;
+    pendingIpChoices.set(getIpPromptKey(message), {
+      promptMessageId: prompt.id,
+      expiresAt: Date.now() + 180_000,
+    });
+
+    return true;
   }
 
-  if (normalizedQuestion === 'start?' || normalizedQuestion === 'stop?') {
-    const action = normalizedQuestion === 'start?' ? 'start' : 'stop';
+  if (['java', 'java ip', 'java address'].includes(normalizedQuestion)) {
+    await message.reply('Java IP: ' + SERVER_INFO.javaAddress);
+    return true;
+  }
+
+  if (['bedrock', 'bedrock ip', 'bedrock address'].includes(normalizedQuestion)) {
+    await message.reply('Bedrock IP: ' + SERVER_INFO.bedrockAddress);
+    return true;
+  }
+
+  const isShortcut =
+    normalizedQuestion === 'start' ||
+    normalizedQuestion === 'stop' ||
+    normalizedQuestion === 'status' ||
+    normalizedQuestion === 'ai status' ||
+    normalizedQuestion === 'dashboard' ||
+    /^summarize\s+<\#\d+>$/.test(normalizedQuestion);
+
+  if (!isShortcut) {
+    const knownAnswer =
+      ai.getInstantAnswer(`${normalizedQuestion}?`) ||
+      ai.getInstantAnswer(normalizedQuestion);
+
+    if (knownAnswer) {
+      await message.reply(knownAnswer);
+    } else {
+      await message.reply(
+        `I don't recognize the shortcut \`?${normalizedQuestion}\`. Try \`?help\` to see the available shortcuts.`,
+      );
+    }
+
+    return true;
+  }
+
+  if (normalizedQuestion === 'start' || normalizedQuestion === 'stop') {
+    const action = normalizedQuestion === 'start' ? 'start' : 'stop';
 
     if (!hasFeatureAccess(action, message.author.id, message.member)) {
       await message.reply('✕ You are not authorized to use this command.');
@@ -1403,7 +1445,7 @@ async function handlePingGatedTextShortcut({ message, question }) {
     } catch (error) {
       log(
         'Admin',
-        `Ping-gated ${action} shortcut failed: ${error.message}`,
+        `Text shortcut ${action} failed: ${error.message}`,
       );
 
       await message.reply(
@@ -1414,7 +1456,7 @@ async function handlePingGatedTextShortcut({ message, question }) {
     return true;
   }
 
-  if (normalizedQuestion === 'status?') {
+  if (normalizedQuestion === 'status') {
     if (!hasFeatureAccess('status', message.author.id, message.member)) {
       await message.reply('✕ You are not authorized to use this command.');
       return true;
@@ -1433,7 +1475,7 @@ async function handlePingGatedTextShortcut({ message, question }) {
     return true;
   }
 
-  if (normalizedQuestion === 'dashboard?') {
+  if (normalizedQuestion === 'dashboard') {
     if (!hasFeatureAccess('dashboard', message.author.id, message.member)) {
       await message.reply('✕ You are not authorized to use this command.');
       return true;
@@ -1447,7 +1489,7 @@ async function handlePingGatedTextShortcut({ message, question }) {
     return true;
   }
 
-  if (normalizedQuestion === 'ai status?') {
+  if (normalizedQuestion === 'ai status') {
     if (!hasFeatureAccess('ai', message.author.id, message.member)) {
       await message.reply('✕ You are not authorized to use this command.');
       return true;
@@ -1528,7 +1570,7 @@ async function handlePingGatedTextShortcut({ message, question }) {
   }
 
   const summarizeMatch = normalizedQuestion.match(
-    /^summarize\?\s+<\#(\d+)>$/,
+    /^summarize\s+<\#(\d+)>$/,
   );
 
   if (summarizeMatch) {
@@ -1569,7 +1611,7 @@ async function handlePingGatedTextShortcut({ message, question }) {
 }
 
 client.on(Events.MessageCreate, async message => {
-  if (message.author.bot) {
+  if (message.author.bot || message.webhookId) {
     return;
   }
 
@@ -1592,6 +1634,39 @@ client.on(Events.MessageCreate, async message => {
           afkDuration + '.',
       );
     }
+  }
+
+  // A pending ?ip prompt only accepts a reply to that exact prompt message.
+  const ipPromptKey = getIpPromptKey(message);
+  const pendingIpChoice = pendingIpChoices.get(ipPromptKey);
+
+  if (pendingIpChoice && pendingIpChoice.expiresAt <= Date.now()) {
+    pendingIpChoices.delete(ipPromptKey);
+  } else if (
+    pendingIpChoice &&
+    message.reference?.messageId === pendingIpChoice.promptMessageId
+  ) {
+    const choice = normalizeIpChoice(message.content);
+
+    if (choice === 'java') {
+      pendingIpChoices.delete(ipPromptKey);
+      await message.reply('Java IP: ' + SERVER_INFO.javaAddress);
+    } else if (choice === 'bedrock') {
+      pendingIpChoices.delete(ipPromptKey);
+      await message.reply('Bedrock IP: ' + SERVER_INFO.bedrockAddress);
+    } else {
+      await message.reply('Please reply with either Java or Bedrock.');
+    }
+
+    return;
+  }
+
+  // Case-insensitive ?-prefix shortcuts do not require a bot mention.
+  const textShortcut = parseTextShortcut(message.content);
+
+  if (textShortcut !== null && message.guild?.id === config.discord.guildId) {
+    await handleTextShortcut({ message, shortcut: textShortcut });
+    return;
   }
 
   // Detect a real Discord user mention as well as the raw <@id> syntax.
@@ -1651,6 +1726,7 @@ client.on(Events.MessageCreate, async message => {
     Boolean(client.user) &&
     message.mentions.repliedUser?.id === client.user.id;
 
+  let isReplyToMinecraftRelay = false;
   let replyTargetMessage = null;
 
   if (message.reference?.messageId) {
@@ -1658,6 +1734,9 @@ client.on(Events.MessageCreate, async message => {
       replyTargetMessage = await message.channel.messages.fetch(
         message.reference.messageId,
       );
+
+      isReplyToMinecraftRelay =
+        isMinecraftRelayMessage(replyTargetMessage);
 
       isReplyToBot =
         isReplyToBot ||
@@ -1676,6 +1755,10 @@ client.on(Events.MessageCreate, async message => {
     shouldHandleConversationalMessage({
       guildId: message.guild?.id,
       configuredGuildId: config.discord.guildId,
+      channelId: message.channel.id,
+      excludedChannelId: config.discord.chatChannelId,
+      isWebhookMessage: Boolean(message.webhookId),
+      isReplyToMinecraftRelay,
       isDirectBotMention,
       isReplyToBot,
     })
@@ -1719,17 +1802,6 @@ const contextualAiQuestion =
     if (directKnownAnswer) {
       await message.reply(directKnownAnswer);
       return;
-    }
-
-    if (isDirectBotMention) {
-      const handledShortcut = await handlePingGatedTextShortcut({
-        message,
-        question,
-      });
-
-      if (handledShortcut) {
-        return;
-      }
     }
 
     // ========================================================
