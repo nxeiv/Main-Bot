@@ -52,7 +52,7 @@ The goal is the same as the website: **quiet, warm, recognizable, and not overly
 - Minecraft/SMP help
 - feature descriptions and tutorials
 - Minecraft connection and player-count status
-- administrative `/start`, `/stop`, `/status`, and `/dashboard`
+- administrative `/start`, `/stop`, `/rejoin`, `/status`, and `/dashboard`
 - `/ping` for a quick Discord latency check
 - `/summarize <channel>` for private channel summaries
 - admin-verified AI administrative requests
@@ -227,6 +227,7 @@ The public Java and Bedrock addresses are used for player joining. Bedrock guida
 | `/ping` | Admin | Shows the current Discord bot latency |
 | `/start` | Admin | Starts the Minecraft AFK session |
 | `/stop` | Admin | Stops the Minecraft AFK session |
+| `/rejoin` | Dedicated allow-list | Disconnects the AFK client, waits 30 seconds, then reconnects |
 | `/status` | Admin | Shows Minecraft status |
 | `/dashboard` | Admin | Shows Discord, Minecraft, and AI health |
 | `/aforget` | Admin | Clears all AI conversations |
@@ -236,7 +237,7 @@ The bot's `/help` response mirrors the supported commands directly in Discord.
 
 **Conversational AI is opt-in.** Members must directly mention the bot or reply to one of its messages in a normal conversation channel. Ordinary chat and messages that merely contain a keyword do not trigger AI. DiscordSRV webhook messages, replies to Minecraft relay messages, and the configured Discord-to-Minecraft relay channel are excluded from conversational AI.
 
-**Case-insensitive text shortcuts** begin with `?` and do not require a bot mention. Examples: `?ip` (then reply to the bot's prompt with `Java` or `Bedrock`), `?java`, `?bedrock`, `?plugins`, `?world download`, `?help`, `?invite`, `?roles`, `?channels`, `?rules`, `?start`, `?stop`, `?status`, `?dashboard`, `?ai status`, and `?summarize <#channel>`. Administrative shortcuts still enforce the same configured permissions as their slash-command equivalents. Use slash commands for AFK and summaries.
+**Case-insensitive text shortcuts** begin with `?` and do not require a bot mention. Examples: `?ip` (then reply to the bot's prompt with `Java` or `Bedrock`), `?java`, `?bedrock`, `?plugins`, `?world download`, `?help`, `?invite`, `?roles`, `?channels`, `?rules`, `?start`, `?stop`, `?status`, `?dashboard`, `?ai status`, and `?summarize <#channel>`. Administrative shortcuts still enforce their configured permissions. Use slash commands for AFK and summaries. The special `?rejoin` shortcut requires a direct mention of the Main Bot and the dedicated rejoin allow-list. The slash form uses the same allow-list. The command disconnects the Minecraft AFK client for 30 seconds, then reconnects it. The Retry button starts a fresh 30-second rejoin cycle.
 
 The configured Mineflayer client protocol is separate from the server version. The project currently depends on upstream `mineflayer` 4.39.x, which does not yet natively support Minecraft Java 26.2; do not change the client protocol to `26.2` until a compatible protocol stack is installed and tested.
 
@@ -492,6 +493,7 @@ A practical manual test order is:
 9. Test `?java`, `?bedrock`, `?plugins`, `?world download`, `?help`, `?invite`, `?roles`, `?channels`, and `?rules`.
 10. Confirm `?server features`, `?server ip`, and `?smp join` are no longer handled as shortcuts.
 11. Test `?status`, `?dashboard`, `?ai status`, `?start`, `?stop`, and `?summarize <#channel>` with authorized and unauthorized accounts.
+12. Test `/rejoin` and `@Main Bot ?rejoin` with the dedicated allowed user and role; confirm plain `?rejoin` is ignored, unauthorized users receive a generic unavailable response, and the AFK client stays disconnected for 30 seconds before reconnecting.
 12. Test `/status`, `/dashboard`, and `/ai status` as admin.
 13. Test `/start` and `/stop` only during a safe maintenance window.
 14. Verify a normal DiscordSRV Minecraft message does not trigger AI when someone replies to it; also verify a direct bot mention in the relay channel gets no AI response.
