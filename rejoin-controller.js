@@ -32,7 +32,11 @@ function createRejoinController({
     cancel();
     disconnect();
 
-    timer = setTimeoutFn(() => {
+    let scheduledTimer;
+    scheduledTimer = setTimeoutFn(() => {
+      // A cancelled or replaced timer may already have queued its callback.
+      if (timer !== scheduledTimer) return;
+
       timer = null;
       try {
         connect();
@@ -41,6 +45,7 @@ function createRejoinController({
         log('The manual rejoin could not start: ' + (error?.message || error));
       }
     }, delayMs);
+    timer = scheduledTimer;
 
     if (timer && typeof timer.unref === 'function') timer.unref();
     log('The Minecraft AFK session was disconnected. Rejoining in ' + Math.ceil(delayMs / 1000) + ' seconds.');
