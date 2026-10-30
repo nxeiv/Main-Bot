@@ -16,6 +16,7 @@ test('the existing public and administrative command set is preserved', () => {
   for (const name of [
     'start',
     'stop',
+    'rejoin',
     'status',
     'afk',
     'forget',
@@ -29,7 +30,7 @@ test('the existing public and administrative command set is preserved', () => {
     assert.ok(names.has(name), 'missing slash command: ' + name);
   }
 
-  assert.equal(names.size, 11);
+  assert.equal(names.size, 12);
 });
 
 test('every command has a description', () => {
