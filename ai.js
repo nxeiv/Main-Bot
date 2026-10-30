@@ -796,7 +796,7 @@ function getKnownAnswer(message) {
   if (text === 'plugins?' || text === 'plugins') {
     return [
       '**The Cottage★ SMP plugins:**',
-      ...SERVER_INFO.plugins.map(plugin => \`• \${plugin}\`),
+      ...SERVER_INFO.plugins.map(plugin => '• ' + plugin),
     ].join('\n');
   }
 
