@@ -32,12 +32,17 @@ test('feature aliases point to known advertised features', () => {
   }
 });
 
-test('help text describes opt-in AI and does not advertise removed text shortcuts', () => {
+test('help text describes opt-in AI and the new prefix shortcuts', () => {
   assert.match(BOT_HELP_MESSAGE, /Mention me or reply to one of my messages/);
   assert.match(BOT_HELP_MESSAGE, /\/afk/);
+  assert.match(BOT_HELP_MESSAGE, /\?ip/);
+  assert.match(BOT_HELP_MESSAGE, /\?java/);
+  assert.match(BOT_HELP_MESSAGE, /\?bedrock/);
+  assert.match(BOT_HELP_MESSAGE, /case-insensitive/i);
   assert.doesNotMatch(BOT_HELP_MESSAGE, /afk\?\s*[—-]/i);
   assert.doesNotMatch(BOT_HELP_MESSAGE, /who are you\?/i);
   assert.match(SYSTEM_PROMPT, /Chapter 1 • Season 6/);
+  assert.match(SYSTEM_PROMPT, /\?ip/);
   assert.doesNotMatch(SYSTEM_PROMPT, /The Cottage★ SMP DOES support cracked/i);
   assert.equal(SERVER_INFO.javaAddress, 'the-cottage-c1-s6.playwithbao.com:34159');
   assert.equal(SERVER_INFO.bedrockAddress, 'the-cottage-c1-s6.playwithbao.com:32211');
