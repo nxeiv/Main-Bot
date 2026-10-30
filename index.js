@@ -1377,7 +1377,7 @@ async function handleTextShortcut({ message, shortcut }) {
 
   if (normalizedQuestion === 'ip') {
     const prompt = await message.reply(
-      'Java or Bedrock?\\nReply to this message with Java or Bedrock.',
+      'Java or Bedrock?\nReply to this message with Java or Bedrock.',
     );
 
     pendingIpChoices.set(getIpPromptKey(message), {
@@ -1802,17 +1802,6 @@ const contextualAiQuestion =
     if (directKnownAnswer) {
       await message.reply(directKnownAnswer);
       return;
-    }
-
-    if (isDirectBotMention) {
-      const handledShortcut = await handlePingGatedTextShortcut({
-        message,
-        question,
-      });
-
-      if (handledShortcut) {
-        return;
-      }
     }
 
     // ========================================================
