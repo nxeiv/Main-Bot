@@ -19,6 +19,7 @@
 const mineflayer = require('mineflayer');
 const EventEmitter = require('events');
 const config = require('./config');
+const { createRejoinController } = require('./rejoin-controller');
 
 const state = {
   bot: null,
@@ -82,6 +83,8 @@ function logStatus() {
 }
 
 function start() {
+  rejoinController.cancel();
+
   if (state.connected || state.isConnecting || state.isReconnecting) {
     log('Bot', 'The bot is already running or connecting.');
     return;
@@ -94,6 +97,7 @@ function start() {
 
 
 function stop() {
+  rejoinController.cancel();
   state.manualStop = true;
   clearTimers();
   clearIntervals();
@@ -113,6 +117,16 @@ function stop() {
   state.startTime = null;
   log('Bot', 'Bot stopped.');
   emitter.emit('stopped');
+}
+
+const rejoinController = createRejoinController({
+  disconnect: () => stop(),
+  connect: () => start(),
+  log: message => log('Bot', message),
+});
+
+function rejoin(delayMs = 30_000, options = {}) {
+  return rejoinController.schedule(delayMs, options);
 }
 
 function chat(message) {
@@ -142,6 +156,7 @@ function getStatus() {
       : 0,
     reconnectAttempts: state.reconnectAttempts,
     manualStop: state.manualStop,
+    rejoinScheduled: rejoinController.isScheduled(),
     server: `${config.server.ip}:${config.server.port}`,
   };
 }
@@ -472,6 +487,7 @@ function rejoinASAP() {
 module.exports = {
   start,
   stop,
+  rejoin,
   chat,
   getStatus,
   emitter,
