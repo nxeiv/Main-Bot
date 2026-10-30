@@ -2105,9 +2105,9 @@ if (adminCommand.delayMinutes === 0) {
           ? 'ⓘ The Minecraft AFK bot is already stopped.'
           : '✓ Minecraft AFK bot stopped.',
       );
+    }
 
     return;
-
   } catch (error) {
     log(
       'Admin',
