@@ -29,43 +29,6 @@ const commands = [
   ),
 
   new SlashCommandBuilder()
-    .setName('remind')
-    .setDescription('Creates a personal reminder')
-    .addStringOption(option =>
-      option
-        .setName('duration')
-        .setDescription('How long from now, such as 30m, 2h, or 1d')
-        .setRequired(true),
-    )
-    .addStringOption(option =>
-      option
-        .setName('message')
-        .setDescription('What you want to be reminded about')
-        .setMaxLength(500)
-        .setRequired(true),
-    ),
-
-  new SlashCommandBuilder()
-    .setName('reminders')
-    .setDescription('Lists your active reminders'),
-
-  new SlashCommandBuilder()
-    .setName('remind-cancel')
-    .setDescription('Cancels one of your reminders')
-    .addStringOption(option =>
-      option
-        .setName('id')
-        .setDescription('Reminder ID from /reminders')
-        .setRequired(true),
-    ),
-
-  new SlashCommandBuilder()
-    .setName('maintenance')
-    .setDescription(
-      '⚒︎ Announces server maintenance DO NOT USE IF NOT SMP MODERATOR.',
-    ),
-
-  new SlashCommandBuilder()
     .setName('forget')
     .setDescription('⌫ Forgets your AI conversation context'),
 
