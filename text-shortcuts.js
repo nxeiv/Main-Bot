@@ -1,5 +1,28 @@
 'use strict';
 
+const SUPPORTED_TEXT_SHORTCUTS = new Set([
+  'ip',
+  'java',
+  'java ip',
+  'java address',
+  'bedrock',
+  'bedrock ip',
+  'bedrock address',
+  'plugins',
+  'world download',
+  'help',
+  'invite',
+  'roles',
+  'channels',
+  'rules',
+  'start',
+  'stop',
+  'rejoin',
+  'status',
+  'dashboard',
+  'ai status',
+]);
+
 function parseTextShortcut(content) {
   const text = String(content || '').trim();
 
@@ -10,11 +33,19 @@ function parseTextShortcut(content) {
   const command = text
     .slice(1)
     .trim()
-    .replace(/\?$/, '')
     .replace(/\s+/g, ' ')
     .toLowerCase();
 
-  return command || null;
+  if (SUPPORTED_TEXT_SHORTCUTS.has(command)) {
+    return command;
+  }
+
+  // The channel mention is required, matching the command handler's input.
+  if (/^summarize <#\d+>$/.test(command)) {
+    return command;
+  }
+
+  return null;
 }
 
 function normalizeIpChoice(content) {
