@@ -4,6 +4,7 @@ require('dotenv').config();
 
 const discordToken = String(process.env.DISCORD_TOKEN || '').trim();
 const minecraftPassword = String(process.env.MC_PASSWORD || '');
+const sparkLoginPassword = String(process.env.MC_LOGIN_PASSWORD || '');
 
 function parseDiscordIdList(value) {
   return [...new Set(
@@ -57,6 +58,7 @@ const config = {
   bot: {
     username: 'Server',
     password: minecraftPassword,
+    sparkLoginPassword,
     auth: 'offline',
   },
 
