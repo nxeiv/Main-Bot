@@ -20,6 +20,7 @@ const mineflayer = require('mineflayer');
 const EventEmitter = require('events');
 const config = require('./config');
 const { createRejoinController } = require('./rejoin-controller');
+const { attachSparkLoginHandler } = require('./spark-login');
 
 const state = {
   bot: null,
@@ -201,6 +202,32 @@ function createBot() {
   }
 
   state.bot = bot;
+
+  attachSparkLoginHandler(bot, {
+    password: config.bot.sparkLoginPassword,
+    log: message => log('Auth', message),
+    onAuthProblem: reason => {
+      if (state.bot !== bot) return;
+
+      log('Auth', reason);
+      state.manualStop = true;
+      rejoinController.cancel();
+      clearTimers();
+      clearIntervals();
+      state.connected = false;
+      state.isConnecting = false;
+      state.isReconnecting = false;
+      state.playerCount = 0;
+      state.startTime = null;
+      state.bot = null;
+
+      try {
+        bot.end();
+      } catch (error) {
+        log('Auth', `Could not close the connection cleanly: ${error.message}`);
+      }
+    },
+  });
 
   clearTimers();
     
