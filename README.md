@@ -366,6 +366,7 @@ GEMINI_API_KEY_3=your_third_gemini_api_key
 GEMINI_API_KEY_4=your_fourth_gemini_api_key
 
 MC_PASSWORD=
+MC_LOGIN_PASSWORD=
 
 ERROR_CHANNEL_ID=
 
@@ -376,6 +377,8 @@ STATUS_ALLOWED_ORIGINS=https://the-cottage.onrender.com
 The exact hosting platform may provide `PORT` automatically. When it does, the bot uses that value for the status server.
 
 Never commit real credentials or privileged access IDs. The actual `ADMIN_USER_IDS` and `ADMIN_ROLE_IDS` values belong only in the deployment environment or an ignored local `.env` file.
+
+`MC_LOGIN_PASSWORD` is the password for Main-Bot's already-registered SparkLogin account named `Server`. It is separate from `MC_PASSWORD`, which is the optional Minecraft account-authentication setting. Set `MC_LOGIN_PASSWORD` only in the hosting provider's private environment settings; never put the real value in GitHub or share it in chat. Main-Bot responds to SparkLogin's existing-account pre-join login dialog once per connection. It deliberately stops rather than auto-registering or repeatedly submitting a rejected password.
 
 The bot fails closed during configuration if neither admin list is configured, or if the supplied IDs are malformed. Set at least one valid user ID or role ID in your hosting panel before deploying this branch.
 
