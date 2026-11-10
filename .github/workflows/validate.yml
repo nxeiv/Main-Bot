@@ -33,6 +33,7 @@ jobs:
           node --check ai-knowledge.js
           node --check shutdown.js
           node --check minecraft.js
+          node --check spark-login.js
           node --check summary.js
           node --check unicode.js
           node --check config.js
