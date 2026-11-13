@@ -371,8 +371,8 @@ Output:
 // Admin AI keeps its own active-key pointer.
 let activeAdminGeminiKeyIndex = 0;
 
-function createChatSession(userId, index) {
-  let state = chatSessions.get(userId);
+function createChatSession(userId, index, suppliedState = null) {
+  let state = suppliedState || chatSessions.get(userId);
 
   if (!state) {
     state = {
@@ -436,17 +436,21 @@ function isFallbackError(error) {
 // NORMAL AI REQUEST
 // ============================================================
 
-async function sendGeminiMessage(message, userId) {
+async function sendGeminiMessage(message, userId, options = {}) {
   let lastError = null;
+  const stateless = options.stateless === true;
 
-  const state =
-    chatSessions.get(userId) || {
+  const state = stateless
+    ? { history: [], chat: null, keyIndex: null }
+    : chatSessions.get(userId) || {
       history: [],
       chat: null,
       keyIndex: null,
     };
 
-  chatSessions.set(userId, state);
+  if (!stateless) {
+    chatSessions.set(userId, state);
+  }
 
   for (
     let attempt = 0;
@@ -459,7 +463,7 @@ async function sendGeminiMessage(message, userId) {
 
     try {
       const chat =
-        createChatSession(userId, index);
+        createChatSession(userId, index, state);
 
       console.log(
         `[AI] Using Gemini API key ${index + 1}/${geminiClients.length}.`,
@@ -1042,9 +1046,13 @@ async function ask(message, options = {}) {
   }
 
   const userId = getUserId(options);
+  const cooldownUserId = options.cooldownUserId
+    ? String(options.cooldownUserId)
+    : userId;
 
-  // Per-user cooldown.
-  const cooldown = checkUserCooldown(userId);
+  // Cooldowns follow the real requester even when a request uses an
+  // isolated temporary AI session, such as a channel summary.
+  const cooldown = checkUserCooldown(cooldownUserId);
 
   if (cooldown > 0) {
     throw new Error(
@@ -1052,11 +1060,13 @@ async function ask(message, options = {}) {
     );
   }
 
-  userLastRequest.set(userId, Date.now());
+  userLastRequest.set(cooldownUserId, Date.now());
 
-  return queueGeminiRequest(userId, async () => {
+  return queueGeminiRequest(cooldownUserId, async () => {
     try {
-      const response = await sendGeminiMessage(text, userId);
+      const response = await sendGeminiMessage(text, userId, {
+        stateless: options.stateless === true,
+      });
 
       let reply = response.text?.trim();
 

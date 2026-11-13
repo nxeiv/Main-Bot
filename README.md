@@ -8,6 +8,14 @@ It connects the Cottage★ community with Minecraft, provides public and adminis
 
 The bot is infrastructure for the community — useful in the background without trying to become the main character.
 
+## Project notices
+
+- **License:** [GNU General Public License v3.0 only](LICENSE)
+- **Privacy:** [Privacy notice](PRIVACY.md)
+- **Security:** [Security policy and vulnerability reporting](SECURITY.md)
+
+The privacy notice describes the message, identifier, and runtime-state handling implemented by this bot. Review it before enabling the bot in additional channels or communities.
+
 ---
 
 # Cottage★ theme

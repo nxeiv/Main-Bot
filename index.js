@@ -28,6 +28,8 @@ const { applyUnicodeTheme } = require('./unicode');
 const { shouldHandleConversationalMessage, isMinecraftRelayMessage } = require('./message-routing');
 const { parseTextShortcut, normalizeIpChoice } = require('./text-shortcuts');
 const { isRejoinAuthorized } = require('./rejoin-access');
+const { memberHasAnyRole } = require('./role-access');
+const { validateMinecraftChatMessage } = require('./minecraft-chat');
 const { startStatusServer } = require('./status-server');
 const { createAfkStore } = require('./afk-store');
 const { createShutdownHandler } = require('./shutdown');
@@ -259,11 +261,7 @@ function isAdmin(userId, member = null) {
     return true;
   }
 
-  return Boolean(
-    member?.roles?.cache?.some(role =>
-      config.adminRoleIds?.includes(role.id),
-    ),
-  );
+  return memberHasAnyRole(member, config.adminRoleIds);
 }
 
 function hasFeatureAccess(feature, userId, member = null) {
@@ -1742,18 +1740,36 @@ client.on(Events.MessageCreate, async message => {
   // PRIVATE DISCORD -> MINECRAFT RELAY
   // ============================================================
 
-  if (
-    message.channel.id === config.discord.chatChannelId &&
-    !isBotMentionedBeforeRelay
-  ) {
-    const text = message.content.trim();
+  if (message.channel.id === config.discord.chatChannelId) {
+    // This channel is a user-chat relay only. Ignore bots and webhooks so
+    // DiscordSRV or another integration cannot echo messages back to Minecraft.
+    if (
+      message.guild?.id !== config.discord.guildId ||
+      message.author.bot ||
+      message.webhookId ||
+      isBotMentionedBeforeRelay
+    ) {
+      return;
+    }
 
-    if (!text) {
+    const validation = validateMinecraftChatMessage(message.content);
+
+    if (!validation.ok) {
+      const feedback = validation.code === 'command'
+        ? '✕ Minecraft commands cannot be run through the Discord chat relay. Send ordinary chat only.'
+        : validation.code === 'too_long'
+          ? '✕ Messages sent to Minecraft must be 256 characters or fewer.'
+          : '✕ Please send a non-empty chat message without control characters.';
+
+      await message.reply({
+        content: feedback,
+        allowedMentions: { parse: [] },
+      });
       return;
     }
 
     try {
-      mc.chat(text);
+      mc.chat(validation.text);
       await message.react('✅');
     } catch (error) {
       log(
@@ -1761,8 +1777,10 @@ client.on(Events.MessageCreate, async message => {
         `Unable to send Discord message to Minecraft: ${error.message}`,
       );
 
-      await message.reply(
-        '✕ The AFK bot is currently not connected to Minecraft.',      );
+      await message.reply({
+        content: '✕ The AFK bot is currently not connected to Minecraft.',
+        allowedMentions: { parse: [] },
+      });
     }
 
     return;

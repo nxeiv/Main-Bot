@@ -21,6 +21,7 @@ const EventEmitter = require('events');
 const config = require('./config');
 const { createRejoinController } = require('./rejoin-controller');
 const { attachSparkLoginHandler } = require('./spark-login');
+const { validateMinecraftChatMessage } = require('./minecraft-chat');
 
 const state = {
   bot: null,
@@ -135,15 +136,22 @@ function chat(message) {
     throw new Error('Minecraft bot is not connected.');
   }
 
-  const text = String(message).trim();
+  const validation = validateMinecraftChatMessage(message);
 
-  if (!text) {
-    throw new Error('Message cannot be empty.');
+  if (!validation.ok) {
+    const messages = {
+      empty: 'Message cannot be empty.',
+      command: 'Minecraft commands cannot be sent through the chat-only API.',
+      too_long: 'Minecraft chat messages cannot exceed 256 characters.',
+      control_characters: 'Minecraft chat messages cannot contain control characters.',
+    };
+
+    throw new Error(messages[validation.code] || 'Invalid Minecraft chat message.');
   }
 
-  state.bot.chat(text);
+  state.bot.chat(validation.text);
 
-  log('Chat', `Sent Minecraft chat: ${text}`);
+  log('Chat', `Sent Minecraft chat: ${validation.text}`);
 }
 
 function getStatus() {
