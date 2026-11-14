@@ -67,6 +67,7 @@ The goal is the same as the website: **quiet, warm, recognizable, and not overly
 - scheduled administrative actions with persistence
 - `/forget` and `/aforget`
 - administrator-only `/ai status`
+- administrator-only `/vc join`, `/vc leave`, and `/vc status` for a persistent, muted and deafened Discord voice connection
 - public `/afk [reason]`
 - daily Minecraft player welcomes
 - Discord ↔ Minecraft chat integration
@@ -243,8 +244,13 @@ The public Java and Bedrock addresses are used for player joining. Bedrock guida
 | `/dashboard` | Admin | Shows Discord, Minecraft, and AI health |
 | `/aforget` | Admin | Clears all AI conversations |
 | `/ai status` | Admin | Shows AI health and queue diagnostics |
+| `/vc join` | Admin | Joins the invoking member's current voice channel and restores the connection after normal bot restarts |
+| `/vc leave` | Admin | Stops and clears the persistent voice session |
+| `/vc status` | Admin | Shows the saved channel and current connection state |
 
 The bot's `/help` response mirrors the supported commands directly in Discord.
+
+The `/vc` commands use the Discord voice gateway through `@discordjs/voice`. `/vc join` joins the administrator's current regular voice channel with the bot self-muted and self-deafened; it does not transmit or receive member audio. The selected channel is stored in the local `voice-session.json` runtime file and restored after a normal bot restart. The connection can recover from supported transient voice-gateway interruptions while the process remains online. This is not an uptime guarantee: hosting outages, process shutdowns, Discord outages, deleted channels, or removed permissions can interrupt the session. The bot needs the **Connect** permission in the target channel.
 
 **Conversational AI is opt-in.** Members must directly mention the bot or reply to one of its messages in a normal conversation channel. Ordinary chat and messages that merely contain a keyword do not trigger AI. DiscordSRV webhook messages, replies to Minecraft relay messages, and the configured Discord-to-Minecraft relay channel are excluded from conversational AI.
 
