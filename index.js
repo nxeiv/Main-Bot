@@ -809,7 +809,7 @@ function buildStatusEmbed() {
     );
 }
 
-function buildDashboardComponents() {
+function buildStatusComponents() {
   return new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId('status:refresh')
@@ -1361,15 +1361,16 @@ async function handleTextShortcut({ message, shortcut }) {
   }
 
   if (normalizedQuestion === 'channels') {
-    await message.reply(
-      'Here are the main channels around the community:\n' +
-      '- Rules: <#1478166898020585592>\n' +
-      '- Roles: <#1398624929099812937>\n' +
-      '- General chat: <#1398568017708978258>\n' +
-      '- Minecraft status: <#1533895421988962334>\n' +
-      '- Minecraft community: <#1533883039287873566>',
-      { allowedMentions: { parse: [] } },
-    );
+    await message.reply({
+      content:
+        'Here are the main channels around the community:\n' +
+        '- Rules: <#1478166898020585592>\n' +
+        '- Roles: <#1398624929099812937>\n' +
+        '- General chat: <#1398568017708978258>\n' +
+        '- Minecraft status: <#1533895421988962334>\n' +
+        '- Minecraft community: <#1533883039287873566>',
+      allowedMentions: { parse: [] },
+    });
     return true;
   }
 
@@ -1466,7 +1467,7 @@ async function handleTextShortcut({ message, shortcut }) {
 
     await message.reply({
       embeds: [buildStatusEmbed()],
-      components: [buildDashboardComponents()],
+      components: [buildStatusComponents()],
     });
 
     return true;
@@ -1538,7 +1539,7 @@ client.on(Events.MessageCreate, async message => {
       const safeReason = afkStatus.reason.replace(/([*_~|>])/g, '\\$1');
       const since = Math.floor(afkStatus.setAt / 1000);
       await message.reply({
-        content: `<@!${mentionedUser.id}> is currently AFK: **${safeReason}** · <t:${since}:R> ago.`,
+        content: `<@!${mentionedUser.id}> is currently AFK: **${safeReason}** · <t:${since}:R>`,
         allowedMentions: { users: [mentionedUser.id] },
       });
     }
@@ -1570,13 +1571,6 @@ client.on(Events.MessageCreate, async message => {
   }
 
   // Every registered shortcut can be used without mentioning Main Bot.
-  const textShortcut = parseTextShortcut(message.content);
-
-  if (textShortcut !== null && message.guild?.id === config.discord.guildId) {
-    await handleTextShortcut({ message, shortcut: textShortcut });
-    return;
-  }
-
   const textShortcut = parseTextShortcut(message.content);
 
   if (textShortcut !== null && message.guild?.id === config.discord.guildId) {
@@ -2230,7 +2224,7 @@ client.on(Events.InteractionCreate, async interaction => {
   if (interaction.isButton() && interaction.customId === 'status:refresh') {
     return interaction.update({
       embeds: [buildStatusEmbed()],
-      components: [buildDashboardComponents()],
+      components: [buildStatusComponents()],
     });
   }
 
@@ -2533,7 +2527,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
       return interaction.reply({
         embeds: [buildStatusEmbed()],
-        components: [buildDashboardComponents()],
+        components: [buildStatusComponents()],
         flags: MessageFlags.Ephemeral,
       });
     }
