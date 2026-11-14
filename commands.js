@@ -62,6 +62,25 @@ const commands = [
     .setDescription('Shows the bot latency'),
 
   new SlashCommandBuilder()
+    .setName('vc')
+    .setDescription('Manage the persistent 24/7 voice connection (admin only)')
+    .addSubcommand(subcommand =>
+      subcommand
+        .setName('join')
+        .setDescription('Join the voice channel you are currently in and stay there'),
+    )
+    .addSubcommand(subcommand =>
+      subcommand
+        .setName('leave')
+        .setDescription('Stop the persistent voice connection'),
+    )
+    .addSubcommand(subcommand =>
+      subcommand
+        .setName('status')
+        .setDescription('Check the persistent voice connection'),
+    ),
+
+  new SlashCommandBuilder()
     .setName('summarize')
     .setDescription('Creates a private summary of recent messages (expires after 10 minutes)')
     .addChannelOption(option =>
