@@ -1,26 +1,9 @@
 'use strict';
 
 const SUPPORTED_TEXT_SHORTCUTS = new Set([
-  'ip',
-  'java',
-  'java ip',
-  'java address',
-  'bedrock',
-  'bedrock ip',
-  'bedrock address',
-  'plugins',
-  'world download',
-  'help',
-  'invite',
-  'roles',
-  'channels',
-  'rules',
-  'start',
-  'stop',
-  'rejoin',
-  'status',
-  'dashboard',
-  'ai status',
+  'ip', 'java', 'bedrock', 'pl', 'world download',
+  'help', 'invite', 'roles', 'channels', 'rules',
+  'start', 'stop', 'rejoin', 'status', 'afk',
 ]);
 
 function parseTextShortcut(content) {
@@ -40,7 +23,11 @@ function parseTextShortcut(content) {
     return command;
   }
 
-  // The channel mention is required, matching the command handler's input.
+  // AFK is a one-word command with an optional free-form reason.
+  if (/^afk(?:\s+.{1,200})?$/.test(command)) {
+    return command;
+  }
+
   if (/^summarize <#\d+>$/.test(command)) {
     return command;
   }
