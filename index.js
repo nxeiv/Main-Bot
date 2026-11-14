@@ -15,6 +15,7 @@ const {
   Events,
   GatewayIntentBits,
   MessageFlags,
+  PermissionFlagsBits,
   REST,
   Routes,
 } = require('discord.js');
@@ -24,6 +25,8 @@ const { SERVER_INFO } = require('./ai-knowledge');
 const mc = require('./minecraft');
 const ai = require('./ai');
 const summary = require('./summary');
+const voiceApi = require('@discordjs/voice');
+const { createVoiceSessionManager } = require('./voice-session');
 const { applyUnicodeTheme } = require('./unicode');
 const { shouldHandleConversationalMessage, isMinecraftRelayMessage } = require('./message-routing');
 const { parseTextShortcut, normalizeIpChoice } = require('./text-shortcuts');
@@ -255,6 +258,14 @@ function log(tag, message) {
   console.log(`[${timestamp}] [${tag}] ${message}`);
 }
 
+
+const voiceSession = createVoiceSessionManager({
+  client,
+  voice: voiceApi,
+  fs,
+  filePath: path.join(__dirname, 'voice-session.json'),
+  log,
+});
 
 function isAdmin(userId, member = null) {
   if (config.adminUserIds?.includes(userId)) {
@@ -2389,6 +2400,77 @@ client.on(Events.InteractionCreate, async interaction => {
   const status = mc.getStatus();
 
   switch (interaction.commandName) {
+    case 'vc': {
+      if (!(await requireFeatureAccess(interaction, 'vc'))) {
+        return;
+      }
+
+      const action = interaction.options.getSubcommand();
+
+      if (action === 'join') {
+        const channel = interaction.member?.voice?.channel;
+
+        if (!channel || channel.type !== ChannelType.GuildVoice) {
+          return interaction.reply({
+            content: 'ⓘ Join a regular voice channel first, then run `/vc join`.',
+            flags: MessageFlags.Ephemeral,
+          });
+        }
+
+        const botMember = interaction.guild.members.me ||
+          await interaction.guild.members.fetchMe();
+        const permissions = channel.permissionsFor(botMember);
+
+        if (!permissions?.has(PermissionFlagsBits.Connect)) {
+          return interaction.reply({
+            content: '✕ I need the Connect permission in that voice channel.',
+            flags: MessageFlags.Ephemeral,
+          });
+        }
+
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
+        try {
+          const result = await voiceSession.join(channel);
+          return interaction.editReply({
+            content: result.alreadyConnected
+              ? `ⓘ I am already connected to <#${channel.id}>.`
+              : `✓ Connected to <#${channel.id}>. I will remain there and restore this session after a normal bot restart. My microphone and audio reception are disabled.`,
+          });
+        } catch (error) {
+          log('Voice', `/vc join failed: ${error.message}`);
+          return interaction.editReply({
+            content: `✕ I could not join that voice channel: ${error.message}`,
+          });
+        }
+      }
+
+      if (action === 'leave') {
+        const result = voiceSession.leave();
+        return interaction.reply({
+          content: result.left
+            ? '✓ Persistent voice connection stopped.'
+            : 'ⓘ I do not have an active persistent voice session.',
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+
+      if (action === 'status') {
+        const currentVoice = voiceSession.getStatus();
+        return interaction.reply({
+          content: currentVoice.active
+            ? `◎ Saved voice channel: <#${currentVoice.channelId}>\nConnection state: **${currentVoice.connectionState}**`
+            : 'ⓘ No persistent voice channel is configured.',
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+
+      return interaction.reply({
+        content: '✕ Unknown voice action.',
+        flags: MessageFlags.Ephemeral,
+      });
+    }
+
     case 'summarize': {
       return summary.handleSlashCommand({ interaction, ai });
     }
@@ -2766,7 +2848,10 @@ client.once(Events.ClientReady, async readyClient => {
   log('Discord', `Logged in as ${readyClient.user.tag}.`);
 
   await registerCommands();
-    
+
+  // Restore the saved 24/7 voice session when the Discord client is ready.
+  void voiceSession.restore();
+
   // Slash command watchdog: health-check every 15 minutes.
   log('Watchdog', 'Slash command watchdog started (every 15 minutes).');
 
