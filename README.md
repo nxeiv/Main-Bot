@@ -2,7 +2,7 @@
 
 The **The Cottage★ Main Bot** is the Discord and Minecraft companion service for **The Cottage★** and its SMP.
 
-It connects the Cottage★ community with Minecraft, provides public and administrative Discord tools, maintains the Minecraft AFK session, exposes a small read-only status bridge for the website, and provides Gemini-powered AI features.
+It connects the Cottage★ community with Minecraft, provides public and administrative Discord tools, maintains the Minecraft AFK session, exposes a small read-only status bridge for the website, and provides Discord-only Gemini-powered AI features.
 
 > **The Cottage★ is the home. The SMP is the backyard.**
 
@@ -53,7 +53,7 @@ The goal is the same as the website: **quiet, warm, recognizable, and not overly
 
 ## Discord
 
-- AI chat with channel-aware conversation memory
+- Discord AI chat with channel-aware conversation memory
 - reply-aware AI follow-ups
 - deterministic answers for confirmed Cottage★ information
 - Discord/community help
@@ -66,7 +66,7 @@ The goal is the same as the website: **quiet, warm, recognizable, and not overly
 - admin-verified AI administrative requests
 - scheduled administrative actions with persistence
 - `/forget` and `/aforget`
-- administrator-only `/ai status`
+
 - administrator-only `/vc join`, `/vc leave`, and `/vc status` for a persistent, muted and deafened Discord voice connection
 - public `/afk [reason]`
 - daily Minecraft player welcomes
@@ -82,10 +82,10 @@ The Minecraft side uses Mineflayer and provides:
 - exponential reconnect backoff
 - player detection and count tracking
 - player join/leave detection
-- Minecraft chat integration
+- Minecraft chat relay (no Minecraft-side AI responses)
 - Discord ↔ Minecraft chat relay
 - lightweight anti-AFK activity
-- daily player welcomes
+- deterministic daily player welcomes
 - Minecraft status reporting to Discord
 - public website status data
 
@@ -254,7 +254,7 @@ The `/vc` commands use the Discord voice gateway through `@discordjs/voice`. `/v
 
 **Conversational AI is opt-in.** Members must directly mention the bot or reply to one of its messages in a normal conversation channel. Ordinary chat and messages that merely contain a keyword do not trigger AI. DiscordSRV webhook messages, replies to Minecraft relay messages, and the configured Discord-to-Minecraft relay channel are excluded from conversational AI.
 
-**Case-insensitive text shortcuts** begin with `?` and do not require a bot mention. Examples: `?ip` (then reply to the bot's prompt with `Java` or `Bedrock`), `?java`, `?bedrock`, `?plugins`, `?world download`, `?help`, `?invite`, `?roles`, `?channels`, `?rules`, `?start`, `?stop`, `?status`, `?dashboard`, `?ai status`, and `?summarize <#channel>`. Administrative shortcuts still enforce their configured permissions. Use slash commands for AFK and summaries. The special `?rejoin` shortcut requires a direct mention of the Main Bot and the dedicated rejoin allow-list. The slash form uses the same allow-list. The command disconnects the Minecraft AFK client for 30 seconds, then reconnects it. The Retry button starts a fresh 30-second rejoin cycle.
+**Case-insensitive text shortcuts** begin with `?` and do not require a bot mention. Examples: `?ip` (then reply to the bot's prompt with `Java` or `Bedrock`), `?java`, `?bedrock`, `?pl`, `?world download`, `?help`, `?invite`, `?roles`, `?channels`, `?rules`, `?start`, `?stop`, `?status`, `?dashboard`, `?ai status`, and `?summarize <#channel>`. Administrative shortcuts still enforce their configured permissions. Use `/afk [reason]` or `?afk [reason]` for AFK status. The special `?rejoin` shortcut requires a direct mention of the Main Bot and the dedicated rejoin allow-list. The slash form uses the same allow-list. The command disconnects the Minecraft AFK client for 30 seconds, then reconnects it. The Retry button starts a fresh 30-second rejoin cycle.
 
 The configured Mineflayer client protocol is separate from the server version. The project currently depends on upstream `mineflayer` 4.39.x, which does not yet natively support Minecraft Java 26.2; do not change the client protocol to `26.2` until a compatible protocol stack is installed and tested.
 
@@ -262,7 +262,7 @@ The configured Mineflayer client protocol is separate from the server version. T
 
 # AFK system
 
-The bot's Minecraft client is designed to keep the SMP session available even when nobody else is online.
+The Minecraft connection client remains a separate server utility. It does not answer in-game chat with AI; conversational AI runs only in Discord.
 
 The anti-AFK system performs lightweight, randomized actions such as:
 
