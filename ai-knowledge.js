@@ -228,6 +228,7 @@ Mention me or reply to one of my messages when you want an AI answer. I stay qui
 • \`/ping\` — check bot latency
 • \`/aforget\` — clear all AI conversation contexts
 • \`/ai status\` — inspect AI health and queue diagnostics
+• `/vc join` · `/vc leave` · `/vc status` — manage the persistent 24/7 voice connection (admin only)
 
 Slash-command access depends on the configured permissions.
 
