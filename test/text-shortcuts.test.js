@@ -19,12 +19,8 @@ test('only explicitly supported shortcut phrases are recognized', () => {
   const supported = [
     'ip',
     'java',
-    'java ip',
-    'java address',
     'bedrock',
-    'bedrock ip',
-    'bedrock address',
-    'plugins',
+    'pl',
     'world download',
     'help',
     'invite',
@@ -35,8 +31,6 @@ test('only explicitly supported shortcut phrases are recognized', () => {
     'stop',
     'rejoin',
     'status',
-    'dashboard',
-    'ai status',
   ];
 
   for (const shortcut of supported) {
@@ -56,8 +50,9 @@ test('only explicitly supported shortcut phrases are recognized', () => {
 test('shortcut parsing is case-insensitive and normalizes internal whitespace', () => {
   assert.equal(parseTextShortcut('?IP'), 'ip');
   assert.equal(parseTextShortcut('?Ip'), 'ip');
-  assert.equal(parseTextShortcut('?  AI   STATUS  '), 'ai status');
   assert.equal(parseTextShortcut('?Summarize <#123456789012345678>'), 'summarize <#123456789012345678>');
+  assert.equal(parseTextShortcut('?afk'), 'afk');
+  assert.equal(parseTextShortcut('?afk taking a break'), 'afk taking a break');
 });
 
 test('ordinary question-mark messages are ignored instead of becoming shortcuts', () => {
@@ -70,8 +65,16 @@ test('ordinary question-mark messages are ignored instead of becoming shortcuts'
     '??ip',
     '?what is this',
     '?random text',
+    '?plugins',
     '?plugins please',
-    '?plugins!!!',
+    '?pl please',
+    '?java ip',
+    '?java address',
+    '?bedrock ip',
+    '?bedrock address',
+    '?dashboard',
+    '?ai status',
+    '?afk ' + 'x'.repeat(201),
     '?ip?',
     '?help?',
     '?summarize',
