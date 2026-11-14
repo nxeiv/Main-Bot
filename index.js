@@ -247,6 +247,7 @@ const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.GuildVoiceStates,
     GatewayIntentBits.MessageContent,
   ],
 });
@@ -2421,9 +2422,12 @@ client.on(Events.InteractionCreate, async interaction => {
           await interaction.guild.members.fetchMe();
         const permissions = channel.permissionsFor(botMember);
 
-        if (!permissions?.has(PermissionFlagsBits.Connect)) {
+        if (
+          !permissions?.has(PermissionFlagsBits.ViewChannel) ||
+          !permissions?.has(PermissionFlagsBits.Connect)
+        ) {
           return interaction.reply({
-            content: '✕ I need the Connect permission in that voice channel.',
+            content: '✕ I need View Channel and Connect permissions in that voice channel.',
             flags: MessageFlags.Ephemeral,
           });
         }
