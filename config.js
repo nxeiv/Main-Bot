@@ -46,6 +46,7 @@ const config = {
     ai: 'admin',
     summarize: 'public',
     ping: 'admin',
+    vc: 'admin',
   },
 
   server: {
