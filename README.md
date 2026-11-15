@@ -119,6 +119,8 @@ The configured Minecraft account is **Server**.
 | `permissions.js` | Central command access policy driven by command registry metadata |
 | `config.js` | Discord, Minecraft, reconnect, and server configuration |
 | `.env.example` | Environment variable template |
+| `minecraft-status.js` | Private Java status ping and sanitized monitor snapshot |
+| `status-server.js` | Read-only public status API with response allowlist |
 | `package.json` | Dependencies, scripts, and Node.js requirement |
 
 Runtime state is deliberately kept outside source code.
@@ -151,7 +153,7 @@ The command registry is the source of truth for public, admin, owner, and restri
 
 # Website integration
 
-The website does not depend on a live API hosted by the Minecraft utility bot. The SMP card is informational and does not display a live player count. This removes the former WispByte-hosted status bridge and its external polling dependency. The admin-only Discord `/status` diagnostic now reports Minecraft connection state and reconnect attempts without displaying a player count.
+The website reads a separate, read-only status API hosted by Main Bot. The API pings the Java server from the backend and returns only online state, player counts, version, and check time. It never returns the connection address, port, MOTD, player names, or raw errors. The admin-only Discord `/status` diagnostic remains separate from this public status endpoint.
 
 ---
 
@@ -162,9 +164,6 @@ Current `config.js` settings:
 | Setting | Current value |
 | --- | --- |
 | Java host | `the-cottage-c1-s6.playwithbao.com` |
-| Java port | `34159` (current public Java address uses this port) |
-| Public Java address | `the-cottage-c1-s6.playwithbao.com:34159` |
-| Bedrock address | `the-cottage-c1-s6.playwithbao.com:32211` |
 | Bedrock compatibility | Any (Geyser-supported Bedrock versions) — direct server entry only |
 | Server software/version | `Minecraft 26.2 / Paper 26.2` |
 | Mineflayer client protocol setting | `1.21.11` (separate from server version) |
@@ -173,7 +172,7 @@ Current `config.js` settings:
 | Reconnect start | `60 seconds` |
 | Reconnect maximum | `300 seconds` |
 
-The public Java and Bedrock addresses are used for player joining. Bedrock guidance uses direct server entry only; do not advertise alternate invitation-based joining methods. Keep `config.js`, `ai-knowledge.js`, the join-help shortcuts, and the website in sync if an address, port, or allocation changes. The Mineflayer client protocol is a separate internal setting and must not be changed to `26.2` without a compatible protocol stack and testing.
+Java and Bedrock connection details are maintained privately in the deployment environment and shared with members through the designated Discord joining message. Do not commit hostnames, addresses, or ports to this public repository. Bedrock guidance uses direct server entry only; do not advertise alternate invitation-based joining methods. `MC_SERVER_HOST`, `MC_SERVER_PORT`, and `MC_BEDROCK_PORT` belong only in the host's private environment settings. The Mineflayer client protocol is a separate internal setting and must not be changed to `26.2` without a compatible protocol stack and testing.
 
 ---
 
@@ -337,6 +336,8 @@ ERROR_CHANNEL_ID=
 ```
 
 Never commit real credentials, additional guild IDs, or privileged access IDs. The actual `DISCORD_ADDITIONAL_GUILD_IDS`, `ADMIN_USER_IDS`, and `ADMIN_ROLE_IDS` values belong only in the deployment environment or an ignored local `.env` file. Add the second server's role ID to `ADMIN_ROLE_IDS` if that server's moderators need admin-command access; role IDs are unique to each guild.
+
+`MC_SERVER_HOST`, `MC_SERVER_PORT`, and `MC_BEDROCK_PORT` are private Minecraft connection settings. Configure them only in the host environment; they are deliberately not stored in source control. `STATUS_PORT` exposes the read-only website API (default `15504`), with optional `STATUS_POLL_INTERVAL_MS`, `STATUS_TIMEOUT_MS`, and `STATUS_ALLOWED_ORIGINS` settings.
 
 `MC_LOGIN_PASSWORD` is the password for Main-Bot's already-registered SparkLogin account named `Server`. It is separate from `MC_PASSWORD`, which is the optional Minecraft account-authentication setting. Set `MC_LOGIN_PASSWORD` only in the hosting provider's private environment settings; never put the real value in GitHub or share it in chat. Main-Bot responds to SparkLogin's existing-account pre-join login dialog once per connection. It deliberately stops rather than auto-registering or repeatedly submitting a rejected password.
 
