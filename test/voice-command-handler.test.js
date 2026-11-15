@@ -81,13 +81,15 @@ test('vc join connects after permission checks and confirms the audio restrictio
 test('vc leave and status use the voice session manager', async () => {
   const leave = makeHarness({ action: 'leave' });
   await leave.handler(leave.interaction);
-  assert.match(leave.calls[0][1].content, /connection stopped/);
+  const leaveReply = leave.calls.find(call => call[0] === 'reply');
+  assert.match(leaveReply[1].content, /connection stopped/);
 
   const status = makeHarness({
     action: 'status',
     voiceStatus: { active: true, channelId: 'voice-2', connectionState: 'ready' },
   });
   await status.handler(status.interaction);
-  assert.match(status.calls[0][1].content, /voice-2/);
-  assert.match(status.calls[0][1].content, /ready/);
+  const statusReply = status.calls.find(call => call[0] === 'reply');
+  assert.match(statusReply[1].content, /voice-2/);
+  assert.match(statusReply[1].content, /ready/);
 });
