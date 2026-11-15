@@ -6,14 +6,21 @@ Use this after deployment. Mark each item **PASS**, **FAIL**, or **NOT TESTED**.
 - #46 merged first: voice command extraction, text shortcut handler, Minecraft event handlers, shared response utilities, WispByte website status API removal, tests, docs, and checklist.
 - #47 merged second: Discord interaction routing extraction.
 - #48 merged third: general and admin command handler separation.
+- #49 merged: restore the missing IP prompt key helper that caused the WispByte ReferenceError.
+- #50 merged: pin patched uuid 11.1.1 across the transitive dependency tree and explicitly deny the unnecessary protobufjs install script.
+- #51 merged: extract the IP prompt key into one shared, tested helper used by both message handlers.
 - Previously merged: #37, #38, #40, #41, #42, and #45.
 - #43 and #44 were closed without merging because #45 superseded their lockfile work.
 - No open pull requests remain in Main-Bot.
 
 ## Build and startup
-- [x] PR changes are merged to `main` in dependency order: #46 → #47 → #48.
-- [x] GitHub Actions is green on the final `main` commit (run #297, success).
-- [ ] Host runs Node.js 26+ and installs with `npm ci`.
+- [x] PR changes #46 → #47 → #48, followed by fixes #49 → #50 → #51, are merged to `main`.
+- [x] GitHub Actions passed on the final PR validation (run #308): syntax, lockfile install, production audit, and 91 tests.
+- [x] Production dependency audit reported 0 vulnerabilities after the UUID override.
+- [x] WispByte log confirms Node.js v26.13.0.
+- [x] protobufjs install script is explicitly denied; transitive uuid is pinned to patched 11.1.1.
+- [ ] Apply the latest `main` files to WispByte and confirm its dependency install is clean.
+- [ ] Run `npm audit --omit=dev` on WispByte and confirm 0 vulnerabilities.
 - [ ] Bot starts once, logs into Discord, and reconciles slash commands.
 - [ ] No secrets or runtime JSON files are committed.
 
@@ -23,7 +30,10 @@ Use this after deployment. Mark each item **PASS**, **FAIL**, or **NOT TESTED**.
 - [ ] Admin commands reject non-admin users.
 - [ ] `/ping` access matches the intended policy.
 - [ ] `???`, `?hello`, and other normal text are not treated as shortcuts.
-- [ ] `?ip`, `?java`, `?bedrock`, `?pl`, `?world download`, `?help`, `?invite`, `?roles`, `?channels`, and `?rules` work.
+- [ ] `?ip` posts the Java/Bedrock choice prompt.
+- [ ] Replying to that exact prompt with Java or Bedrock returns the correct address.
+- [ ] Unrelated messages and replies to other messages do not consume a pending IP choice.
+- [ ] `?java`, `?bedrock`, `?pl`, `?world download`, `?help`, `?invite`, `?roles`, `?channels`, and `?rules` work.
 - [ ] `?start`, `?stop`, and `?rejoin` enforce the right access rules.
 
 ## Discord AFK
