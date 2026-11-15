@@ -25,6 +25,7 @@ This is a source-level audit. It does not replace a live staging deployment, a c
 | Website status bridge | Removed. The old WispByte API module, tests, environment variables, and browser polling are retired; the SMP card no longer displays live status or player counts. |
 | Text shortcut execution | `text-shortcut-handler.js` | KEEP. Execution is dependency-injected and separated from the Discord message event listener. |
 | Minecraft event wiring | `minecraft-event-handlers.js` | KEEP. Minecraft connection and player lifecycle events are registered outside the runtime entry point. |
+| Discord interactions | `discord-interaction-handlers.js` | KEEP. Slash-command and button interaction routing is separated from index.js; retain command-level access tests. |
 | Response utilities | `response-utils.js` | KEEP. Pure formatting helpers are extracted and unit tested. |
 | Summaries | `summary.js` | KEEP. It is already separated from the main entry point and uses temporary private responses. |
 | Response utilities | `response-utils.js` | KEEP. Pure formatting helpers extracted from the runtime entry point and covered by unit tests. |
