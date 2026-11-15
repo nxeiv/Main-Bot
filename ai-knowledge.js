@@ -1,5 +1,11 @@
 'use strict';
 
+const minecraftHost = String(process.env.MC_SERVER_HOST || '').trim();
+const javaPort = Number.parseInt(process.env.MC_SERVER_PORT || '', 10);
+const bedrockPort = Number.parseInt(process.env.MC_BEDROCK_PORT || '', 10);
+const hasJavaAddress = Boolean(minecraftHost && Number.isInteger(javaPort) && javaPort > 0 && javaPort <= 65535);
+const hasBedrockAddress = Boolean(minecraftHost && Number.isInteger(bedrockPort) && bedrockPort > 0 && bedrockPort <= 65535);
+
 const SERVER_INFO = {
   name: 'The Cottage★',
   chapter: 'Chapter 1 • Season 6',
@@ -7,14 +13,14 @@ const SERVER_INFO = {
   // Current Java server information. The Mineflayer protocol setting is separate.
   serverVersion: 'Minecraft 26.2',
   serverSoftware: 'Paper 26.2',
-  javaAddress: 'the-cottage-c1-s6.playwithbao.com:34159',
+  javaAddress: hasJavaAddress ? `${minecraftHost}:${javaPort}` : 'See the designated Discord joining message.',
   javaJoinLink: 'https://discord.com/channels/1398568016915992667/1478252152169431134/1563549543365222513',
 
   // Bedrock
   bedrockVersion: 'Any (Geyser-supported Bedrock versions)',
-  bedrockAddress: 'the-cottage-c1-s6.playwithbao.com:32211',
+  bedrockAddress: hasBedrockAddress ? `${minecraftHost}:${bedrockPort}` : 'See the designated Discord joining message.',
   bedrockJoiningInfo:
-    'On Minecraft Bedrock, add The Cottage★ as a server manually using address the-cottage-c1-s6.playwithbao.com and port 32211. If the direct connection fails, contact staff for help.',
+    'On Minecraft Bedrock, add The Cottage★ manually using the latest address and port in the designated Discord joining message. If the direct connection fails, contact staff for help.',
 
   // Discord links / channels
   invite: 'https://the-cottage.onrender.com/',
@@ -97,9 +103,9 @@ const FEATURE_GUIDE = {
   'Cottage Recovery': 'InventoryRollbackPlus provides inventory backups and staff-managed restoration tools when recovery is appropriate.',
   'Skin Support': 'SkinsRestorer, Floodgate, and BedrockSkinRestorer are installed. Bedrock skin behavior still depends on current configuration and client compatibility; direct unresolved cases to staff.',
   'Fair Play': 'GrimAC and AttributeSwapFixer provide server-side anti-cheat and attribute protections.',
-  'Cross-Platform Access': 'Geyser and Floodgate allow supported Bedrock clients to play with Java players. Bedrock players must use the direct server-entry details listed below; if login fails, direct the player to staff.',
+  'Cross-Platform Access': 'Geyser and Floodgate allow supported Bedrock clients to play with Java players. Bedrock players must use the latest direct server-entry details in the designated Discord joining message; if login fails, direct the player to staff.',
   'Discord Bridge': 'DiscordSRV bridges configured Discord and Minecraft chat. Relay behavior and destinations follow the current server configuration.',
-  'Server Wake-Up': 'If the SMP is offline and staff are unavailable, players can send a wake request through BaoHost using the public Java server address.',
+  'Server Wake-Up': 'If the SMP is unavailable and may be sleeping, players can find the latest Java address in the designated Discord joining message and submit it on the Wake Server page.',
 };
 
 const FEATURE_TUTORIALS = {
@@ -143,13 +149,13 @@ const FEATURE_TUTORIALS = {
     'There is no player command to activate anti-cheat or attribute fixes; these run on the server.',
 
   'Cross-Platform Access':
-    'Bedrock players should connect directly by adding the server using the-cottage-c1-s6.playwithbao.com on port 32211. If direct joining fails, contact staff. Do not offer an alternate invitation-based joining method.',
+    'Bedrock players should connect directly by adding the server using the latest address and port in the designated Discord joining message. If direct joining fails, contact staff. Do not offer an alternate invitation-based joining method.',
 
   'Discord Bridge':
     'Use the designated Discord and Minecraft chat channels for the configured chat relay. If messages are not relayed, contact staff.',
 
   'Server Wake-Up':
-    'Open https://www.baohost.com/wake/ and enter the SMP Java address exactly: the-cottage-c1-s6.playwithbao.com:34159. Submit the wake request, then wait about 30–60 seconds for the server to boot before joining. You do not need the owner to be online.',
+    'Open https://www.baohost.com/wake/ and enter the latest Java address from the designated Discord joining message. Submit the wake request, then wait about 30–60 seconds before trying to join.',
 };
 
 const FEATURE_ALIASES = {
