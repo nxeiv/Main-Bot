@@ -53,7 +53,8 @@ The goal is the same as the website: **quiet, warm, recognizable, and not overly
 
 ## Discord
 
-- Discord AI chat with channel-aware conversation memory
+- Discord AI chat with channel-aware conversation memory in each configured server
+- multiple configured Discord guilds, with the original Cottage guild retained as the primary Minecraft relay/status server
 - reply-aware AI follow-ups
 - deterministic answers for confirmed Cottage★ information
 - Discord/community help
@@ -142,7 +143,7 @@ Current access levels include:
 | `/status` | Admin |
 | `/aforget` | Admin |
 
-Administrators can be granted through configured user IDs and the Cottage★ Moderator role.
+Administrators can be granted through configured user IDs and role IDs. Discord user IDs work across servers; role IDs are server-specific, so add the role IDs from each server where moderators need access.
 
 The command registry is the source of truth for public, admin, owner, and restricted access labels. Unknown commands fail closed.
 
@@ -183,7 +184,7 @@ The public Java and Bedrock addresses are used for player joining. Bedrock guida
 | `/help` | Public | Shows bot help and access labels |
 | `/forget` | Public | Clears the requesting user's AI conversation |
 | `/summarize <channel>` | Public | Privately summarizes recent messages |
-| `/afk [reason]` | Public | Marks the requesting user as AFK; response is public |
+| `/afk [reason]` | Public | Marks the requesting user as AFK; the command response is private |
 | `/ping` | Admin | Shows the current Discord bot latency |
 | `/start` | Admin | Starts the Minecraft AFK session |
 | `/stop` | Admin | Stops the Minecraft AFK session |
@@ -194,11 +195,11 @@ The public Java and Bedrock addresses are used for player joining. Bedrock guida
 | `/vc leave` | Admin | Stops and clears the persistent voice session |
 | `/vc status` | Admin | Shows the saved channel and current connection state |
 
-The bot's `/help` response mirrors the supported commands directly in Discord. The Minecraft client no longer invokes Gemini; AI conversations remain in Discord.
+The bot's `/help` response mirrors the supported commands directly in Discord. Every slash-command response is ephemeral (visible only to the person who invoked it), including deferred and follow-up responses. Text shortcuts remain public; the bot explicitly mentions the person who issued the shortcut so their reply is highlighted. The Minecraft client no longer invokes Gemini; AI conversations remain in Discord.
 
 The `/vc` commands use the Discord voice gateway through `@discordjs/voice`. `/vc join` joins the administrator's current regular voice channel with the bot self-muted and self-deafened; it does not transmit or receive member audio. The selected channel is stored in the local `voice-session.json` runtime file and restored after a normal bot restart. The connection can recover from supported transient voice-gateway interruptions while the process remains online. This is not an uptime guarantee: hosting outages, process shutdowns, Discord outages, deleted channels, or removed permissions can interrupt the session. The bot needs the **Connect** permission in the target channel.
 
-**Conversational AI is opt-in.** Members must directly mention the bot or reply to one of its messages in a normal conversation channel. Ordinary chat and messages that merely contain a keyword do not trigger AI. DiscordSRV webhook messages, replies to Minecraft relay messages, and the configured Discord-to-Minecraft relay channel are excluded from conversational AI.
+**Conversational AI is opt-in.** Members in an explicitly configured guild must directly mention the bot or reply to one of its messages in a normal conversation channel. Ordinary chat and messages that merely contain a keyword do not trigger AI. DiscordSRV webhook messages, replies to Minecraft relay messages, and the configured Discord-to-Minecraft relay channel are excluded from conversational AI.
 
 **Case-insensitive text shortcuts** begin with `?` and do not require a bot mention. Commands use one word, except `?world download` and `?summarize <#channel>`. Supported shortcuts: `?ip`, `?java`, `?bedrock`, `?pl`, `?world download`, `?help`, `?invite`, `?roles`, `?channels`, `?rules`, `?afk [reason]`, `?start`, `?stop`, `?rejoin`, `?status`, and `?summarize <#channel>`. Administrative shortcuts check the triggering member's configured permissions; `?rejoin` uses its dedicated allow-list. Shortcut replies are deterministic and do not call Gemini. Any ordinary message clears the author's AFK state and announces their return; mentioning an AFK member displays their reason and relative AFK timestamp.
 
@@ -313,6 +314,10 @@ Create a local `.env`:
 ```env
 DISCORD_TOKEN=your_discord_bot_token
 
+# The original Cottage guild is included automatically.
+# Add any additional server IDs, separated by commas.
+DISCORD_ADDITIONAL_GUILD_IDS=
+
 # Comma-separated privileged Discord IDs; at least one list must be configured.
 # Keep actual values in local .env or your hosting provider's environment settings.
 ADMIN_USER_IDS=
@@ -330,7 +335,7 @@ ERROR_CHANNEL_ID=
 
 ```
 
-Never commit real credentials or privileged access IDs. The actual `ADMIN_USER_IDS` and `ADMIN_ROLE_IDS` values belong only in the deployment environment or an ignored local `.env` file.
+Never commit real credentials, additional guild IDs, or privileged access IDs. The actual `DISCORD_ADDITIONAL_GUILD_IDS`, `ADMIN_USER_IDS`, and `ADMIN_ROLE_IDS` values belong only in the deployment environment or an ignored local `.env` file. Add the second server's role ID to `ADMIN_ROLE_IDS` if that server's moderators need admin-command access; role IDs are unique to each guild.
 
 `MC_LOGIN_PASSWORD` is the password for Main-Bot's already-registered SparkLogin account named `Server`. It is separate from `MC_PASSWORD`, which is the optional Minecraft account-authentication setting. Set `MC_LOGIN_PASSWORD` only in the hosting provider's private environment settings; never put the real value in GitHub or share it in chat. Main-Bot responds to SparkLogin's existing-account pre-join login dialog once per connection. It deliberately stops rather than auto-registering or repeatedly submitting a rejected password.
 
