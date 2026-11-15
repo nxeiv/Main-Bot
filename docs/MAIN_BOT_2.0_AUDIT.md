@@ -69,6 +69,7 @@ This is a source-level audit. It does not replace a live staging deployment, a c
 8. **Sensitive diagnostics:** error stacks and raw error messages can contain request details. Review log/report paths and redact secrets before forwarding errors to Discord.
 9. **Hard-coded operational identifiers:** service/channel IDs and the restricted rejoin allow-list should be reviewed and centralized as validated configuration values.
 10. **Live compatibility:** the Minecraft client protocol is intentionally separate from the SMP server version. Do not change protocol versions based only on the server's advertised version.
+11. **Transitive dependency advisory:** the current production audit reports six moderate `uuid` advisories through Mineflayer's `minecraft-protocol` / `prismarine-auth` / `yggdrasil` dependency chain. CI currently blocks high and critical findings, so this does not fail the pipeline. `npm audit fix --force` proposes a breaking Mineflayer downgrade and must not be run blindly; evaluate an upstream patch or a tested compatible override before changing the dependency tree.
 
 ## Recommended implementation order
 
