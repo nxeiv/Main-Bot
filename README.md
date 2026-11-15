@@ -2,7 +2,7 @@
 
 The **The Cottage★ Main Bot** is the Discord and Minecraft companion service for **The Cottage★** and its SMP.
 
-It connects the Cottage★ community with Minecraft, provides public and administrative Discord tools, maintains the Minecraft AFK session, exposes a small read-only status bridge for the website, and provides Discord-only Gemini-powered AI features.
+It connects the Cottage★ community with Minecraft, provides public and administrative Discord tools, can run an optional Minecraft AFK session, exposes a small read-only status bridge for the website, and provides Discord-only Gemini-powered AI features.
 
 > **The Cottage★ is the home. The SMP is the backyard.**
 
@@ -258,7 +258,7 @@ The configured Mineflayer client protocol is separate from the server version. T
 
 # AFK system
 
-The Minecraft connection client remains a separate server utility. It does not answer in-game chat with AI; conversational AI runs only in Discord.
+The Minecraft connection client remains a separate server utility. It does not answer in-game chat with AI; conversational AI runs only in Discord. The AFK client is opt-in: it stays stopped after a Main Bot process restart and must be started with an authorized `/start` or `?start` command. Once started, it automatically reconnects after unexpected disconnects for the remainder of that process run.
 
 The anti-AFK system performs lightweight, randomized actions such as:
 
