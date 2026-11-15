@@ -233,6 +233,10 @@ function loadScheduledAdminActions() {
   }
 }
 
+const { createAfkNotificationCooldown } = require('./afk-notifications');
+
+const afkNotificationCooldown = createAfkNotificationCooldown({ cooldownMs: 60_000 });
+
 const afkStore = createAfkStore({
   filePath: path.join(__dirname, 'user-afk.json'),
   log: message => log('AFK', message),
@@ -1514,6 +1518,14 @@ async function handleTextShortcut({ message, shortcut }) {
   return false;
 }
 
+client.on(Events.GuildMemberRemove, member => {
+  if (member.guild?.id !== config.discord.guildId) return;
+  if (clearUserAfk(member.id)) {
+    log('AFK', `Cleared AFK state for departing member ${member.id}.`);
+  }
+  afkNotificationCooldown.clearUser(member.id);
+});
+
 client.on(Events.MessageCreate, async message => {
   if (message.author.bot || message.webhookId) {
     return;
@@ -1534,8 +1546,10 @@ client.on(Events.MessageCreate, async message => {
 
     for (const mentionedUser of message.mentions.users.values()) {
       if (mentionedUser.id === message.author.id) continue;
+      if (mentionedUser.bot) continue;
       const afkStatus = getUserAfk(mentionedUser.id);
       if (!afkStatus) continue;
+      if (!afkNotificationCooldown.shouldNotify(mentionedUser.id, message.channel.id)) continue;
       const safeReason = afkStatus.reason.replace(/([*_~|>])/g, '\\$1');
       const since = Math.floor(afkStatus.setAt / 1000);
       await message.reply({
