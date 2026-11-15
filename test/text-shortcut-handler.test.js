@@ -32,6 +32,8 @@ test('IP shortcut asks for platform and stores a scoped expiring prompt', async 
   const h = harness(); await h.handler({ message: h.message, shortcut: 'ip' });
   assert.equal(h.pendingIpChoices.size, 1);
   assert.equal([...h.pendingIpChoices.values()][0].promptMessageId, 'prompt');
+  assert.equal(h.calls[0][1].content, '<@user> Java or Bedrock?\\nReply to this message with Java or Bedrock.');
+  assert.deepEqual(h.calls[0][1].allowedMentions.users, ['user']);
 });
 
 test('Java and Bedrock shortcuts return configured addresses', async () => {
@@ -42,10 +44,12 @@ test('Java and Bedrock shortcuts return configured addresses', async () => {
 test('AFK and plugin shortcuts use their injected services', async () => {
   const h = harness(); await h.handler({ message: h.message, shortcut: 'afk Study' }); await h.handler({ message: h.message, shortcut: 'pl' });
   assert.ok(h.calls.some(call => call[0] === 'setAfk' && call[1] === 'user' && call[2] === 'Study'));
-  assert.ok(h.calls.some(call => call[0] === 'reply' && call[1] === 'Plugin list'));
+  assert.ok(h.calls.some(call => call[0] === 'reply' && call[1].content === '<@user> Plugin list'));
+  assert.ok(h.calls.some(call => call[0] === 'reply' && /You are now AFK/.test(call[1].content) && call[1].content.startsWith('<@user>')));
 });
 
 test('unknown shortcut remains handled with deterministic help guidance', async () => {
   const h = harness(); await h.handler({ message: h.message, shortcut: 'not-real' });
-  assert.match(h.calls[0][1], /Try/);
+  assert.match(h.calls[0][1].content, /Try/);
+  assert.equal(h.calls[0][1].content.startsWith('<@user>'), true);
 });
