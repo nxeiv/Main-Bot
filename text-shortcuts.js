@@ -1,10 +1,8 @@
 'use strict';
 
-const SUPPORTED_TEXT_SHORTCUTS = new Set([
-  'ip', 'java', 'bedrock', 'pl', 'world download',
-  'help', 'invite', 'roles', 'channels', 'rules',
-  'start', 'stop', 'rejoin', 'status', 'afk',
-]);
+const { TEXT_SHORTCUTS } = require('./command-registry');
+
+const SUPPORTED_TEXT_SHORTCUTS = new Set(TEXT_SHORTCUTS);
 
 function parseTextShortcut(content) {
   const text = String(content || '').trim();
