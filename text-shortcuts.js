@@ -13,19 +13,19 @@ function parseTextShortcut(content) {
     return null;
   }
 
-  const command = text
+  const rawCommand = text
     .slice(1)
     .trim()
-    .replace(/\s+/g, ' ')
-    .toLowerCase();
+    .replace(/\s+/g, ' ');
+  const command = rawCommand.toLowerCase();
 
   if (SUPPORTED_TEXT_SHORTCUTS.has(command)) {
     return command;
   }
 
-  // AFK is a one-word command with an optional free-form reason.
-  if (/^afk(?:\s+.{1,200})?$/.test(command)) {
-    return command;
+  // Normalize only the command name; preserve the user's reason casing.
+  if (/^afk(?:\s+.{1,200})?$/i.test(rawCommand)) {
+    return `afk${rawCommand.slice(3)}`;
   }
 
   if (/^summarize <#\d+>$/.test(command)) {
