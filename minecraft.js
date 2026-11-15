@@ -89,6 +89,11 @@ function logStatus() {
 function start() {
   rejoinController.cancel();
 
+  if (!config.server.ip || !config.server.port) {
+    log('Bot', 'Minecraft connection is not configured. Set MC_SERVER_HOST and MC_SERVER_PORT in the private host environment.');
+    return;
+  }
+
   if (state.connected || state.isConnecting || state.isReconnecting) {
     log('Bot', 'The bot is already running or connecting.');
     return;
@@ -168,7 +173,7 @@ function getStatus() {
     reconnectAttempts: state.reconnectAttempts,
     manualStop: state.manualStop,
     rejoinScheduled: rejoinController.isScheduled(),
-    server: `${config.server.ip}:${config.server.port}`,
+    server: config.server.ip && config.server.port ? `${config.server.ip}:${config.server.port}` : null,
   };
 }
 
