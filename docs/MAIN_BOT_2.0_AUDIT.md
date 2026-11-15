@@ -4,7 +4,7 @@ _Last reviewed: 15 November 2026_
 
 ## Audit scope
 
-Reviewed the repository tree, runtime entry point, configuration, command definitions, text shortcut parser, permission helpers, Discord AFK storage, AI service, Minecraft connection and relay modules, voice-session manager, shutdown handling, tests, dependency manifest, privacy notice, security policy, and CI workflow.
+Reviewed the repository tree, runtime entry point, configuration, command definitions, text shortcut parser/handler, general and admin command handlers, Discord interaction routing, Minecraft event wiring, permission helpers, Discord AFK storage, AI service, Minecraft connection and relay modules, voice-session manager/command handler, shutdown handling, tests, dependency manifest, privacy notice, security policy, and CI workflow. The former WispByte website status API has been removed from both repositories.
 
 This is a source-level audit. It does not replace a live staging deployment, a complete runtime exercise against Discord/Gemini/Minecraft, or a host-specific security review.
 
@@ -12,8 +12,8 @@ This is a source-level audit. It does not replace a live staging deployment, a c
 
 | Area | Current files | Assessment |
 |---|---|---|
-| Runtime and Discord events | `index.js` | KEEP, then split. The entry point is about 2,600 lines and currently owns event routing, command execution, scheduled actions, status embeds, AFK handling, and AI orchestration. |
-| Command registry | `command-registry.js`, `commands.js`, `text-shortcuts.js`, `ai-knowledge.js` | KEEP, IMPROVE. Slash definitions, shortcut names, access metadata, categories, and help output now derive from one registry. Runtime execution handlers still live in `index.js` and need extraction. |
+| Runtime and Discord events | `index.js` | KEEP, IMPROVE. The entry point is now a wiring/lifecycle module; command routing, Minecraft events, text shortcuts, and response formatting have been extracted. Message-event handling and scheduled-action orchestration remain candidates for further separation. |
+| Command registry | `command-registry.js`, `commands.js`, `text-shortcuts.js`, `ai-knowledge.js` | KEEP, IMPROVE. Slash definitions, shortcut names, access metadata, categories, and help output derive from one registry. Execution is now separated by command domain; the next step is to make registry metadata drive runtime dispatch as well. |
 | Text shortcuts | `text-shortcuts.js` | KEEP. Parsing is intentionally strict and ignores unknown question-mark messages. Move metadata into the shared command registry. |
 | Configuration | `config.js`, `.env.example` | KEEP, IMPROVE. Core secrets and admin IDs are environment-driven; service IDs and some feature values remain embedded in configuration/source. |
 | Permissions | `permissions.js`, `role-access.js`, `rejoin-access.js` | KEEP, IMPROVE. Feature access now comes from registry metadata and one permission service; the restricted rejoin allow-list remains a dedicated policy helper. |
@@ -21,7 +21,7 @@ This is a source-level audit. It does not replace a live staging deployment, a c
 | Discord AI | `ai.js`, `ai-knowledge.js` | KEEP, IMPROVE. It already has a bounded request queue, per-user cooldowns, key failover, and bounded message context. Session expiry, stronger cancellation/timeouts, and clearer separation from Discord events remain desirable. |
 | Minecraft connection | `minecraft.js`, `spark-login.js` | KEEP, IMPROVE. The client remains opt-in after process restarts and reconnects after transient failures once manually started. |
 | Minecraft chat relay | `minecraft-chat.js`, `message-routing.js` | KEEP. Input validation and relay/AI separation exist; add more integration coverage around webhook and mention edge cases. |
-| Voice connection | `voice-session.js` | KEEP, IMPROVE. Explicit join/leave and persistent restore exist. Improve diagnostics, recovery testing, and permission-loss handling. |
+| Voice connection | `voice-session.js`, `voice-command-handler.js` | KEEP, IMPROVE. Explicit join/leave, persistent restore, and extracted `/vc` command handling exist. Improve diagnostics, recovery testing, and permission-loss handling. |
 | Website status bridge | Removed. The old WispByte API module, tests, environment variables, and browser polling are retired; the SMP card no longer displays live status or player counts. |
 | Text shortcut execution | `text-shortcut-handler.js` | KEEP. Execution is dependency-injected and separated from the Discord message event listener. |
 | Minecraft event wiring | `minecraft-event-handlers.js` | KEEP. Minecraft connection and player lifecycle events are registered outside the runtime entry point. |
@@ -30,7 +30,6 @@ This is a source-level audit. It does not replace a live staging deployment, a c
 | Administration commands | `admin-command-handler.js` | KEEP. Restricted ping, AFK reset, Minecraft start/stop/rejoin, and diagnostics are isolated behind existing access checks. |
 | Response utilities | `response-utils.js` | KEEP. Pure formatting helpers are extracted and unit tested. |
 | Summaries | `summary.js` | KEEP. It is already separated from the main entry point and uses temporary private responses. |
-| Response utilities | `response-utils.js` | KEEP. Pure formatting helpers extracted from the runtime entry point and covered by unit tests. |
 | Shutdown | `shutdown.js` | KEEP. Extracted and testable; ensure every future service registers its cleanup. |
 | Presentation | `unicode.js` | KEEP. Small, focused presentation helper. |
 | Tests | `test/*.test.js` | KEEP, EXPAND. Existing unit tests cover many helpers; live service behavior still needs staging/manual verification. |
@@ -41,20 +40,20 @@ This is a source-level audit. It does not replace a live staging deployment, a c
 - Discord community commands, deterministic help and server information.
 - Discord-only Gemini conversations and channel summaries.
 - Persistent Discord AFK state, return clearing, duration display, and mention notifications.
-- Minecraft connection controls, status, Java/Bedrock information, plugin/world information, chat relay, and website bridge.
+- Minecraft connection controls, Discord-only status diagnostics, Java/Bedrock information, plugin/world information, and chat relay.
 - Manual `/start` and `?start` for the Minecraft AFK client; it must remain stopped after a process restart.
 - Persistent, muted/deafened Discord voice connection with explicit `/vc join`, `/vc leave`, and `/vc status`.
 - Central configuration, reusable permission helpers, graceful shutdown, and existing regression tests.
 
 ### IMPROVE
-- Continue extracting the oversized `index.js` into focused Discord event, interaction, text-command, scheduled-action, and status modules. (The first architecture increment now provides a shared command registry and permission service.)
+- Continue reducing `index.js` by separating Discord message-event handling and scheduled-action orchestration. The command/interaction, Minecraft-event, text-shortcut, and response modules are now separate.
 - Expand the command registry to drive runtime dispatch as well as slash metadata, text shortcuts, categories, permissions, and generated help.
 - Route all privileged operations through one permission policy, including rejoin and scheduled actions.
 - Add expiry/cleanup for inactive AI sessions, request timeouts/cancellation, and robust queue shutdown.
 - Add voice connection state monitoring and tests for reconnect, deleted channels, and missing permissions.
 - Standardize structured logs, redact secrets/tokens, and keep private message contents out of routine diagnostics.
 - Add member-removal AFK cleanup and notification cooldowns (implemented in this branch).
-- Keep the Discord-only `/status` diagnostic accurate; there is no longer a public website status API.
+- Keep the Discord-only `/status` diagnostic accurate; there is no public website status API or live player-count widget.
 - Add integration tests for Discord event routing, command permissions, and external service failures.
 - Keep dependency versions and lockfile synchronized in every change.
 
@@ -66,8 +65,8 @@ This is a source-level audit. It does not replace a live staging deployment, a c
 
 ## Important findings and risks
 
-1. **Large runtime entry point:** `index.js` still combines too many concerns. This is the main maintainability risk and should be addressed incrementally with tests around each extracted boundary.
-2. **Command metadata duplication:** slash definitions, runtime switch cases, text shortcut parsing, and help content are still separate sources of truth. The command registry should become the authoritative metadata source.
+1. **Remaining runtime responsibilities:** `index.js` is smaller and now primarily wires extracted handlers, but Discord message-event processing and scheduled-action orchestration remain large responsibilities. Continue extracting them incrementally with tests.
+2. **Command metadata duplication:** command execution is now split into general/admin/voice handlers, but registry metadata does not yet drive runtime dispatch. The command registry should become the authoritative metadata source for both definitions and execution.
 3. **Permission drift risk:** reusable helpers exist, but not every privileged path is expressed through one policy. Scheduled actions must retain the authorization decision of the original requester and never become user-triggerable through an untrusted persisted file.
 4. **AI session lifecycle:** sessions are in-memory and keyed by caller context. They need explicit idle expiry and bounded total session storage in addition to bounded request history.
 5. **Operational health semantics:** the status view should report actual recent service checks and stale data, not only whether credentials are configured.
@@ -80,9 +79,9 @@ This is a source-level audit. It does not replace a live staging deployment, a c
 
 ## Recommended implementation order
 
-1. **Architecture foundation:** the shared command registry now generates slash definitions and help, and the central permission service enforces registry access labels. Next: extract response helpers and Discord event/interaction modules while keeping behavior unchanged.
+1. **Architecture foundation:** the registry generates slash definitions/help; permissions are centralized; voice, text shortcut, Minecraft event, Discord interaction, general command, admin command, and response utility modules have been extracted. Next: registry-driven runtime dispatch and Discord message/scheduler separation.
 2. **Reliability:** AFK cooldown/member cleanup, AI session expiry/timeouts, voice restore/reconnect diagnostics, and scheduler safety.
-3. **Security and operations:** secret redaction, validated configuration, least-privilege status endpoints, dependency audit, and structured logs.
+3. **Security and operations:** secret redaction, validated configuration, least-privilege Discord diagnostics, dependency audit, and structured logs.
 4. **Verification:** unit/integration tests, staging smoke tests, then production deployment with rollback instructions.
 
 ## Explicitly not claimed
