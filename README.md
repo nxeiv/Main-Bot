@@ -191,7 +191,7 @@ The public Java and Bedrock addresses are used for player joining. Bedrock guida
 | `/rejoin` | Dedicated allow-list | Disconnects the AFK client, waits 30 seconds, then reconnects |
 | `/status` | Admin | Unified Discord, Minecraft connection, and AI diagnostics |
 | `/aforget` | Admin | Clears all Discord AI conversations |
-| `/vc join` | Admin | Joins the invoking member's current voice channel and restores the connection after normal bot restarts |
+| `/vc join` | Admin | Joins the invoking member's current voice channel in that server; other servers keep their own independent connections |
 | `/vc leave` | Admin | Stops and clears only the voice session in the server where the command is used |
 | `/vc status` | Admin | Shows the saved channel and connection state for the current server |
 
