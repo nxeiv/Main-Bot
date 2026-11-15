@@ -20,8 +20,10 @@ function createPermissionService({
   }
 
   function hasFeatureAccess(feature, userId, member = null) {
-    const access = entries.get(feature)?.access || 'admin';
+    const entry = entries.get(feature);
+    if (!entry) return false;
 
+    const access = entry.access;
     if (access === 'public') return true;
     if (access === 'admin' || access === 'moderator') return isAdmin(userId, member);
     if (access === 'owner') return config.adminUserIds?.includes(String(userId || '')) || false;
