@@ -30,6 +30,7 @@ const { createVoiceSessionManager } = require('./voice-session');
 const { createVoiceCommandHandler } = require('./voice-command-handler');
 const { createTextShortcutHandler } = require('./text-shortcut-handler');
 const { getIpPromptKey } = require('./ip-prompt-key');
+const { replyMentioningAuthor } = require('./message-replies');
 const { registerMinecraftEventHandlers } = require('./minecraft-event-handlers');
 const { registerInteractionHandlers } = require('./discord-interaction-handlers');
 const { formatUptime, formatAfkDuration, formatDelay, getBotState } = require('./response-utils');
@@ -782,20 +783,6 @@ function buildRejoinComponents() {
   );
 }
 
-async function publishRejoinNotice(channel) {
-  if (!channel?.isTextBased?.() || typeof channel.send !== 'function') return false;
-
-  try {
-    await channel.send({
-      content: '⌁ The Cottage★ AFK bot is rejoining. It will reconnect in about 30 seconds.',
-      allowedMentions: { parse: [] },
-    });
-    return true;
-  } catch (error) {
-    log('Admin', 'Unable to publish the rejoin notice: ' + error.message);
-    return false;
-  }
-}
 
 function shorten(text, limit = 1000) {
   const normalized = String(text || 'Unknown reason').replace(/\s+/g, ' ').trim();
@@ -843,15 +830,15 @@ discordRest.on('rateLimited', info => {
   );
 });
 
-function getSlashCommandRoute() {
+function getSlashCommandRoute(guildId = config.discord.guildId) {
   return Routes.applicationGuildCommands(
     getDiscordApplicationId(),
-    config.discord.guildId,
+    guildId,
   );
 }
 
-async function replaceSlashCommandsInBulk(source = 'Registrar') {
-  const route = getSlashCommandRoute();
+async function replaceSlashCommandsInBulk(source = 'Registrar', guildId = config.discord.guildId) {
+  const route = getSlashCommandRoute(guildId);
 
   const replaced = await discordRest.put(route, {
     body: commands.map(command =>
@@ -880,9 +867,9 @@ async function replaceSlashCommandsInBulk(source = 'Registrar') {
   };
 }
 
-async function reconcileSlashCommands(source = 'Registrar') {
+async function reconcileSlashCommands(source = 'Registrar', guildId = config.discord.guildId) {
   const rest = discordRest;
-  const route = getSlashCommandRoute();
+  const route = getSlashCommandRoute(guildId);
 
   const expectedByName = new Map(
     commands.map(command => [command.name, command]),
@@ -899,7 +886,7 @@ async function reconcileSlashCommands(source = 'Registrar') {
   // creating every command individually. This is both faster and much gentler
   // on Discord's REST limits.
   if (existing.length === 0 && commands.length > 0) {
-    return replaceSlashCommandsInBulk(source);
+    return replaceSlashCommandsInBulk(source, guildId);
   }
 
   const existingByName = new Map(
@@ -987,7 +974,7 @@ async function reconcileSlashCommands(source = 'Registrar') {
       const updatedCommand = await rest.patch(
         Routes.applicationGuildCommand(
           getDiscordApplicationId(),
-          config.discord.guildId,
+          guildId,
           current.id,
         ),
         { body: command },
@@ -1011,7 +998,7 @@ async function reconcileSlashCommands(source = 'Registrar') {
     await rest.delete(
       Routes.applicationGuildCommand(
         getDiscordApplicationId(),
-        config.discord.guildId,
+        guildId,
         current.id,
       ),
     );
@@ -1034,121 +1021,83 @@ async function reconcileSlashCommands(source = 'Registrar') {
 }
 
 async function registerCommands() {
-  try {
-    const result = await reconcileSlashCommands('Registrar');
+  for (const guildId of config.discord.guildIds) {
+    try {
+      const result = await reconcileSlashCommands('Registrar', guildId);
 
-    log(
-      'Discord',
-      `Slash command reconciliation complete: ${result.created} created, ${result.updated} updated, ${result.removed} removed.`,
-    );
-  } catch (error) {
-    log(
-      'Discord',
-      `Unable to reconcile slash commands: ${error.message}`,
-    );
+      log(
+        'Discord',
+        `[${guildId}] Slash command reconciliation complete: ${result.created} created, ${result.updated} updated, ${result.removed} removed.`,
+      );
+    } catch (error) {
+      log(
+        'Discord',
+        `[${guildId}] Unable to reconcile slash commands: ${error.message}`,
+      );
+    }
   }
 }
 
 let commandWatchdogRunning = false;
-let consecutiveEmptyCommandReports = 0;
+const consecutiveEmptyCommandReports = new Map();
 const EMPTY_COMMAND_REPORT_CONFIRMATIONS = 3;
 const COMMAND_WATCHDOG_INTERVAL_MS = 15 * 60 * 1000;
 
-async function commandWatchdog() {
-  if (commandWatchdogRunning) return;
-
-  commandWatchdogRunning = true;
-
+async function checkGuildCommandWatchdog(guildId) {
   try {
     const rest = discordRest;
-    const route = getSlashCommandRoute();
-
+    const route = getSlashCommandRoute(guildId);
     const existing = await rest.get(route);
 
-    log(
-      'Discord',
-      `Watchdog: Discord currently reports ${existing.length} guild command(s).`,
-    );
+    log('Discord', '[' + guildId + '] Watchdog: Discord currently reports ' + existing.length + ' guild command(s).');
 
-    // A single empty response can be transient, so do not recreate commands
-    // immediately. If Discord reports zero repeatedly, treat it as a real
-    // missing-command condition and allow reconciliation to repair it.
     if (existing.length === 0 && commands.length > 0) {
-      consecutiveEmptyCommandReports += 1;
+      const confirmations = (consecutiveEmptyCommandReports.get(guildId) || 0) + 1;
+      consecutiveEmptyCommandReports.set(guildId, confirmations);
 
-      if (
-        consecutiveEmptyCommandReports <
-        EMPTY_COMMAND_REPORT_CONFIRMATIONS
-      ) {
-        log(
-          'Watchdog',
-          `Discord returned 0 guild commands. Waiting for confirmation (${consecutiveEmptyCommandReports}/${EMPTY_COMMAND_REPORT_CONFIRMATIONS}) before attempting repair.`,
-        );
+      if (confirmations < EMPTY_COMMAND_REPORT_CONFIRMATIONS) {
+        log('Watchdog', '[' + guildId + '] Discord returned 0 guild commands. Waiting for confirmation (' + confirmations + '/' + EMPTY_COMMAND_REPORT_CONFIRMATIONS + ').');
         return;
       }
 
-      log(
-        'Watchdog',
-        `Discord returned 0 guild commands ${consecutiveEmptyCommandReports} times consecutively. Performing one bulk command replacement instead of individual creates.`,
-      );
-
-      const result = await replaceSlashCommandsInBulk('Watchdog');
-
-      consecutiveEmptyCommandReports = 0;
-
-      log(
-        'Watchdog',
-        `Slash command bulk repair complete: ${result.created}/${result.expected} command(s) replaced in one request.`,
-      );
-
+      log('Watchdog', '[' + guildId + '] Discord returned 0 guild commands ' + confirmations + ' times. Performing one bulk command replacement.');
+      const result = await replaceSlashCommandsInBulk('Watchdog', guildId);
+      consecutiveEmptyCommandReports.set(guildId, 0);
+      log('Watchdog', '[' + guildId + '] Slash command bulk repair complete: ' + result.created + '/' + result.expected + ' command(s) replaced.');
       return;
-    } else {
-      consecutiveEmptyCommandReports = 0;
     }
 
-    const expectedNames = new Set(
-      commands.map(command => command.name),
-    );
-    const existingNames = new Set(
-      existing.map(command => command.name),
-    );
-
-    const missingNames = commands
-      .filter(command => !existingNames.has(command.name))
-      .map(command => command.name);
-
-    const unexpectedNames = existing
-      .filter(command => !expectedNames.has(command.name))
-      .map(command => command.name);
+    consecutiveEmptyCommandReports.set(guildId, 0);
+    const expectedNames = new Set(commands.map(command => command.name));
+    const existingNames = new Set(existing.map(command => command.name));
+    const missingNames = commands.filter(command => !existingNames.has(command.name)).map(command => command.name);
+    const unexpectedNames = existing.filter(command => !expectedNames.has(command.name)).map(command => command.name);
 
     if (missingNames.length === 0 && unexpectedNames.length === 0) {
-      log(
-        'Watchdog',
-        `Slash commands OK (${existing.length}/${commands.length}); definitions are managed by startup reconciliation.`,
-      );
-    } else {
-      log(
-        'Watchdog',
-        `Slash command set drift detected. Missing: ${missingNames.join(', ') || 'none'}; unexpected: ${unexpectedNames.join(', ') || 'none'}.`,
-      );
-
-      const result = await reconcileSlashCommands('Watchdog');
-
-      log(
-        'Watchdog',
-        `Slash command repair complete: ${result.created} created, ${result.updated} updated, ${result.removed} removed.`,
-      );
+      log('Watchdog', '[' + guildId + '] Slash commands OK (' + existing.length + '/' + commands.length + ').');
+      return;
     }
+
+    log('Watchdog', '[' + guildId + '] Slash command drift. Missing: ' + (missingNames.join(', ') || 'none') + '; unexpected: ' + (unexpectedNames.join(', ') || 'none') + '.');
+    const result = await reconcileSlashCommands('Watchdog', guildId);
+    log('Watchdog', '[' + guildId + '] Slash command repair complete: ' + result.created + ' created, ' + result.updated + ' updated, ' + result.removed + ' removed.');
   } catch (error) {
-    log(
-      'Watchdog',
-      `Command check failed: ${error.message}`,
-    );
+    log('Watchdog', '[' + guildId + '] Command check failed: ' + error.message);
+  }
+}
+
+async function commandWatchdog() {
+  if (commandWatchdogRunning) return;
+  commandWatchdogRunning = true;
+
+  try {
+    for (const guildId of config.discord.guildIds) {
+      await checkGuildCommandWatchdog(guildId);
+    }
   } finally {
     commandWatchdogRunning = false;
   }
 }
-
 async function notifyChannel(embed) {
   if (!config.discord.statusChannelId) return;
 
@@ -1211,7 +1160,7 @@ const handleTextShortcut = createTextShortcutHandler({
 });
 
 client.on(Events.GuildMemberRemove, member => {
-  if (member.guild?.id !== config.discord.guildId) return;
+  if (!config.discord.guildIds.includes(member.guild?.id)) return;
   if (clearUserAfk(member.id)) {
     log('AFK', `Cleared AFK state for departing member ${member.id}.`);
   }
@@ -1224,12 +1173,12 @@ client.on(Events.MessageCreate, async message => {
   }
 
   // Any ordinary message clears the author's AFK state and announces their return.
-  if (message.guild?.id === config.discord.guildId) {
+  if (config.discord.guildIds.includes(message.guild?.id)) {
     const ownAfkStatus = getUserAfk(message.author.id);
     if (ownAfkStatus) {
       const safeReason = ownAfkStatus.reason.replace(/([*_~|>])/g, '\\$1');
       clearUserAfk(message.author.id);
-      await message.reply({
+      await replyMentioningAuthor(message, {
         content: `Your AFK status (**${safeReason}**) was removed, <@!${message.author.id}>. Welcome back!`,
         allowedMentions: { users: [message.author.id] },
       });
@@ -1244,7 +1193,7 @@ client.on(Events.MessageCreate, async message => {
       if (!afkNotificationCooldown.shouldNotify(mentionedUser.id, message.channel.id)) continue;
       const safeReason = afkStatus.reason.replace(/([*_~|>])/g, '\\$1');
       const since = Math.floor(afkStatus.setAt / 1000);
-      await message.reply({
+      await replyMentioningAuthor(message, {
         content: `<@!${mentionedUser.id}> is currently AFK: **${safeReason}** · <t:${since}:R>`,
         allowedMentions: { users: [mentionedUser.id] },
       });
@@ -1265,12 +1214,12 @@ client.on(Events.MessageCreate, async message => {
 
     if (choice === 'java') {
       pendingIpChoices.delete(ipPromptKey);
-      await message.reply('Java IP: ' + SERVER_INFO.javaAddress);
+      await replyMentioningAuthor(message, 'Java IP: ' + SERVER_INFO.javaAddress);
     } else if (choice === 'bedrock') {
       pendingIpChoices.delete(ipPromptKey);
-      await message.reply('Bedrock IP: ' + SERVER_INFO.bedrockAddress);
+      await replyMentioningAuthor(message, 'Bedrock IP: ' + SERVER_INFO.bedrockAddress);
     } else {
-      await message.reply('Please reply with either Java or Bedrock.');
+      await replyMentioningAuthor(message, 'Please reply with either Java or Bedrock.');
     }
 
     return;
@@ -1279,7 +1228,7 @@ client.on(Events.MessageCreate, async message => {
   // Every registered shortcut can be used without mentioning Main Bot.
   const textShortcut = parseTextShortcut(message.content);
 
-  if (textShortcut !== null && message.guild?.id === config.discord.guildId) {
+  if (textShortcut !== null && config.discord.guildIds.includes(message.guild?.id)) {
     await handleTextShortcut({ message, shortcut: textShortcut });
     return;
   }
@@ -1318,7 +1267,7 @@ client.on(Events.MessageCreate, async message => {
           ? '✕ Messages sent to Minecraft must be 256 characters or fewer.'
           : '✕ Please send a non-empty chat message without control characters.';
 
-      await message.reply({
+      await replyMentioningAuthor(message, {
         content: feedback,
         allowedMentions: { parse: [] },
       });
@@ -1334,7 +1283,7 @@ client.on(Events.MessageCreate, async message => {
         `Unable to send Discord message to Minecraft: ${error.message}`,
       );
 
-      await message.reply({
+      await replyMentioningAuthor(message, {
         content: '✕ The AFK bot is currently not connected to Minecraft.',
         allowedMentions: { parse: [] },
       });
@@ -1389,7 +1338,7 @@ client.on(Events.MessageCreate, async message => {
     client.user &&
     shouldHandleConversationalMessage({
       guildId: message.guild?.id,
-      configuredGuildId: config.discord.guildId,
+      configuredGuildIds: config.discord.guildIds,
       channelId: message.channel.id,
       excludedChannelId: config.discord.chatChannelId,
       isWebhookMessage: Boolean(message.webhookId),
@@ -1412,7 +1361,7 @@ const normalizedQuestion = question
   .trim();
 
 if (!question && !isReplyToBot) {
-  await message.reply(
+  await replyMentioningAuthor(message, 
     'ⓘ Mention me with a question or message and I will help.',
   );
 
@@ -1435,7 +1384,7 @@ const contextualAiQuestion =
       question ? ai.getInstantAnswer(question) : null;
 
     if (directKnownAnswer) {
-      await message.reply(directKnownAnswer);
+      await replyMentioningAuthor(message, directKnownAnswer);
       return;
     }
 
@@ -1444,7 +1393,7 @@ const contextualAiQuestion =
     // ========================================================
 
     if (normalizedQuestion === 'forget') {
-      await message.reply(
+      await replyMentioningAuthor(message, 
         forgetUserConversation(getDiscordAiSessionId(message)),
       );
 
@@ -1457,14 +1406,14 @@ const contextualAiQuestion =
 
     if (normalizedQuestion === 'aforget') {
       if (!isAdmin(message.author.id, message.member)) {
-        await message.reply(
+        await replyMentioningAuthor(message, 
           '✕ You are not authorized to use **aforget**.',
         );
 
         return;
       }
 
-      await message.reply(
+      await replyMentioningAuthor(message, 
         forgetAllConversations(),
       );
 
@@ -1485,7 +1434,7 @@ const contextualAiQuestion =
       /\b(?:welcome|say hi to) (?:our |the )?new member\b/i.test(normalizedQuestion);
 
     if (isNewMemberWelcomeRequest) {
-      await message.reply(
+      await replyMentioningAuthor(message, 
         `Hello <@${message.author.id}>! Welcome to The Cottage★! ⌂
 
 Please read <#1478166898020585592>, pick some roles in <#1398624929099812937>, and say hi in <#1398568017708978258>!
@@ -1513,7 +1462,7 @@ We hope you have fun here and love being part of The Cottage★! ♥︎`,
       /\bbedrock\b/i.test(normalizedQuestion);
 
     if (asksHowToJoin && isJavaPlayer) {
-      await message.reply(
+      await replyMentioningAuthor(message, 
         `Hello! Here are the Java joining details for The Cottage★ Chapter 1 • Season 6:
 
 ${SERVER_INFO.javaJoinLink}
@@ -1531,7 +1480,7 @@ The joining guide has the setup details.`,
     // ========================================================
 
     if (asksHowToJoin && isBedrockPlayer) {
-      await message.reply(
+      await replyMentioningAuthor(message, 
         `Hello! To join The Cottage★ Chapter 1 • Season 6 on Bedrock, add the server directly in Minecraft:
 
 Server address: ${SERVER_INFO.bedrockAddress.split(':')[0]}
@@ -1582,7 +1531,7 @@ if (adminCommand.action === 'cancel') {
       cancelAllScheduledAdminActions();
 
     if (cancelledTasks.length === 0) {
-      await message.reply(
+      await replyMentioningAuthor(message, 
         'ⓘ There are currently no scheduled administrative actions to cancel.',
       );
 
@@ -1593,7 +1542,7 @@ if (adminCommand.action === 'cancel') {
       task => task.action,
     );
 
-    await message.reply(
+    await replyMentioningAuthor(message, 
       `✓ Cancelled ${cancelledTasks.length} scheduled administrative action${
         cancelledTasks.length === 1 ? '' : 's'
       }: ${cancelledNames.join(', ')}.`,
@@ -1611,7 +1560,7 @@ if (adminCommand.action === 'cancel') {
   );
 
   if (scheduledTasks.length === 0) {
-    await message.reply(
+    await replyMentioningAuthor(message, 
       `✕ There is no scheduled **${adminCommand.targetAction}** action.`,
     );
 
@@ -1627,7 +1576,7 @@ saveScheduledAdminActions();
 
 const timestamp = Math.floor(task.executeAt / 1000);
 
-  await message.reply(
+  await replyMentioningAuthor(message, 
     `✓ Cancelled the scheduled **${task.action}** for <t:${timestamp}:F> (<t:${timestamp}:R>).`,
   );
 
@@ -1639,7 +1588,7 @@ const timestamp = Math.floor(task.executeAt / 1000);
 // ----------------------------------------------------
 
 if (adminCommand.action === 'restart') {
-  await message.reply(
+  await replyMentioningAuthor(message, 
     'I cannot restart the Minecraft server directly from Discord. Please use the server control panel to restart it.',
   );
 
@@ -1656,7 +1605,7 @@ if (adminCommand.action === 'restart') {
 
 if (adminCommand.action === 'scheduled') {
   if (scheduledAdminActions.size === 0) {
-    await message.reply(
+    await replyMentioningAuthor(message, 
       'ⓘ There are currently no scheduled administrative actions.',
     );
 
@@ -1700,7 +1649,7 @@ if (adminCommand.action === 'scheduled') {
     });
   }
 
-  await message.reply({
+  await replyMentioningAuthor(message, {
     embeds: [embed],
   });
 
@@ -1713,7 +1662,7 @@ if (adminCommand.action === 'scheduled') {
 
 if (adminCommand.action === 'status') {
   if (adminCommand.delayMinutes > 0) {
-    await message.reply(
+    await replyMentioningAuthor(message, 
       '✕ Status checks cannot be scheduled. Ask me for the status now.',
     );
 
@@ -1728,7 +1677,7 @@ if (adminCommand.action === 'status') {
     Colors.Blurple,
   );
 
-  await message.reply({
+  await replyMentioningAuthor(message, {
     embeds: [embed],
   });
 
@@ -1751,13 +1700,13 @@ if (adminCommand.delayMinutes === 0) {
     const result = await executeAction();
 
     if (adminCommand.action === 'start') {
-      await message.reply(
+      await replyMentioningAuthor(message, 
         result === 'already active'
           ? 'ⓘ The Minecraft AFK bot is already running.'
           : '✓ Minecraft AFK bot started.',
       );
     } else if (adminCommand.action === 'stop') {
-      await message.reply(
+      await replyMentioningAuthor(message, 
         result === 'already stopped'
           ? 'ⓘ The Minecraft AFK bot is already stopped.'
           : '✓ Minecraft AFK bot stopped.',
@@ -1771,7 +1720,7 @@ if (adminCommand.delayMinutes === 0) {
       `Immediate ${adminCommand.action} failed: ${error.message}`,
     );
 
-    await message.reply(
+    await replyMentioningAuthor(message, 
       `✕ Unable to execute **${adminCommand.action}**: ${error.message}`,
     );
 
@@ -1808,7 +1757,7 @@ const executeAt = scheduleAdminAction(
   },
 );
 
-          await message.reply(
+          await replyMentioningAuthor(message, 
             `✓ Scheduled **${adminCommand.action}** for <t:${Math.floor(
               executeAt / 1000,
             )}:F> (<t:${Math.floor(executeAt / 1000)}:R>).`,
@@ -1822,7 +1771,7 @@ const executeAt = scheduleAdminAction(
           `Unable to parse admin request: ${error.message}`,
         );
 
-        await message.reply(
+        await replyMentioningAuthor(message, 
           `✕ I couldn't process that administrative request: ${error.message}`,
         );
 
@@ -1848,14 +1797,14 @@ const response = await ai.ask(contextualAiQuestion, {
 
       log('AI', `Discord response: ${response}`);
 
-      await message.reply(response);
+      await replyMentioningAuthor(message, response);
     } catch (error) {
       log(
         'AI',        `Unable to answer Discord mention: ${error.message}`,
       );
 
       try {
-        await message.reply({
+        await replyMentioningAuthor(message, {
           content: applyUnicodeTheme('✕ Server could not get an AI response right now.'),
           failIfNotExists: false,
         });
@@ -1885,7 +1834,7 @@ const response = await ai.ask(contextualAiQuestion, {
 });
 registerInteractionHandlers({
   client, Events, MessageFlags, log, mc, REJOIN_DELAY_MS, hasFeatureAccess,
-  buildStatusEmbed, buildStatusComponents, publishRejoinNotice, summary, ai,
+  buildStatusEmbed, buildStatusComponents, summary, ai,
   getDiscordPing, forgetUserConversation, getInteractionAiSessionId,
   forgetAllConversations, executeAdministrativeAction, createEmbed, Colors,
   config, isRejoinAuthorized, buildRejoinComponents, requireFeatureAccess,

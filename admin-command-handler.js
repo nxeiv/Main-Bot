@@ -4,7 +4,7 @@ function createAdminCommandHandler(dependencies) {
   const {
     hasFeatureAccess, log, MessageFlags, getDiscordPing, forgetAllConversations,
     mc, REJOIN_DELAY_MS, executeAdministrativeAction, createEmbed, Colors, config,
-    isRejoinAuthorized, publishRejoinNotice, buildRejoinComponents,
+    isRejoinAuthorized, buildRejoinComponents,
     requireFeatureAccess, buildStatusEmbed, buildStatusComponents,
   } = dependencies;
 
@@ -57,7 +57,6 @@ function createAdminCommandHandler(dependencies) {
           const result = mc.rejoin(REJOIN_DELAY_MS);
           if (!result.scheduled) return interaction.editReply({ content: 'ⓘ A rejoin is already in progress.', components: [] });
           log('Admin', `Verified /rejoin request from ${interaction.user.tag} (${interaction.user.id}).`);
-          await publishRejoinNotice(interaction.channel);
           return interaction.editReply({ content: 'Rejoining... The AFK bot will stay disconnected for 30 seconds before reconnecting.', components: [buildRejoinComponents()] });
         } catch (error) {
           log('Admin', `/rejoin failed: ${error.message}`);

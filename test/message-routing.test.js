@@ -11,6 +11,7 @@ const {
 const base = {
   guildId: 'cottage-guild',
   configuredGuildId: 'cottage-guild',
+  configuredGuildIds: ['cottage-guild'],
   channelId: 'general',
   excludedChannelId: 'minecraft-chat',
   isWebhookMessage: false,
@@ -107,5 +108,31 @@ test('ordinary bot messages are not misidentified as Minecraft relays', () => {
   assert.equal(isMinecraftRelayMessage({
     author: { bot: false },
     content: 'makkrabb » hello',
+  }), false);
+});
+
+test('mentions and replies work in every explicitly configured guild', () => {
+  const configured = {
+    ...base,
+    configuredGuildId: undefined,
+    configuredGuildIds: ['cottage-guild', 'gree-guild'],
+    guildId: 'gree-guild',
+    isDirectBotMention: true,
+  };
+  assert.equal(shouldHandleConversationalMessage(configured), true);
+  assert.equal(shouldHandleConversationalMessage({
+    ...configured,
+    isDirectBotMention: false,
+    isReplyToBot: true,
+  }), true);
+});
+
+test('guilds outside the configured allow-list remain ignored', () => {
+  assert.equal(shouldHandleConversationalMessage({
+    ...base,
+    configuredGuildId: undefined,
+    configuredGuildIds: ['cottage-guild', 'gree-guild'],
+    guildId: 'unknown-guild',
+    isDirectBotMention: true,
   }), false);
 });

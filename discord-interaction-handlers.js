@@ -1,12 +1,14 @@
 'use strict';
 
+const { createEphemeralInteraction } = require('./ephemeral-interaction');
+
 const { createGeneralCommandHandler } = require('./general-command-handler');
 const { createAdminCommandHandler } = require('./admin-command-handler');
 
 function registerInteractionHandlers(dependencies) {
   const {
     client, Events, MessageFlags, log, mc, REJOIN_DELAY_MS, hasFeatureAccess,
-    buildStatusEmbed, buildStatusComponents, publishRejoinNotice, summary, ai,
+    buildStatusEmbed, buildStatusComponents, summary, ai,
     getDiscordPing, forgetUserConversation, getInteractionAiSessionId,
     forgetAllConversations, executeAdministrativeAction, createEmbed, Colors,
     config, isRejoinAuthorized, buildRejoinComponents, requireFeatureAccess,
@@ -24,7 +26,7 @@ function registerInteractionHandlers(dependencies) {
   const handleAdminCommand = createAdminCommandHandler({
     hasFeatureAccess, log, MessageFlags, getDiscordPing, forgetAllConversations,
     mc, REJOIN_DELAY_MS, executeAdministrativeAction, createEmbed, Colors, config,
-    isRejoinAuthorized, publishRejoinNotice, buildRejoinComponents,
+    isRejoinAuthorized, buildRejoinComponents,
     requireFeatureAccess, buildStatusEmbed, buildStatusComponents,
   });
 
@@ -48,18 +50,10 @@ function registerInteractionHandlers(dependencies) {
   
         log('Admin', `Rejoin retry requested by ${interaction.user.tag} (${interaction.user.id}).`);
   
-        const sourceMessageIsEphemeral =
-          Boolean(interaction.message?.flags?.has?.(MessageFlags.Ephemeral));
-  
         const updatedMessage = await interaction.update({
           content: 'Retrying... A fresh 30-second disconnect window has started.',
           components: [],
         });
-  
-        if (sourceMessageIsEphemeral) {
-          await publishRejoinNotice(interaction.channel);
-        }
-  
         return updatedMessage;
       } catch (error) {
         log('Admin', `Rejoin retry failed: ${error.message}`);
@@ -82,29 +76,46 @@ function registerInteractionHandlers(dependencies) {
     if (!interaction.isChatInputCommand()) {
       return;
     }
-  
+
+    const allowedGuildIds = config?.discord?.guildIds;
+    if (
+      Array.isArray(allowedGuildIds) &&
+      allowedGuildIds.length > 0 &&
+      !allowedGuildIds.includes(interaction.guildId)
+    ) {
+      return interaction.reply({
+        content: 'Main Bot is not enabled in this server.',
+        flags: MessageFlags.Ephemeral,
+      });
+    }
+
+    const commandInteraction = createEphemeralInteraction(
+      interaction,
+      MessageFlags.Ephemeral,
+    );
+
     log(
       'Discord',
-      `/${interaction.commandName} requested by ${interaction.user.tag}.`,
+      `/${commandInteraction.commandName} requested by ${commandInteraction.user.tag}.`,
     );
-  
+
     const status = mc.getStatus();
-  
-    switch (interaction.commandName) {
+
+    switch (commandInteraction.commandName) {
       case 'vc':
-        return handleVoiceCommand(interaction);
+        return handleVoiceCommand(commandInteraction);
       case 'summarize':
       case 'forget':
       case 'help':
       case 'afk':
-        return handleGeneralCommand(interaction);
+        return handleGeneralCommand(commandInteraction);
       case 'ping':
       case 'aforget':
       case 'start':
       case 'stop':
       case 'rejoin':
       case 'status':
-        return handleAdminCommand(interaction, status);
+        return handleAdminCommand(commandInteraction, status);
       default:
         return undefined;
     }

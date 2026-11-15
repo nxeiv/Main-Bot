@@ -20,6 +20,7 @@ function isMinecraftRelayMessage(message) {
 function shouldHandleConversationalMessage({
   guildId,
   configuredGuildId,
+  configuredGuildIds,
   channelId,
   excludedChannelId,
   isWebhookMessage,
@@ -27,10 +28,13 @@ function shouldHandleConversationalMessage({
   isDirectBotMention,
   isReplyToBot,
 }) {
+  const isAllowedGuild = Array.isArray(configuredGuildIds)
+    ? configuredGuildIds.includes(guildId)
+    : Boolean(configuredGuildId && guildId === configuredGuildId);
+
   return Boolean(
     guildId &&
-    configuredGuildId &&
-    guildId === configuredGuildId &&
+    isAllowedGuild &&
     (!excludedChannelId || channelId !== excludedChannelId) &&
     !isWebhookMessage &&
     !isReplyToMinecraftRelay &&

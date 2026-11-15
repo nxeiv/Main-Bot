@@ -19,6 +19,7 @@ Use this after deployment. Mark each item **PASS**, **FAIL**, or **NOT TESTED**.
 - [x] Production dependency audit reported 0 vulnerabilities after the UUID override.
 - [x] WispByte log confirms Node.js v26.13.0.
 - [x] protobufjs install script is explicitly denied; transitive uuid is pinned to patched 11.1.1.
+- [ ] Configure `DISCORD_ADDITIONAL_GUILD_IDS` with the second server's Guild ID on WispByte.
 - [ ] Apply the latest `main` files to WispByte and confirm its dependency install is clean.
 - [ ] Run `npm audit --omit=dev` on WispByte and confirm 0 vulnerabilities.
 - [ ] Bot starts once, logs into Discord, and reconciles slash commands.
@@ -26,7 +27,11 @@ Use this after deployment. Mark each item **PASS**, **FAIL**, or **NOT TESTED**.
 
 ## Discord commands and permissions
 - [ ] `/help` lists the intended commands.
-- [ ] Public commands work for ordinary members.
+- [ ] Public commands work for ordinary members in both configured guilds.
+- [ ] Every slash command response, including `/afk`, `/vc`, `/rejoin`, `/status`, and errors, is ephemeral.
+- [ ] Slash commands do not create public rejoin notices or other public side effects.
+- [ ] Text shortcut and AI message replies visibly mention the user who triggered them.
+- [ ] The second guild does not receive the Cottage-only Minecraft relay or status-channel messages.
 - [ ] Admin commands reject non-admin users.
 - [ ] `/ping` access matches the intended policy.
 - [ ] `???`, `?hello`, and other normal text are not treated as shortcuts.
@@ -51,7 +56,8 @@ Use this after deployment. Mark each item **PASS**, **FAIL**, or **NOT TESTED**.
 - [ ] Relayed messages do not trigger Discord AI.
 
 ## AI and summaries
-- [ ] AI only responds to supported direct mentions/replies.
+- [ ] AI only responds to supported direct mentions/replies in configured guilds.
+- [ ] AI conversation context remains isolated by guild and channel.
 - [ ] Per-user/channel context isolation works.
 - [ ] Rate limits, queue, Gemini failover, and failure fallback work.
 - [ ] `/forget` clears only the requester's context.

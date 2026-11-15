@@ -17,7 +17,7 @@ function harness(overrides = {}) {
     forgetAllConversations: () => 'forgot-all', executeAdministrativeAction: async () => calls.push(['admin']),
     createEmbed: () => ({ setDescription() { return this; }, addFields() { return this; } }),
     Colors: { Green: 'green', Yellow: 'yellow', Red: 'red', Blurple: 'blurple' },
-    config: { server: { ip: 'server.example' }, bot: { username: 'Server' } },
+    config: { discord: { guildIds: ['cottage-guild', 'gree-guild'] }, server: { ip: 'server.example' }, bot: { username: 'Server' } },
     isRejoinAuthorized: () => false, buildRejoinComponents: () => [],
     requireFeatureAccess: async () => false, handleVoiceCommand: async () => calls.push(['vc']),
     setUserAfk: () => {}, getUserAfk: () => ({ reason: 'AFK', setAt: 1000 }),
@@ -27,11 +27,12 @@ function harness(overrides = {}) {
   return { client, calls };
 }
 
-function interaction(commandName) {
+function interaction(commandName, guildId = 'cottage-guild') {
   return {
     isButton: () => false, isChatInputCommand: () => true, commandName,
     user: { id: 'member', tag: 'member' }, member: {},
-    reply: async value => value, deferReply: async () => {}, editReply: async value => value,
+    guildId,
+    reply: async value => value, deferReply: async value => value, followUp: async value => value, editReply: async value => value,
     options: { getString: () => null },
   };
 }
@@ -47,4 +48,18 @@ test('voice slash command delegates to the extracted voice handler', async () =>
   const h = harness();
   await h.client.listeners('interactionCreate')[0](interaction('vc'));
   assert.ok(h.calls.some(call => call[0] === 'vc'));
+});
+test('slash command responses are ephemeral in every configured guild', async () => {
+  const h = harness();
+  const result = await h.client.listeners('interactionCreate')[0](interaction('help', 'gree-guild'));
+  assert.equal(result.flags, 64);
+  assert.equal(result.content, 'help');
+});
+
+test('slash commands are rejected privately in guilds outside the allow-list', async () => {
+  const h = harness();
+  const result = await h.client.listeners('interactionCreate')[0](interaction('help', 'unknown-guild'));
+  assert.equal(result.flags, 64);
+  assert.match(result.content, /not enabled in this server/);
+  assert.equal(h.calls.some(call => call[0] === 'log' && String(call[2]).includes('/help requested')), false);
 });
