@@ -8,7 +8,7 @@ This notice describes the data handling visible in the current The Cottage★ Ma
 
 Depending on which features are used, the bot may process:
 
-- **Discord messages and identifiers:** message text, Discord user IDs, channel IDs, display names, and role information needed to respond, enforce access, or keep separate conversation contexts.
+- **Discord messages and identifiers:** in each explicitly configured guild, message text, Discord user IDs, channel IDs, display names, and role information needed to respond, enforce access, or keep separate conversation contexts. AI conversation sessions are separated by guild and channel.
 - **Minecraft chat and player names:** chat text sent to the bot, player usernames, and join/leave events needed for replies, chat relay, and daily welcomes.
 - **AFK status:** a Discord user ID, the optional AFK reason, and the time the status was set.
 - **Scheduled actions:** the action name (`start` or `stop`), execution and scheduling timestamps, the requesting user ID, and the Discord channel ID used for the completion notice.
@@ -18,10 +18,10 @@ Do not send passwords, API keys, payment details, private contact information, o
 
 ## When information is processed or shared
 
-- Messages that invoke Discord AI through a direct mention or a reply to the bot may be sent to **Google Gemini** through the configured API. The Minecraft client does not invoke Gemini or generate AI replies in Minecraft. Known server answers may be handled locally without a Gemini request.
+- Messages that invoke Discord AI through a direct mention or a reply to the bot in a configured guild may be sent to **Google Gemini** through the configured API. The Minecraft client does not invoke Gemini or generate AI replies in Minecraft. Known server answers may be handled locally without a Gemini request.
 - `/summarize` reads up to the latest 100 non-bot, non-system messages in the selected text channel, builds a transcript capped at 18,000 characters, and sends that transcript to Google Gemini to generate the summary.
 - The configured Discord-to-Minecraft relay sends ordinary messages from its designated Discord channel to the Minecraft server. Slash-prefixed Minecraft commands, bot messages, and webhook messages are not forwarded.
-- Discord is used to deliver messages, commands, and bot responses. The hosting provider runs the bot and may process application logs and runtime files as part of providing that service.
+- All slash-command responses are private/ephemeral and visible only to the invoking user. Text-shortcut and conversational message replies are posted in the source channel and explicitly mention the requester. Discord is used to deliver messages, commands, and bot responses. The hosting provider runs the bot and may process application logs and runtime files as part of providing that service.
 - The public read-only status endpoint returns only operational fields such as online state, player count, uptime, reconnect attempts, and a check timestamp. It does not intentionally return the configured Minecraft hostname, port, API keys, or Discord identifiers.
 
 Google Gemini, Discord, the Minecraft server host, and the bot's hosting provider operate under their own terms and privacy practices. Review those providers' policies for information about their handling and retention.
