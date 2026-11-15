@@ -12,7 +12,7 @@ function isMinecraftRelayMessage(message) {
   const isBotAuthored = Boolean(message.author?.bot);
   const content = String(message.content || '');
   const hasMinecraftRelayFormat =
-    /^\s*[A-Za-z0-9_]{1,16}\s*»\s*/u.test(content);
+    /^\\s*[A-Za-z0-9_]{1,16}\\s*»\\s*/u.test(content);
 
   return isBotAuthored && hasMinecraftRelayFormat;
 }
@@ -20,6 +20,7 @@ function isMinecraftRelayMessage(message) {
 function shouldHandleConversationalMessage({
   guildId,
   configuredGuildId,
+  configuredGuildIds,
   channelId,
   excludedChannelId,
   isWebhookMessage,
@@ -27,10 +28,13 @@ function shouldHandleConversationalMessage({
   isDirectBotMention,
   isReplyToBot,
 }) {
+  const isAllowedGuild = Array.isArray(configuredGuildIds)
+    ? configuredGuildIds.includes(guildId)
+    : Boolean(configuredGuildId && guildId === configuredGuildId);
+
   return Boolean(
     guildId &&
-    configuredGuildId &&
-    guildId === configuredGuildId &&
+    isAllowedGuild &&
     (!excludedChannelId || channelId !== excludedChannelId) &&
     !isWebhookMessage &&
     !isReplyToMinecraftRelay &&
