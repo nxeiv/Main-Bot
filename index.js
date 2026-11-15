@@ -45,6 +45,12 @@ const { createShutdownHandler } = require('./shutdown');
 
 const scheduledAdminActions = new Map();
 const pendingIpChoices = new Map();
+
+// Keep the pending ?ip reply key consistent with the text shortcut handler.
+function getIpPromptKey(message) {
+  return `${message.guild?.id || 'dm'}:${message.channel.id}:${message.author.id}`;
+}
+
 const REJOIN_DELAY_MS = 30_000;
 
 const runtimeHealth = {
