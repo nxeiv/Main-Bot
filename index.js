@@ -44,6 +44,7 @@ const { COMMAND_REGISTRY } = require('./command-registry');
 const { validateMinecraftChatMessage } = require('./minecraft-chat');
 const { createAfkStore } = require('./afk-store');
 const { createShutdownHandler } = require('./shutdown');
+const { createStatusServer } = require('./status-server');
 
 const scheduledAdminActions = new Map();
 const pendingIpChoices = new Map();
@@ -1900,13 +1901,27 @@ const shutdown = createShutdownHandler({
 });
 
 function handleShutdownSignal(signal) {
-  void shutdown(signal).finally(() => {
+  void statusServer.stop().finally(() => shutdown(signal)).finally(() => {
     process.exit(0);
   });
 }
 
 process.once('SIGINT', () => handleShutdownSignal('SIGINT'));
 process.once('SIGTERM', () => handleShutdownSignal('SIGTERM'));
+
+const statusServer = createStatusServer({
+  host: config.server.ip,
+  port: config.server.port,
+  listenPort: Number.parseInt(process.env.STATUS_PORT || process.env.PORT || '15504', 10) || 15504,
+  intervalMs: Number.parseInt(process.env.STATUS_POLL_INTERVAL_MS || '45000', 10) || 45000,
+  timeoutMs: Number.parseInt(process.env.STATUS_TIMEOUT_MS || '4000', 10) || 4000,
+  allowedOrigins: String(
+    process.env.STATUS_ALLOWED_ORIGINS || 'https://the-cottage.onrender.com',
+  ).split(',').map(origin => origin.trim()).filter(Boolean),
+  log: message => log('Status API', message),
+});
+
+statusServer.start();
 
 log('Discord', 'Starting Discord bot.');
 client.login(config.discord.token);

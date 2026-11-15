@@ -5,6 +5,9 @@ require('dotenv').config();
 const discordToken = String(process.env.DISCORD_TOKEN || '').trim();
 const minecraftPassword = String(process.env.MC_PASSWORD || '');
 const sparkLoginPassword = String(process.env.MC_LOGIN_PASSWORD || '');
+const minecraftHost = String(process.env.MC_SERVER_HOST || '').trim();
+const minecraftPort = Number.parseInt(process.env.MC_SERVER_PORT || '', 10);
+const bedrockPort = Number.parseInt(process.env.MC_BEDROCK_PORT || '', 10);
 
 function parseDiscordIdList(value) {
   return [...new Set(
@@ -46,8 +49,14 @@ const config = {
   adminRoleIds,
 
   server: {
-    ip: 'the-cottage-c1-s6.playwithbao.com',
-    port: 34159,
+    // Connection details are private deployment configuration, never committed.
+    ip: minecraftHost || null,
+    port: Number.isInteger(minecraftPort) && minecraftPort > 0 && minecraftPort <= 65535
+      ? minecraftPort
+      : null,
+    bedrockPort: Number.isInteger(bedrockPort) && bedrockPort > 0 && bedrockPort <= 65535
+      ? bedrockPort
+      : null,
     version: 'Paper 26.2',
     clientProtocolVersion: '1.21.11',
   },
@@ -74,6 +83,16 @@ if (!config.discord.token) {
 
 if (config.adminUserIds.length === 0 && config.adminRoleIds.length === 0) {
   missing.push('at least one of ADMIN_USER_IDS or ADMIN_ROLE_IDS');
+}
+
+if (minecraftHost && (!Number.isInteger(minecraftPort) || minecraftPort <= 0 || minecraftPort > 65535)) {
+  missing.push('a valid MC_SERVER_PORT when MC_SERVER_HOST is configured');
+}
+if (Number.isInteger(minecraftPort) && minecraftPort > 0 && !minecraftHost) {
+  missing.push('MC_SERVER_HOST when MC_SERVER_PORT is configured');
+}
+if (Number.isInteger(bedrockPort) && (bedrockPort <= 0 || bedrockPort > 65535)) {
+  missing.push('a valid MC_BEDROCK_PORT');
 }
 
 const invalidGuildIds = config.discord.guildIds
