@@ -72,7 +72,7 @@ This is a source-level audit. It does not replace a live staging deployment, a c
 
 ## Recommended implementation order
 
-1. **Architecture foundation:** shared command registry, permission policy, response helpers, and event-module boundaries. Keep behavior unchanged.
+1. **Architecture foundation:** the shared command registry now generates slash definitions and help, and the central permission service enforces registry access labels. Next: extract response helpers and Discord event/interaction modules while keeping behavior unchanged.
 2. **Reliability:** AFK cooldown/member cleanup, AI session expiry/timeouts, voice restore/reconnect diagnostics, and scheduler safety.
 3. **Security and operations:** secret redaction, validated configuration, least-privilege status endpoints, dependency audit, and structured logs.
 4. **Verification:** unit/integration tests, staging smoke tests, then production deployment with rollback instructions.
