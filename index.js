@@ -29,6 +29,7 @@ const voiceApi = require('@discordjs/voice');
 const { createVoiceSessionManager } = require('./voice-session');
 const { createVoiceCommandHandler } = require('./voice-command-handler');
 const { createTextShortcutHandler } = require('./text-shortcut-handler');
+const { getIpPromptKey } = require('./ip-prompt-key');
 const { registerMinecraftEventHandlers } = require('./minecraft-event-handlers');
 const { registerInteractionHandlers } = require('./discord-interaction-handlers');
 const { formatUptime, formatAfkDuration, formatDelay, getBotState } = require('./response-utils');
@@ -45,11 +46,6 @@ const { createShutdownHandler } = require('./shutdown');
 
 const scheduledAdminActions = new Map();
 const pendingIpChoices = new Map();
-
-// Keep the pending ?ip reply key consistent with the text shortcut handler.
-function getIpPromptKey(message) {
-  return `${message.guild?.id || 'dm'}:${message.channel.id}:${message.author.id}`;
-}
 
 const REJOIN_DELAY_MS = 30_000;
 
