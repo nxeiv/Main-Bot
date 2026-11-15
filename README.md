@@ -510,8 +510,9 @@ A practical manual test order is:
 8. Test existing admin shortcuts and slash commands with authorized and unauthorized accounts.
 9. Test `/rejoin` using the explicitly allowed user ID and a member with the required role; other users should receive a generic unavailable response.
 10. Test `@Main Bot ?rejoin` with an authorized account. Confirm plain, unpinged `?rejoin` is ignored.
-11. Confirm the AFK client disconnects immediately, stays offline for 30 seconds, then reconnects. Test the Retry button and verify unauthorized users cannot use it.
-12. Verify DiscordSRV relay messages and replies remain excluded from conversational AI.
-13. Verify ordinary direct mentions and replies to Main Bot messages still work in normal conversation channels.
-14. Verify the website can reach `/api/status`.
-15. Review logs for Discord, Minecraft, Gemini, network, and permission errors.
+11. Confirm the Minecraft AFK client stays offline after a fresh process restart. Use an authorized `/start` or `?start`, verify it connects, then use `/stop` or `?stop` and confirm it stays stopped.
+12. Test `/rejoin` separately: confirm the immediate disconnect, 30-second reconnect delay, Retry button behavior, and rejection of unauthorized users.
+13. Verify DiscordSRV relay messages and replies remain excluded from conversational AI.
+14. Verify ordinary direct mentions and replies to Main Bot messages still work in normal conversation channels.
+15. Verify the website can reach `/api/status`.
+16. Review logs for Discord, Minecraft, Gemini, network, and permission errors.
