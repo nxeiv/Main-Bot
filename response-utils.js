@@ -19,19 +19,14 @@ function formatAfkDuration(durationMs) {
   const hours = Math.floor((totalSeconds % 86400) / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
-
   const parts = [];
-
   if (days) parts.push(`${days}d`);
   if (hours) parts.push(`${hours}h`);
   if (minutes) parts.push(`${minutes}m`);
-
-  if (seconds || parts.length === 0) {
-    parts.push(`${seconds}s`);
-  }
-
+  if (seconds || parts.length === 0) parts.push(`${seconds}s`);
   return parts.join(' ');
 }
+
 function formatDelay(delayMs) {
   const seconds = Math.round(delayMs / 1000);
   if (seconds % 60 === 0) {
@@ -45,25 +40,7 @@ function getBotState(status) {
   if (status.connected) return 'Online';
   if (status.connecting || status.reconnecting) return 'Reconnecting';
   return 'Offline';
-}
-
-function createEmbed(title, color) {
-  return new EmbedBuilder()
-    .setTitle(title)
-    .setColor(color)
-    .setFooter({ text: 'By Makkrabb' })
-    .setTimestamp();
-}
-
-function forgetUserConversation(userId) {
-  ai.resetUserConversation(userId);
-  return '⌫ Your AI conversation context has been forgotten. You can start fresh now.';
-}
-
-function forgetAllConversations() {
-  ai.resetConversation();
-  return '⌫ All AI conversation contexts have been forgotten.';
-}
+} 
 
 module.exports = {
   formatUptime,
