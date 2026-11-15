@@ -6,7 +6,7 @@ function replyMentioningAuthor(message, payload) {
   }
 
   const authorId = String(message.author?.id || '').trim();
-  if (!/^\\d{17,20}$/.test(authorId)) {
+  if (!/^[0-9]{17,20}$/.test(authorId)) {
     throw new TypeError('A valid message author ID is required to mention the requester.');
   }
 
