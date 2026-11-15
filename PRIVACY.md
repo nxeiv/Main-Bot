@@ -1,6 +1,6 @@
 # Privacy Notice
 
-_Last reviewed: 13 November 2026_
+_Last reviewed: 15 November 2026_
 
 This notice describes the data handling visible in the current The Cottage★ Main Bot source. It is intended to help server members understand what the bot processes. It is not legal advice and does not replace the privacy terms of Discord, Google, the Minecraft server host, or the bot's hosting provider.
 
@@ -18,7 +18,7 @@ Do not send passwords, API keys, payment details, private contact information, o
 
 ## When information is processed or shared
 
-- Messages that invoke the AI through a direct mention, a reply to the bot, or a supported Minecraft AI interaction may be sent to **Google Gemini** through the configured API. Known server answers may be handled locally without a Gemini request.
+- Messages that invoke Discord AI through a direct mention or a reply to the bot may be sent to **Google Gemini** through the configured API. The Minecraft client does not invoke Gemini or generate AI replies in Minecraft. Known server answers may be handled locally without a Gemini request.
 - `/summarize` reads up to the latest 100 non-bot, non-system messages in the selected text channel, builds a transcript capped at 18,000 characters, and sends that transcript to Google Gemini to generate the summary.
 - The configured Discord-to-Minecraft relay sends ordinary messages from its designated Discord channel to the Minecraft server. Slash-prefixed Minecraft commands, bot messages, and webhook messages are not forwarded.
 - Discord is used to deliver messages, commands, and bot responses. The hosting provider runs the bot and may process application logs and runtime files as part of providing that service.
@@ -33,6 +33,7 @@ Google Gemini, Discord, the Minecraft server host, and the bot's hosting provide
 - **AFK status** is stored in the local `user-afk.json` runtime file until the status is cleared or the file is removed.
 - **Daily welcome state** is stored in `daily-welcomes.json` and tracks player names for the current date in the Asia/Manila timezone; it is refreshed when the date changes.
 - **Scheduled administrative actions** are stored in `scheduled-actions.json` while pending and are removed as they execute or are cancelled.
+- **Voice session configuration** is stored in `voice-session.json` when an administrator explicitly joins a voice channel. The bot restores this voice connection after a normal process restart until `/vc leave` is used. The Minecraft AFK client is different: it does not automatically start after a Main Bot process restart and requires an authorized `/start` or `?start` command.
 - **Application logs** are written to the process output and may be retained by the hosting provider according to that provider's configuration. Some log entries include Minecraft player names, chat prompts, or diagnostic error details.
 
 Runtime files are intended to remain on the bot host and are excluded from Git. The project does not define a universal retention period for host logs or provider-side processing.
