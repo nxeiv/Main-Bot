@@ -4,7 +4,7 @@ _Last reviewed: 15 November 2026_
 
 ## Audit scope
 
-Reviewed the repository tree, runtime entry point, configuration, command definitions, text shortcut parser, permission helpers, Discord AFK storage, AI service, Minecraft connection and relay modules, voice-session manager, status bridge, shutdown handling, tests, dependency manifest, privacy notice, security policy, and CI workflow.
+Reviewed the repository tree, runtime entry point, configuration, command definitions, text shortcut parser, permission helpers, Discord AFK storage, AI service, Minecraft connection and relay modules, voice-session manager, shutdown handling, tests, dependency manifest, privacy notice, security policy, and CI workflow.
 
 This is a source-level audit. It does not replace a live staging deployment, a complete runtime exercise against Discord/Gemini/Minecraft, or a host-specific security review.
 
@@ -22,8 +22,12 @@ This is a source-level audit. It does not replace a live staging deployment, a c
 | Minecraft connection | `minecraft.js`, `spark-login.js` | KEEP, IMPROVE. The client remains opt-in after process restarts and reconnects after transient failures once manually started. |
 | Minecraft chat relay | `minecraft-chat.js`, `message-routing.js` | KEEP. Input validation and relay/AI separation exist; add more integration coverage around webhook and mention edge cases. |
 | Voice connection | `voice-session.js` | KEEP, IMPROVE. Explicit join/leave and persistent restore exist. Improve diagnostics, recovery testing, and permission-loss handling. |
-| Website status bridge | `status-server.js` | KEEP, IMPROVE. Public status is filtered and CORS is allow-listed; add endpoint tests for malformed requests and operational health. |
+| Website status bridge | Removed. The old WispByte API module, tests, environment variables, and browser polling are retired; the SMP card no longer displays live status or player counts. |
+| Text shortcut execution | `text-shortcut-handler.js` | KEEP. Execution is dependency-injected and separated from the Discord message event listener. |
+| Minecraft event wiring | `minecraft-event-handlers.js` | KEEP. Minecraft connection and player lifecycle events are registered outside the runtime entry point. |
+| Response utilities | `response-utils.js` | KEEP. Pure formatting helpers are extracted and unit tested. |
 | Summaries | `summary.js` | KEEP. It is already separated from the main entry point and uses temporary private responses. |
+| Response utilities | `response-utils.js` | KEEP. Pure formatting helpers extracted from the runtime entry point and covered by unit tests. |
 | Shutdown | `shutdown.js` | KEEP. Extracted and testable; ensure every future service registers its cleanup. |
 | Presentation | `unicode.js` | KEEP. Small, focused presentation helper. |
 | Tests | `test/*.test.js` | KEEP, EXPAND. Existing unit tests cover many helpers; live service behavior still needs staging/manual verification. |
@@ -47,7 +51,7 @@ This is a source-level audit. It does not replace a live staging deployment, a c
 - Add voice connection state monitoring and tests for reconnect, deleted channels, and missing permissions.
 - Standardize structured logs, redact secrets/tokens, and keep private message contents out of routine diagnostics.
 - Add member-removal AFK cleanup and notification cooldowns (implemented in this branch).
-- Improve status reporting to distinguish configured/connected/healthy/degraded rather than treating configuration as operational health.
+- Keep the Discord-only `/status` diagnostic accurate; there is no longer a public website status API.
 - Add integration tests for Discord event routing, command permissions, and external service failures.
 - Keep dependency versions and lockfile synchronized in every change.
 

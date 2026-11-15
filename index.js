@@ -27,6 +27,10 @@ const ai = require('./ai');
 const summary = require('./summary');
 const voiceApi = require('@discordjs/voice');
 const { createVoiceSessionManager } = require('./voice-session');
+const { createVoiceCommandHandler } = require('./voice-command-handler');
+const { createTextShortcutHandler } = require('./text-shortcut-handler');
+const { registerMinecraftEventHandlers } = require('./minecraft-event-handlers');
+const { formatUptime, formatAfkDuration, formatDelay, getBotState } = require('./response-utils');
 const { applyUnicodeTheme } = require('./unicode');
 const { shouldHandleConversationalMessage, isMinecraftRelayMessage } = require('./message-routing');
 const { parseTextShortcut, normalizeIpChoice } = require('./text-shortcuts');
@@ -35,7 +39,6 @@ const { memberHasAnyRole } = require('./role-access');
 const { createPermissionService } = require('./permissions');
 const { COMMAND_REGISTRY } = require('./command-registry');
 const { validateMinecraftChatMessage } = require('./minecraft-chat');
-const { startStatusServer } = require('./status-server');
 const { createAfkStore } = require('./afk-store');
 const { createShutdownHandler } = require('./shutdown');
 
@@ -297,6 +300,15 @@ async function requireFeatureAccess(interaction, feature) {
 
   return false;
 }
+
+const handleVoiceCommand = createVoiceCommandHandler({
+  requireFeatureAccess,
+  ChannelType,
+  PermissionFlagsBits,
+  MessageFlags,
+  voiceSession,
+  log,
+});
 
 function getDiscordAiSessionId(message) {
   const guildId = message.guild?.id || 'dm';
@@ -659,53 +671,6 @@ await channel.send(
       `Unable to send scheduled action confirmation: ${error.message}`,
     );
   }
-}
-
-function formatUptime(totalSeconds) {
-  if (!totalSeconds) return '0s';
-
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-  return [
-    hours && `${hours}h`,
-    minutes && `${minutes}m`,
-    `${seconds}s`,
-  ].filter(Boolean).join(' ');
-}
-
-function formatAfkDuration(durationMs) {
-  const totalSeconds = Math.max(0, Math.floor(durationMs / 1000));
-  const days = Math.floor(totalSeconds / 86400);
-  const hours = Math.floor((totalSeconds % 86400) / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-
-  const parts = [];
-
-  if (days) parts.push(`${days}d`);
-  if (hours) parts.push(`${hours}h`);
-  if (minutes) parts.push(`${minutes}m`);
-
-  if (seconds || parts.length === 0) {
-    parts.push(`${seconds}s`);
-  }
-
-  return parts.join(' ');
-}
-function formatDelay(delayMs) {
-  const seconds = Math.round(delayMs / 1000);
-  if (seconds % 60 === 0) {
-    const minutes = seconds / 60;
-    return `${minutes} minute${minutes === 1 ? '' : 's'}`;
-  }
-  return `${seconds} seconds`;
-}
-
-function getBotState(status) {
-  if (status.connected) return 'Online';
-  if (status.connecting || status.reconnecting) return 'Reconnecting';
-  return 'Offline';
 }
 
 function createEmbed(title, color) {
@@ -1229,277 +1194,18 @@ function updatePresence() {
   client.user.setPresence(presence);
 }
 
-mc.emitter.on('connected', ({ version }) => {
-  runtimeHealth.lastMinecraftConnectedAt = Date.now();
-  runtimeHealth.lastMinecraftDisconnectReason = null;
-  updatePresence();
-  const status = mc.getStatus();
-  const embed = buildStatusEmbed(status, 'Bot Connected', Colors.Green)
-    .setDescription(`Connected to ${status.server} using Minecraft ${version}.`);
-  void notifyChannel(embed);
+registerMinecraftEventHandlers({
+  mc, runtimeHealth, updatePresence, buildStatusEmbed, createEmbed,
+  Colors, shorten, formatDelay, log, notifyChannel, config,
+  shouldWelcomePlayer,
 });
 
-mc.emitter.on('kicked', reason => {
-  updatePresence();
-  const embed = createEmbed('Bot Kicked', Colors.Orange)
-    .setDescription(`Reason: ${shorten(reason)}`);
-  void notifyChannel(embed);
+const handleTextShortcut = createTextShortcutHandler({
+  SERVER_INFO, pendingIpChoices, setUserAfk, getUserAfk, ai,
+  hasFeatureAccess, log, mc, REJOIN_DELAY_MS, buildRejoinComponents,
+  executeAdministrativeAction, buildStatusEmbed, buildStatusComponents,
+  summary, client, ChannelType,
 });
-
-mc.emitter.on('disconnected', reason => {
-  runtimeHealth.lastMinecraftDisconnectedAt = Date.now();
-  runtimeHealth.lastMinecraftDisconnectReason = String(reason || 'unknown');
-  updatePresence();
-});
-
-mc.emitter.on('reconnecting', ({ attempt, delayMs }) => {
-  updatePresence();
-  const delay = formatDelay(delayMs);
-  log('Bot', `Reconnect attempt ${attempt} is scheduled in ${delay}.`);
-  const embed = createEmbed('Reconnection Scheduled', Colors.Orange)
-    .setDescription(`Attempt ${attempt} will begin in ${delay}.`);
-  void notifyChannel(embed);
-});
-
-mc.emitter.on('stopped', () => {
-  updatePresence();
-  const embed = createEmbed('Bot Stopped', Colors.Red)
-    .setDescription('The AFK session was stopped. Use /start to connect again.');
-  void notifyChannel(embed);
-});
-
-// Minecraft chat relay remains available; in-game AI responses are disabled.
-mc.emitter.on('minecraftPlayerJoined', async ({ username }) => {
-  if (!username || username === config.bot.username) {
-    return;
-  }
-
-  if (!shouldWelcomePlayer(username)) {
-    return;
-  }
-
-  await new Promise(resolve => setTimeout(resolve, 1500));
-  try {
-    mc.chat(`Welcome to The Cottage★, ${username}!`);
-    log('Minecraft', `Sent daily welcome to ${username}.`);
-  } catch (error) {
-    log('Minecraft', `Unable to send daily welcome to ${username}: ${error.message}`);
-  }
-});
-
-mc.emitter.on('minecraftPlayerLeft', async ({ username }) => {
-  if (!username) return;
-
-  const embed = createEmbed('Player Left', Colors.Blurple)
-    .setDescription(`⌂ **${username}** left The Cottage★ SMP.`);
-  void notifyChannel(embed);
-});
-
-
-function getIpPromptKey(message) {
-  return `${message.guild?.id || 'dm'}:${message.channel.id}:${message.author.id}`;
-}
-
-async function handleTextShortcut({ message, shortcut }) {
-  const rawShortcut = String(shortcut || '')
-    .trim()
-    .replace(/\s+/g, ' ');
-  const normalizedQuestion = rawShortcut.toLowerCase();
-
-  if (normalizedQuestion === 'ip') {
-    const prompt = await message.reply(
-      'Java or Bedrock?\nReply to this message with Java or Bedrock.',
-    );
-
-    pendingIpChoices.set(getIpPromptKey(message), {
-      promptMessageId: prompt.id,
-      expiresAt: Date.now() + 180_000,
-    });
-
-    return true;
-  }
-
-  if (normalizedQuestion === 'java') {
-    await message.reply('Java IP: ' + SERVER_INFO.javaAddress);
-    return true;
-  }
-
-  if (normalizedQuestion === 'bedrock') {
-    await message.reply('Bedrock IP: ' + SERVER_INFO.bedrockAddress);
-    return true;
-  }
-
-  if (normalizedQuestion.startsWith('afk')) {
-    const reason = rawShortcut.slice(3).trim() || 'AFK';
-    setUserAfk(message.author.id, reason);
-    const saved = getUserAfk(message.author.id);
-    const safeReason = saved.reason.replace(/([*_~|>])/g, '\\$1');
-    const startedAt = Math.floor(saved.setAt / 1000);
-    await message.reply({
-      content: `✓ You are now AFK. Reason: **${safeReason}** · <t:${startedAt}:F>`,
-      allowedMentions: { parse: [] },
-    });
-    return true;
-  }
-
-  if (normalizedQuestion === 'pl') {
-    await message.reply(ai.getInstantAnswer('plugins') || 'The plugin list is currently unavailable.');
-    return true;
-  }
-
-  if (normalizedQuestion === 'channels') {
-    await message.reply({
-      content:
-        'Here are the main channels around the community:\n' +
-        '- Rules: <#1478166898020585592>\n' +
-        '- Roles: <#1398624929099812937>\n' +
-        '- General chat: <#1398568017708978258>\n' +
-        '- Minecraft status: <#1533895421988962334>\n' +
-        '- Minecraft community: <#1533883039287873566>',
-      allowedMentions: { parse: [] },
-    });
-    return true;
-  }
-
-  const isShortcut =
-    normalizedQuestion === 'start' ||
-    normalizedQuestion === 'stop' ||
-    normalizedQuestion === 'rejoin' ||
-    normalizedQuestion === 'status' ||
-    /^summarize\s+<\#\d+>$/.test(normalizedQuestion);
-
-  if (!isShortcut) {
-    const knownAnswer =
-      ai.getInstantAnswer(`${normalizedQuestion}?`) ||
-      ai.getInstantAnswer(normalizedQuestion);
-
-    if (knownAnswer) {
-      await message.reply(knownAnswer);
-    } else {
-      await message.reply(
-        `I don't recognize the shortcut \`?${normalizedQuestion}\`. Try \`?help\` to see the available shortcuts.`,
-      );
-    }
-
-    return true;
-  }
-
-  if (normalizedQuestion === 'rejoin') {
-    if (!hasFeatureAccess('rejoin', message.author.id, message.member)) {
-      log('Admin', `Rejected ?rejoin from ${message.author.tag} (${message.author.id}).`);
-      await message.reply('Unknown or unavailable command.');
-      return true;
-    }
-
-    try {
-      const result = mc.rejoin(REJOIN_DELAY_MS);
-      if (!result.scheduled) {
-        await message.reply('ⓘ A rejoin is already in progress.');
-        return true;
-      }
-
-      log('Admin', `Verified ?rejoin request from ${message.author.tag} (${message.author.id}).`);
-      await message.reply({
-        content: 'Rejoining... The AFK bot will stay disconnected for 30 seconds before reconnecting.',
-        components: [buildRejoinComponents()],
-        allowedMentions: { parse: [] },
-      });
-    } catch (error) {
-      log('Admin', `Text shortcut rejoin failed: ${error.message}`);
-      await message.reply('✕ Error: the AFK bot could not be scheduled to rejoin.');
-    }
-
-    return true;
-  }
-
-  if (normalizedQuestion === 'start' || normalizedQuestion === 'stop') {
-    const action = normalizedQuestion === 'start' ? 'start' : 'stop';
-
-    if (!hasFeatureAccess(action, message.author.id, message.member)) {
-      await message.reply('✕ You are not authorized to use this command.');
-      return true;
-    }
-
-    try {
-      const result = await executeAdministrativeAction(action);
-
-      await message.reply(
-        action === 'start'
-          ? result === 'already active'
-            ? 'ⓘ The Minecraft AFK bot is already running.'
-            : '✓ Minecraft AFK bot started.'
-          : result === 'already stopped'
-            ? 'ⓘ The Minecraft AFK bot is already stopped.'
-            : '✓ Minecraft AFK bot stopped.',
-      );
-    } catch (error) {
-      log(
-        'Admin',
-        `Text shortcut ${action} failed: ${error.message}`,
-      );
-
-      await message.reply(
-        `✕ Unable to execute **${action}**: ${error.message}`,
-      );
-    }
-
-    return true;
-  }
-
-  if (normalizedQuestion === 'status') {
-    if (!hasFeatureAccess('status', message.author.id, message.member)) {
-      await message.reply('✕ You are not authorized to use this command.');
-      return true;
-    }
-
-    await message.reply({
-      embeds: [buildStatusEmbed()],
-      components: [buildStatusComponents()],
-    });
-
-    return true;
-  }
-
-  const summarizeMatch = normalizedQuestion.match(
-    /^summarize\s+<\#(\d+)>$/,
-  );
-
-  if (summarizeMatch) {
-    let target;
-
-    try {
-      target = await client.channels.fetch(summarizeMatch[1]);
-    } catch (error) {
-      await message.reply(
-        '✕ I could not find that Discord channel.',
-      );
-      return true;
-    }
-
-    if (!target?.isTextBased()) {
-      await message.reply('✕ I can only summarize text-based Discord channels.');
-      return true;
-    }
-
-    if (!(
-      target.type === ChannelType.GuildText ||
-      target.type === ChannelType.GuildAnnouncement
-    )) {
-      await message.reply('✕ I can only summarize text-based Discord channels.');
-      return true;
-    }
-
-    await summary.handleMessageCommand({
-      message,
-      target,
-      ai,
-    });
-
-    return true;
-  }
-
-  return false;
-}
 
 client.on(Events.GuildMemberRemove, member => {
   if (member.guild?.id !== config.discord.guildId) return;
@@ -2238,77 +1944,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
   switch (interaction.commandName) {
     case 'vc': {
-      if (!(await requireFeatureAccess(interaction, 'vc'))) {
-        return;
-      }
-
-      const action = interaction.options.getSubcommand();
-
-      if (action === 'join') {
-        const channel = interaction.member?.voice?.channel;
-
-        if (!channel || channel.type !== ChannelType.GuildVoice) {
-          return interaction.reply({
-            content: 'ⓘ Join a regular voice channel first, then run `/vc join`.',
-            flags: MessageFlags.Ephemeral,
-          });
-        }
-
-        const botMember = interaction.guild.members.me ||
-          await interaction.guild.members.fetchMe();
-        const permissions = channel.permissionsFor(botMember);
-
-        if (
-          !permissions?.has(PermissionFlagsBits.ViewChannel) ||
-          !permissions?.has(PermissionFlagsBits.Connect)
-        ) {
-          return interaction.reply({
-            content: '✕ I need View Channel and Connect permissions in that voice channel.',
-            flags: MessageFlags.Ephemeral,
-          });
-        }
-
-        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
-
-        try {
-          const result = await voiceSession.join(channel);
-          return interaction.editReply({
-            content: result.alreadyConnected
-              ? `ⓘ I am already connected to <#${channel.id}>.`
-              : `✓ Connected to <#${channel.id}>. I will remain there and restore this session after a normal bot restart. My microphone and audio reception are disabled.`,
-          });
-        } catch (error) {
-          log('Voice', `/vc join failed: ${error.message}`);
-          return interaction.editReply({
-            content: `✕ I could not join that voice channel: ${error.message}`,
-          });
-        }
-      }
-
-      if (action === 'leave') {
-        const result = voiceSession.leave();
-        return interaction.reply({
-          content: result.left
-            ? '✓ Persistent voice connection stopped.'
-            : 'ⓘ I do not have an active persistent voice session.',
-          flags: MessageFlags.Ephemeral,
-        });
-      }
-
-      if (action === 'status') {
-        const currentVoice = voiceSession.getStatus();
-        return interaction.reply({
-          content: currentVoice.active
-            ? `◎ Saved voice channel: <#${currentVoice.channelId}>\nConnection state: **${currentVoice.connectionState}**`
-            : 'ⓘ No persistent voice channel is configured.',
-          flags: MessageFlags.Ephemeral,
-        });
-      }
-
-      return interaction.reply({
-        content: '✕ Unknown voice action.',
-        flags: MessageFlags.Ephemeral,
-      });
+      return handleVoiceCommand(interaction);
     }
 
     case 'summarize': {
@@ -2607,11 +2243,9 @@ process.on('unhandledRejection', reason => {
   );
 });
 
-const statusServer = startStatusServer({ mc, log });
 const shutdown = createShutdownHandler({
   client,
   mc,
-  statusServer,
   log,
 });
 
