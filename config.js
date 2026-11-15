@@ -33,20 +33,6 @@ const config = {
   adminUserIds,
   adminRoleIds,
 
-  // Central feature access policy.
-  // Change a feature here instead of editing permission checks throughout the bot.
-  featureAccess: {
-    help: 'public',
-    status: 'admin',
-    start: 'admin',
-    stop: 'admin',
-    forget: 'public',
-    aforeget: 'admin',
-    summarize: 'public',
-    ping: 'admin',
-    vc: 'admin',
-  },
-
   server: {
     ip: 'the-cottage-c1-s6.playwithbao.com',
     port: 34159,
