@@ -56,10 +56,11 @@ test('help text describes opt-in AI and the new prefix shortcuts', () => {
   assert.doesNotMatch(SYSTEM_PROMPT, /A Season 6 world download has not been published/);
   assert.deepEqual(SERVER_INFO.plugins.slice(-2), ['Faster, Better, Happy Ghasts', 'Dynamic Lighting']);
   assert.doesNotMatch(SYSTEM_PROMPT, /The Cottage★ SMP DOES support cracked/i);
-  assert.equal(SERVER_INFO.javaAddress, 'the-cottage-c1-s6.playwithbao.com:34159');
-  assert.equal(SERVER_INFO.bedrockAddress, 'the-cottage-c1-s6.playwithbao.com:32211');
+  assert.match(SERVER_INFO.javaAddress, /designated Discord joining message/);
+  assert.match(SERVER_INFO.bedrockAddress, /designated Discord joining message/);
   assert.equal(SERVER_INFO.bedrockVersion, 'Any (Geyser-supported Bedrock versions)');
-  assert.match(SERVER_INFO.bedrockJoiningInfo, /32211/);
+  assert.match(SERVER_INFO.bedrockJoiningInfo, /designated Discord joining message/);
+  assert.doesNotMatch(SERVER_INFO.bedrockJoiningInfo, /\b\d{4,5}\b/);
   assert.match(SERVER_INFO.bedrockJoiningInfo, /add The Cottage★ as a server manually/i);
   assert.doesNotMatch(SERVER_INFO.bedrockJoiningInfo, /friend request|friends list|Emmcee4483|invite/i);
   assert.doesNotMatch(SYSTEM_PROMPT, /Emmcee4483|friend request|friends list/i);
