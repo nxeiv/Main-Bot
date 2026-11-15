@@ -18,11 +18,23 @@ function parseDiscordIdList(value) {
 const adminUserIds = parseDiscordIdList(process.env.ADMIN_USER_IDS);
 const adminRoleIds = parseDiscordIdList(process.env.ADMIN_ROLE_IDS);
 
+const primaryGuildId = '1398568016915992667';
+const additionalGuildIds = parseDiscordIdList(
+  process.env.DISCORD_ADDITIONAL_GUILD_IDS,
+);
+const configuredGuildIds = [...new Set([
+  primaryGuildId,
+  ...additionalGuildIds,
+])];
+
 const config = {
   discord: {
     token: discordToken,
     clientId: '1501273403615608933',
-    guildId: '1398568016915992667',
+    // Keep the original Cottage guild as the primary server for its relay and
+    // status channels. Additional guilds receive shared commands and AI.
+    guildId: primaryGuildId,
+    guildIds: configuredGuildIds,
     statusChannelId: '1551186617635704832',
     chatChannelId: '1551228249214820483',
     errorChannelId: String(process.env.ERROR_CHANNEL_ID || '').trim(),
