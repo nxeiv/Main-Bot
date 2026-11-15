@@ -2,7 +2,7 @@
 
 The **The Cottage★ Main Bot** is the Discord and Minecraft companion service for **The Cottage★** and its SMP.
 
-It connects the Cottage★ community with Minecraft, provides public and administrative Discord tools, can run an optional Minecraft AFK session, exposes a small read-only status bridge for the website, and provides Discord-only Gemini-powered AI features.
+It connects the Cottage★ community with Minecraft, provides public and administrative Discord tools, can run an optional Minecraft utility session, and provides Discord-only Gemini-powered AI features.
 
 > **The Cottage★ is the home. The SMP is the backyard.**
 
@@ -59,7 +59,7 @@ The goal is the same as the website: **quiet, warm, recognizable, and not overly
 - Discord/community help
 - Minecraft/SMP help
 - feature descriptions and tutorials
-- Minecraft connection and player-count status
+- Minecraft connection status
 - administrative `/start`, `/stop`, `/rejoin`, and unified `/status`
 - `/ping` for a quick Discord latency check
 - `/summarize <channel>` for private channel summaries
@@ -80,14 +80,12 @@ The Minecraft side uses Mineflayer and provides:
 
 - connection and reconnection handling
 - exponential reconnect backoff
-- player detection and count tracking
-- player join/leave detection
+- player detection and join/leave events
 - Minecraft chat relay (no Minecraft-side AI responses)
 - Discord ↔ Minecraft chat relay
 - lightweight anti-AFK activity
 - deterministic daily player welcomes
 - Minecraft status reporting to Discord
-- public website status data
 
 The configured Minecraft account is **Server**.
 
@@ -97,13 +95,12 @@ The configured Minecraft account is **Server**.
 
 | File | Responsibility |
 | --- | --- |
-| `index.js` | Discord client, events, scheduling, permissions, HTTP status API, and Discord/Minecraft orchestration |
+| `index.js` | Discord client, events, scheduling, permissions, and Discord/Minecraft orchestration |
 | `command-registry.js` | Authoritative command metadata, slash-command generation, text shortcuts, categories, access labels, and generated help |
 | `commands.js` | Thin slash-command registry adapter |
 | `message-routing.js` | Pure policy for deciding when conversational AI may respond |
-| `status-server.js` | Read-only health and Minecraft status HTTP endpoints, including CORS policy |
 | `afk-store.js` | Persistent per-user Discord AFK state and validation |
-| `shutdown.js` | Idempotent cleanup of Minecraft, Discord, and HTTP connections |
+| `shutdown.js` | Idempotent cleanup of Minecraft and Discord connections |
 | `minecraft.js` | Mineflayer connection, reconnect logic, player tracking, chat, and anti-AFK behavior |
 | `rejoin-controller.js` | Delayed manual disconnect/reconnect cycle |
 | `rejoin-access.js` | Dedicated user/role allow-list for the rejoin command |
@@ -144,65 +141,9 @@ The command registry is the source of truth for public, admin, owner, and restri
 
 ---
 
-# Public website status bridge
+# Website integration
 
-The Main Bot exposes a small read-only HTTP server for the Cottage★ website.
-
-Current public API base:
-
-`https://the-cottage-bot.wisp.uno/`
-
-## Endpoints
-
-### `GET /health`
-
-Returns basic service health.
-
-Example shape:
-
-```json
-{
-  "ok": true,
-  "service": "The Cottage★ Main Bot",
-  "checkedAt": "..."
-}
-```
-
-### `GET /api/status`
-
-Returns public Minecraft status data.
-
-Example shape:
-
-```json
-{
-  "online": true,
-  "state": "online",
-  "players": 0,
-  "uptime": 12345,
-  "reconnectAttempts": 0,
-  "checkedAt": "..."
-}
-```
-
-Possible states include:
-
-- `online`
-- `connecting`
-- `reconnecting`
-- `offline`
-
-The endpoint is intentionally read-only.
-
-### Privacy boundary
-
-The public API does **not** return the Minecraft hostname or port.
-
-CORS can be controlled with:
-
-`STATUS_ALLOWED_ORIGINS`
-
-The server accepts `PORT` when supplied by the host, otherwise `STATUS_PORT`, falling back to port `3000`.
+The website does not depend on a live API hosted by the Minecraft utility bot. The SMP card is informational and does not display a live player count. This removes the former WispByte-hosted status bridge and its external polling dependency.
 
 ---
 
@@ -382,19 +323,13 @@ MC_LOGIN_PASSWORD=
 
 ERROR_CHANNEL_ID=
 
-STATUS_PORT=3000
-STATUS_ALLOWED_ORIGINS=https://the-cottage.onrender.com
 ```
-
-The exact hosting platform may provide `PORT` automatically. When it does, the bot uses that value for the status server.
 
 Never commit real credentials or privileged access IDs. The actual `ADMIN_USER_IDS` and `ADMIN_ROLE_IDS` values belong only in the deployment environment or an ignored local `.env` file.
 
 `MC_LOGIN_PASSWORD` is the password for Main-Bot's already-registered SparkLogin account named `Server`. It is separate from `MC_PASSWORD`, which is the optional Minecraft account-authentication setting. Set `MC_LOGIN_PASSWORD` only in the hosting provider's private environment settings; never put the real value in GitHub or share it in chat. Main-Bot responds to SparkLogin's existing-account pre-join login dialog once per connection. It deliberately stops rather than auto-registering or repeatedly submitting a rejected password.
 
 The bot fails closed during configuration if neither admin list is configured, or if the supplied IDs are malformed. Set at least one valid user ID or role ID in your hosting panel before deploying this branch.
-
-The status API is intentionally public and read-only. It exposes only the online state, player count, uptime, reconnection attempts, and timestamp; it does not return the server hostname or port. CORS defaults to the Cottage website origin, but CORS is a browser policy, not authentication.
 
 ---
 
@@ -433,7 +368,7 @@ Equivalent:
 node index.js
 ```
 
-Startup establishes the Discord connection, reconciles slash commands, loads persistent state, starts the status bridge, and restores an explicitly saved voice session. The Minecraft AFK client remains stopped after a process restart until an authorized `/start` or `?start` command is used.
+Startup establishes the Discord connection, reconciles slash commands, loads persistent state, and restores an explicitly saved voice session. The Minecraft AFK client remains stopped after a process restart until an authorized `/start` or `?start` command is used.
 
 ---
 
@@ -514,5 +449,5 @@ A practical manual test order is:
 12. Test `/rejoin` separately: confirm the immediate disconnect, 30-second reconnect delay, Retry button behavior, and rejection of unauthorized users.
 13. Verify DiscordSRV relay messages and replies remain excluded from conversational AI.
 14. Verify ordinary direct mentions and replies to Main Bot messages still work in normal conversation channels.
-15. Verify the website can reach `/api/status`.
+15. Confirm the website SMP card does not request or display live player counts.
 16. Review logs for Discord, Minecraft, Gemini, network, and permission errors.
