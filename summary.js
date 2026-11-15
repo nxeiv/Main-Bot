@@ -1,5 +1,7 @@
 'use strict';
 
+const { replyMentioningAuthor } = require('./message-replies');
+
 const {
   ChannelType,
   EmbedBuilder,
@@ -222,7 +224,7 @@ async function handleMessageCommand({ message, target, ai }) {
       })
       .setTimestamp();
 
-    const reply = await message.reply({
+    const reply = await replyMentioningAuthor(message, {
       embeds: [embed],
       allowedMentions: { parse: [] },
     });
@@ -245,7 +247,7 @@ async function handleMessageCommand({ message, target, ai }) {
       error?.message || error,
     );
 
-    return message.reply({
+    return replyMentioningAuthor(message, {
       content:
         error?.message ||
         'I could not summarize that channel right now. Please try again in a moment.',
