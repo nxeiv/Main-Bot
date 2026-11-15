@@ -61,7 +61,7 @@ Use this after deployment. Mark each item **PASS**, **FAIL**, or **NOT TESTED**.
 - [ ] Website source contains no WispByte API URL, `/api/status`, polling, or player-count renderer.
 - [ ] Main Bot no longer starts an HTTP status server.
 - [ ] No `STATUS_PORT` or `STATUS_ALLOWED_ORIGINS` setting is needed.
-- [ ] Discord-only `/status` still works.
+- [ ] Discord-only `/status` still works and does not display a player count.
 
 ## Final cleanup
 - [ ] README, audit, and `.env.example` match the code.
