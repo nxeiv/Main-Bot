@@ -671,6 +671,24 @@ await channel.send(
   }
 }
 
+function createEmbed(title, color) {
+  return new EmbedBuilder()
+    .setTitle(title)
+    .setColor(color)
+    .setFooter({ text: 'By Makkrabb' })
+    .setTimestamp();
+}
+
+function forgetUserConversation(userId) {
+  ai.resetUserConversation(userId);
+  return '⌫ Your AI conversation context has been forgotten. You can start fresh now.';
+}
+
+function forgetAllConversations() {
+  ai.resetConversation();
+  return '⌫ All AI conversation contexts have been forgotten.';
+}
+
 function buildStatusEmbed() {
   const mcStatus = mc.getStatus();
   const aiStatus = ai.getAiDiagnostics();
