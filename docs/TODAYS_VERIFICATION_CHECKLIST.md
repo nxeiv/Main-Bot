@@ -1,62 +1,62 @@
-# Main Bot + Cottage Website — Today's verification checklist
+# Main Bot 2.0 — today's manual verification checklist
 
-Use this after the next deployment when electricity and hosting access are available. Mark each item **PASS**, **FAIL**, or **NOT TESTED**. Do not treat a passing CI run as proof of live Discord/Minecraft behavior.
+Use this after deployment. Mark each item **PASS**, **FAIL**, or **NOT TESTED**. CI does not replace live testing.
 
-## Repository and deployment
-- [ ] Latest intended PR changes are present on `main`.
-- [ ] GitHub Actions validation is green on the final merge commit.
-- [ ] Host installs dependencies with `npm ci` and starts `node index.js`.
-- [ ] Only one Main Bot process is running.
-- [ ] No credentials, private IDs, or runtime-state files were committed.
+## Build and startup
+- [ ] PR changes are merged to `main` in dependency order.
+- [ ] GitHub Actions is green on the final merge commit.
+- [ ] Host runs Node.js 26+ and installs with `npm ci`.
+- [ ] Bot starts once, logs into Discord, and reconciles slash commands.
+- [ ] No secrets or runtime JSON files are committed.
 
-## Discord startup and commands
-- [ ] Bot logs in and slash commands reconcile successfully.
-- [ ] `/help` shows the expected commands and correct access labels.
-- [ ] Public commands work for an ordinary member.
-- [ ] Admin-only commands reject an ordinary member without leaking diagnostics.
-- [ ] `?help`, `?ip`, `?java`, `?bedrock`, `?pl`, `?world download`, `?invite`, `?roles`, `?channels`, and `?rules` work.
-- [ ] Ordinary text such as `???`, `?hello`, and messages containing question marks are not mistaken for commands.
-- [ ] `?start`, `?stop`, and `?rejoin` enforce the intended permissions.
+## Discord commands and permissions
+- [ ] `/help` lists the intended commands.
+- [ ] Public commands work for ordinary members.
+- [ ] Admin commands reject non-admin users.
 - [ ] `/ping` access matches the intended policy.
+- [ ] `???`, `?hello`, and other normal text are not treated as shortcuts.
+- [ ] `?ip`, `?java`, `?bedrock`, `?pl`, `?world download`, `?help`, `?invite`, `?roles`, `?channels`, and `?rules` work.
+- [ ] `?start`, `?stop`, and `?rejoin` enforce the right access rules.
 
-## AFK and Minecraft utility
-- [ ] Discord `/afk [reason]` stores the reason and timestamp.
-- [ ] Mentioning an AFK member shows the reason/time and respects the notification cooldown.
-- [ ] The member's next message clears AFK and posts the return notice.
-- [ ] The Minecraft utility client remains stopped after a fresh Main Bot process restart.
-- [ ] Authorized `/start` starts the utility client; `/stop` stops it.
-- [ ] Unexpected disconnects reconnect only after the client has been manually started.
-- [ ] Java/Bedrock address guidance and plugin/world information are correct.
-- [ ] Discord ↔ Minecraft chat relay works without triggering Discord AI on relayed messages.
-- [ ] Minecraft join/leave events and player counts are correct inside Discord diagnostics only.
+## Discord AFK
+- [ ] `/afk [reason]` persists the reason and timestamp.
+- [ ] AFK mentions show reason/time and respect cooldowns.
+- [ ] The next user message clears AFK and posts a return notice.
+- [ ] Departing members' AFK records are cleared.
+
+## Minecraft utility and relay
+- [ ] Minecraft client stays stopped after a fresh Main Bot restart.
+- [ ] Authorized `/start` starts it and `/stop` stops it.
+- [ ] Transient disconnects reconnect only after manual startup.
+- [ ] Java/Bedrock, plugin, and world-download information is current.
+- [ ] Discord ↔ Minecraft relay works.
+- [ ] Relayed messages do not trigger Discord AI.
 
 ## AI and summaries
-- [ ] AI responds only to direct mentions and supported replies in allowed channels.
-- [ ] AI context is isolated by user and channel as intended.
-- [ ] Rate limits, queue behavior, and Gemini key failover behave correctly.
-- [ ] Gemini failures produce a safe fallback and useful private logs.
-- [ ] `/forget` clears only the requesting user's context.
-- [ ] `/aforget` is restricted to administrators.
-- [ ] `/summarize` respects channel access and returns a private summary.
+- [ ] AI only responds to supported direct mentions/replies.
+- [ ] Per-user/channel context isolation works.
+- [ ] Rate limits, queue, Gemini failover, and failure fallback work.
+- [ ] `/forget` clears only the requester's context.
+- [ ] `/aforget` is admin-only.
+- [ ] `/summarize` respects access and returns a private summary.
 
 ## Voice
-- [ ] `/vc join` joins the invoking admin's regular voice channel.
-- [ ] Bot self-mute and self-deafen remain enabled.
+- [ ] `/vc join` joins the admin's regular voice channel.
+- [ ] Self-mute and self-deafen remain enabled.
 - [ ] `/vc status` reports the saved channel and connection state.
-- [ ] `/vc leave` disconnects and clears the saved session.
-- [ ] A normal process restart restores a saved voice session.
-- [ ] Missing channel permissions and deleted channels fail gracefully.
+- [ ] `/vc leave` disconnects and clears saved state.
+- [ ] Saved voice session restores after normal restart.
+- [ ] Missing permissions/deleted channels fail gracefully.
 
-## Website / SMP card
-- [ ] SMP card has no live player-count display.
-- [ ] Website no longer requests `the-cottage-bot.wisp.uno`, `/api/status`, or the former WispByte status endpoint.
-- [ ] No WispByte status polling, API helper, environment variable, or status widget remains in the website.
-- [ ] SMP card still shows the static server information and season/chapter content correctly.
-- [ ] No unrelated website, Discord invite, or community content was removed.
+## Website and retired status API
+- [ ] Homepage and SMP page have no live status/player-count panel.
+- [ ] Website source contains no WispByte API URL, `/api/status`, polling, or player-count renderer.
+- [ ] Main Bot no longer starts an HTTP status server.
+- [ ] No `STATUS_PORT` or `STATUS_ALLOWED_ORIGINS` setting is needed.
+- [ ] Discord-only `/status` still works.
 
-## Cleanup and final review
-- [ ] README, environment template, and architecture docs match the actual implementation.
-- [ ] No stale references to the removed website status bridge remain.
-- [ ] `npm test` passes on the deployed code.
-- [ ] Review startup/runtime logs for Discord, Minecraft, Gemini, voice, and permission errors.
-- [ ] Record every FAIL with the exact command, expected result, actual result, and relevant redacted log excerpt.
+## Final cleanup
+- [ ] README, audit, and `.env.example` match the code.
+- [ ] No stale WispByte website-status references remain.
+- [ ] Full `npm test` passes.
+- [ ] Review logs and record every failed test with expected vs actual behavior and redacted logs.
