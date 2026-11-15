@@ -101,6 +101,7 @@ The configured Minecraft account is **Server**.
 | `message-routing.js` | Pure policy for deciding when conversational AI may respond |
 | `minecraft-event-handlers.js` | Minecraft connection, reconnect, player join/leave event wiring |
 | `discord-interaction-handlers.js` | Slash-command and button interaction routing with injected dependencies |
+| `voice-command-handler.js` | `/vc` join, leave, and status command execution |
 | `general-command-handler.js` | General/community slash-command behavior |
 | `admin-command-handler.js` | Restricted administration slash-command behavior |
 | `text-shortcut-handler.js` | Dependency-injected execution for registered text shortcuts |
