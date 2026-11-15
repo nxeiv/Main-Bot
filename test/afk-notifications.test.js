@@ -19,7 +19,7 @@ test('AFK mention notifications are throttled per user and channel', () => {
   assert.equal(cooldown.shouldNotify('user-a', 'channel-a'), true);
 });
 
-test('clearing a user's AFK state also clears their notification cooldowns', () => {
+test("clearing a user AFK state also clears their notification cooldowns", () => {
   const cooldown = createAfkNotificationCooldown({ now: () => 10_000 });
 
   assert.equal(cooldown.shouldNotify('user-a', 'channel-a'), true);
