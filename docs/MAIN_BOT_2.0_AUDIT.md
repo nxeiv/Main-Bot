@@ -26,6 +26,8 @@ This is a source-level audit. It does not replace a live staging deployment, a c
 | Text shortcut execution | `text-shortcut-handler.js` | KEEP. Execution is dependency-injected and separated from the Discord message event listener. |
 | Minecraft event wiring | `minecraft-event-handlers.js` | KEEP. Minecraft connection and player lifecycle events are registered outside the runtime entry point. |
 | Discord interactions | `discord-interaction-handlers.js` | KEEP. Slash-command and button interaction routing is separated from index.js; retain command-level access tests. |
+| General/community commands | `general-command-handler.js` | KEEP. Summaries, personal context reset, help, and Discord AFK behavior are separated from routing. |
+| Administration commands | `admin-command-handler.js` | KEEP. Restricted ping, AFK reset, Minecraft start/stop/rejoin, and diagnostics are isolated behind existing access checks. |
 | Response utilities | `response-utils.js` | KEEP. Pure formatting helpers are extracted and unit tested. |
 | Summaries | `summary.js` | KEEP. It is already separated from the main entry point and uses temporary private responses. |
 | Response utilities | `response-utils.js` | KEEP. Pure formatting helpers extracted from the runtime entry point and covered by unit tests. |
