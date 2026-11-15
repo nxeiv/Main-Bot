@@ -53,6 +53,7 @@ test('shortcut parsing is case-insensitive and normalizes internal whitespace', 
   assert.equal(parseTextShortcut('?Summarize <#123456789012345678>'), 'summarize <#123456789012345678>');
   assert.equal(parseTextShortcut('?afk'), 'afk');
   assert.equal(parseTextShortcut('?afk taking a break'), 'afk taking a break');
+  assert.equal(parseTextShortcut('?afk Taking A Break'), 'afk Taking A Break');
 });
 
 test('ordinary question-mark messages are ignored instead of becoming shortcuts', () => {
