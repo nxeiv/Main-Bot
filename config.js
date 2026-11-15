@@ -76,6 +76,13 @@ if (config.adminUserIds.length === 0 && config.adminRoleIds.length === 0) {
   missing.push('at least one of ADMIN_USER_IDS or ADMIN_ROLE_IDS');
 }
 
+const invalidGuildIds = config.discord.guildIds
+  .filter(id => !/^\\d{17,20}$/.test(id));
+
+if (invalidGuildIds.length > 0) {
+  missing.push('valid Discord snowflake IDs in DISCORD_ADDITIONAL_GUILD_IDS');
+}
+
 const invalidAdminIds = [...config.adminUserIds, ...config.adminRoleIds]
   .filter(id => !/^\d{17,20}$/.test(id));
 
