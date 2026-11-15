@@ -13,10 +13,10 @@ This is a source-level audit. It does not replace a live staging deployment, a c
 | Area | Current files | Assessment |
 |---|---|---|
 | Runtime and Discord events | `index.js` | KEEP, then split. The entry point is about 2,600 lines and currently owns event routing, command execution, scheduled actions, status embeds, AFK handling, and AI orchestration. |
-| Slash commands | `commands.js` | KEEP, IMPROVE. Definitions are separate from execution and manually maintained help content. |
+| Command registry | `command-registry.js`, `commands.js`, `text-shortcuts.js`, `ai-knowledge.js` | KEEP, IMPROVE. Slash definitions, shortcut names, access metadata, categories, and help output now derive from one registry. Runtime execution handlers still live in `index.js` and need extraction. |
 | Text shortcuts | `text-shortcuts.js` | KEEP. Parsing is intentionally strict and ignores unknown question-mark messages. Move metadata into the shared command registry. |
 | Configuration | `config.js`, `.env.example` | KEEP, IMPROVE. Core secrets and admin IDs are environment-driven; service IDs and some feature values remain embedded in configuration/source. |
-| Permissions | `role-access.js`, `rejoin-access.js` | KEEP, IMPROVE. Admin-role checking is reusable, but rejoin allow-list values are hard-coded separately and authorization paths are not yet fully centralized. |
+| Permissions | `permissions.js`, `role-access.js`, `rejoin-access.js` | KEEP, IMPROVE. Feature access now comes from registry metadata and one permission service; the restricted rejoin allow-list remains a dedicated policy helper. |
 | Discord AFK | `afk-store.js`, `afk-notifications.js` | KEEP. State persists across restarts. Repeated mention notifications are now throttled per channel/user; departing members' AFK entries are cleared. |
 | Discord AI | `ai.js`, `ai-knowledge.js` | KEEP, IMPROVE. It already has a bounded request queue, per-user cooldowns, key failover, and bounded message context. Session expiry, stronger cancellation/timeouts, and clearer separation from Discord events remain desirable. |
 | Minecraft connection | `minecraft.js`, `spark-login.js` | KEEP, IMPROVE. The client remains opt-in after process restarts and reconnects after transient failures once manually started. |
@@ -40,8 +40,8 @@ This is a source-level audit. It does not replace a live staging deployment, a c
 - Central configuration, reusable permission helpers, graceful shutdown, and existing regression tests.
 
 ### IMPROVE
-- Replace the oversized `index.js` with focused Discord event, interaction, text-command, scheduled-action, and status modules.
-- Introduce one command registry for slash command metadata, text shortcuts, categories, permissions, and generated help.
+- Continue extracting the oversized `index.js` into focused Discord event, interaction, text-command, scheduled-action, and status modules. (The first architecture increment now provides a shared command registry and permission service.)
+- Expand the command registry to drive runtime dispatch as well as slash metadata, text shortcuts, categories, permissions, and generated help.
 - Route all privileged operations through one permission policy, including rejoin and scheduled actions.
 - Add expiry/cleanup for inactive AI sessions, request timeouts/cancellation, and robust queue shutdown.
 - Add voice connection state monitoring and tests for reconnect, deleted channels, and missing permissions.
