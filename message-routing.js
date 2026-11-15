@@ -12,7 +12,7 @@ function isMinecraftRelayMessage(message) {
   const isBotAuthored = Boolean(message.author?.bot);
   const content = String(message.content || '');
   const hasMinecraftRelayFormat =
-    /^\\s*[A-Za-z0-9_]{1,16}\\s*»\\s*/u.test(content);
+    /^\s*[A-Za-z0-9_]{1,16}\s*»\s*/u.test(content);
 
   return isBotAuthored && hasMinecraftRelayFormat;
 }
