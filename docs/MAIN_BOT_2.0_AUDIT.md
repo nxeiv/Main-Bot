@@ -4,7 +4,7 @@ _Last reviewed: 15 November 2026_
 
 ## Audit scope
 
-Reviewed the repository tree, runtime entry point, configuration, command definitions, text shortcut parser, permission helpers, Discord AFK storage, AI service, Minecraft connection and relay modules, voice-session manager, status bridge, shutdown handling, tests, dependency manifest, privacy notice, security policy, and CI workflow.
+Reviewed the repository tree, runtime entry point, configuration, command definitions, text shortcut parser, permission helpers, Discord AFK storage, AI service, Minecraft connection and relay modules, voice-session manager, shutdown handling, tests, dependency manifest, privacy notice, security policy, and CI workflow.
 
 This is a source-level audit. It does not replace a live staging deployment, a complete runtime exercise against Discord/Gemini/Minecraft, or a host-specific security review.
 
@@ -47,7 +47,7 @@ This is a source-level audit. It does not replace a live staging deployment, a c
 - Add voice connection state monitoring and tests for reconnect, deleted channels, and missing permissions.
 - Standardize structured logs, redact secrets/tokens, and keep private message contents out of routine diagnostics.
 - Add member-removal AFK cleanup and notification cooldowns (implemented in this branch).
-- Improve status reporting to distinguish configured/connected/healthy/degraded rather than treating configuration as operational health.
+- Keep the Discord-only `/status` diagnostic accurate; there is no longer a public website status API.
 - Add integration tests for Discord event routing, command permissions, and external service failures.
 - Keep dependency versions and lockfile synchronized in every change.
 
