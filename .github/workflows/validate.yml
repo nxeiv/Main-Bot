@@ -25,9 +25,7 @@ jobs:
       - name: Validate every tracked JavaScript source and test file
         run: |
           find . -path './node_modules' -prune -o -name '*.js' -type f -print0 | xargs -0 -n1 node --check
-      - name: Refresh lockfile for the updated dependency manifest
-        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
-      - name: Install dependencies
+      - name: Install dependencies from the committed lockfile
         run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Audit production dependencies
         run: npm audit --omit=dev --audit-level=high
