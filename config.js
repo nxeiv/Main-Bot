@@ -77,7 +77,7 @@ if (config.adminUserIds.length === 0 && config.adminRoleIds.length === 0) {
 }
 
 const invalidGuildIds = config.discord.guildIds
-  .filter(id => !/^\\d{17,20}$/.test(id));
+  .filter(id => !/^[0-9]{17,20}$/.test(id));
 
 if (invalidGuildIds.length > 0) {
   missing.push('valid Discord snowflake IDs in DISCORD_ADDITIONAL_GUILD_IDS');
