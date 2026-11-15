@@ -39,7 +39,7 @@ The bot uses a consistent **Unicode-first visual theme** across user-facing resp
 
 - Pictographic emoji are avoided where a suitable text/Unicode symbol exists.
 - Common interface states use symbols such as `✓`, `✕`, `ⓘ`, `⚠︎`, `⚒︎`, `⌂`, `⌫`, `◎`, and `⌁`.
-- AI-generated Discord and Minecraft responses pass through the same Unicode theme layer.
+- Discord AI responses pass through the shared Unicode theme layer. Minecraft chat relay messages are handled separately and do not invoke Gemini.
 - Discord mentions, channel references, URLs, commands, and the **Cottage★** name are preserved.
 - Remaining default emoji-presentation characters are normalized so AI output does not unexpectedly switch back to pictographic emoji.
 
