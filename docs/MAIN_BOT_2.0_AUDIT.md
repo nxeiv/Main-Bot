@@ -12,11 +12,11 @@ This is a source-level audit. It does not replace a live staging deployment, a c
 
 | Area | Current files | Assessment |
 |---|---|---|
-| Runtime and Discord events | `index.js` | KEEP, then split. The entry point is about 2,600 lines and currently owns event routing, command execution, scheduled actions, status embeds, AFK handling, and AI orchestration. |
-| Slash commands | `commands.js` | KEEP, IMPROVE. Definitions are separate from execution and manually maintained help content. |
-| Text shortcuts | `text-shortcuts.js` | KEEP. Parsing is intentionally strict and ignores unknown question-mark messages. Move metadata into the shared command registry. |
+| Runtime and Discord events | `index.js` | KEEP, then split. The entry point is about 2,645 lines and still owns event routing, command execution, scheduled actions, status embeds, AFK handling, and AI orchestration. |
+| Slash commands and metadata | `command-registry.js`, `commands.js` | KEEP, IMPROVE. The registry now owns slash-command metadata, text-shortcut names, categories, access labels, and generated help. `commands.js` is a compatibility facade that builds the Discord API schema. Runtime execution handlers are still separate in `index.js`, so the registry is not yet the complete execution router. |
+| Text shortcuts | `text-shortcuts.js`, `command-registry.js` | KEEP. Parsing is intentionally strict and ignores unknown question-mark messages. Supported shortcut names now come from the shared registry; argument parsing and runtime dispatch remain separate. |
 | Configuration | `config.js`, `.env.example` | KEEP, IMPROVE. Core secrets and admin IDs are environment-driven; service IDs and some feature values remain embedded in configuration/source. |
-| Permissions | `role-access.js`, `rejoin-access.js` | KEEP, IMPROVE. Admin-role checking is reusable, but rejoin allow-list values are hard-coded separately and authorization paths are not yet fully centralized. |
+| Permissions | `config.js`, `role-access.js`, `rejoin-access.js`, `index.js` | KEEP, IMPROVE. Feature access levels and role checks are reusable, but some privileged paths and the dedicated rejoin policy still need one auditable authorization service. |
 | Discord AFK | `afk-store.js`, `afk-notifications.js` | KEEP. State persists across restarts. Repeated mention notifications are now throttled per channel/user; departing members' AFK entries are cleared. |
 | Discord AI | `ai.js`, `ai-knowledge.js` | KEEP, IMPROVE. It already has a bounded request queue, per-user cooldowns, key failover, and bounded message context. Session expiry, stronger cancellation/timeouts, and clearer separation from Discord events remain desirable. |
 | Minecraft connection | `minecraft.js`, `spark-login.js` | KEEP, IMPROVE. The client remains opt-in after process restarts and reconnects after transient failures once manually started. |
@@ -41,7 +41,7 @@ This is a source-level audit. It does not replace a live staging deployment, a c
 
 ### IMPROVE
 - Replace the oversized `index.js` with focused Discord event, interaction, text-command, scheduled-action, and status modules.
-- Introduce one command registry for slash command metadata, text shortcuts, categories, permissions, and generated help.
+- Complete the command registry by routing execution handlers and permission policy through its metadata; slash definitions, shortcut names, categories, access labels, and generated help already use `command-registry.js`.
 - Route all privileged operations through one permission policy, including rejoin and scheduled actions.
 - Add expiry/cleanup for inactive AI sessions, request timeouts/cancellation, and robust queue shutdown.
 - Add voice connection state monitoring and tests for reconnect, deleted channels, and missing permissions.
@@ -53,26 +53,26 @@ This is a source-level audit. It does not replace a live staging deployment, a c
 
 ### REMOVE
 - Minecraft-side Gemini/chatbot behavior (already removed from the Discord-first cleanup).
-- Unused `mineflayer-pathfinder` dependency (removed from the manifest in this branch; ensure the committed lockfile is regenerated before deployment).
+- Unused `mineflayer-pathfinder` dependency (removed from both `package.json` and the committed lockfile).
 - Duplicate dashboard and AI-status commands in favor of unified `/status`.
 - Redundant Java/Bedrock address shortcut aliases and the old `?plugins` alias in favor of `?pl`.
 
 ## Important findings and risks
 
 1. **Large runtime entry point:** `index.js` still combines too many concerns. This is the main maintainability risk and should be addressed incrementally with tests around each extracted boundary.
-2. **Command metadata duplication:** slash definitions, runtime switch cases, text shortcut parsing, and help content are still separate sources of truth. The command registry should become the authoritative metadata source.
+2. **Command execution remains distributed:** `command-registry.js` is now the source of truth for command metadata and generated help, but dispatch logic and authorization still live in the large `index.js`. The next step is to bind registry entries to focused handlers and a shared permission policy without changing command behavior.
 3. **Permission drift risk:** reusable helpers exist, but not every privileged path is expressed through one policy. Scheduled actions must retain the authorization decision of the original requester and never become user-triggerable through an untrusted persisted file.
 4. **AI session lifecycle:** sessions are in-memory and keyed by caller context. They need explicit idle expiry and bounded total session storage in addition to bounded request history.
 5. **Operational health semantics:** the status view should report actual recent service checks and stale data, not only whether credentials are configured.
 6. **Voice restore constraints:** persistence restores the configured channel after normal process restart, but hosting uptime, Discord availability, and channel permissions remain external requirements.
-7. **Dependency/lockfile consistency:** dependency manifest and lockfile must be updated together. The validation workflow currently refreshes the lockfile in CI before installation; that should not be used as a substitute for committing the updated lockfile.
+7. **Dependency/lockfile consistency:** dependency manifest and lockfile must be updated together. CI should install from the committed lockfile with `npm ci` and must not silently refresh the lockfile during validation.
 8. **Sensitive diagnostics:** error stacks and raw error messages can contain request details. Review log/report paths and redact secrets before forwarding errors to Discord.
 9. **Hard-coded operational identifiers:** service/channel IDs and the restricted rejoin allow-list should be reviewed and centralized as validated configuration values.
 10. **Live compatibility:** the Minecraft client protocol is intentionally separate from the SMP server version. Do not change protocol versions based only on the server's advertised version.
 
 ## Recommended implementation order
 
-1. **Architecture foundation:** shared command registry, permission policy, response helpers, and event-module boundaries. Keep behavior unchanged.
+1. **Architecture foundation:** command metadata registry is in place. Next extract execution handlers, shared permission policy, response helpers, and event-module boundaries. Keep behavior unchanged.
 2. **Reliability:** AFK cooldown/member cleanup, AI session expiry/timeouts, voice restore/reconnect diagnostics, and scheduler safety.
 3. **Security and operations:** secret redaction, validated configuration, least-privilege status endpoints, dependency audit, and structured logs.
 4. **Verification:** unit/integration tests, staging smoke tests, then production deployment with rollback instructions.
