@@ -1314,10 +1314,10 @@ function getIpPromptKey(message) {
 }
 
 async function handleTextShortcut({ message, shortcut }) {
-  const normalizedQuestion = String(shortcut || '')
+  const rawShortcut = String(shortcut || '')
     .trim()
-    .toLowerCase()
     .replace(/\s+/g, ' ');
+  const normalizedQuestion = rawShortcut.toLowerCase();
 
   if (normalizedQuestion === 'ip') {
     const prompt = await message.reply(
@@ -1343,7 +1343,7 @@ async function handleTextShortcut({ message, shortcut }) {
   }
 
   if (normalizedQuestion.startsWith('afk')) {
-    const reason = normalizedQuestion.slice(3).trim() || 'AFK';
+    const reason = rawShortcut.slice(3).trim() || 'AFK';
     setUserAfk(message.author.id, reason);
     const saved = getUserAfk(message.author.id);
     const safeReason = saved.reason.replace(/([*_~|>])/g, '\\$1');
