@@ -98,7 +98,7 @@ The configured Minecraft account is **Server**.
 | File | Responsibility |
 | --- | --- |
 | `index.js` | Discord client, events, scheduling, permissions, HTTP status API, and Discord/Minecraft orchestration |
-| `commands.js` | Slash-command definitions and Discord command schema |
+| `command-registry.js` | Authoritative command metadata, slash-command generation, text shortcuts, categories, access labels, and generated help |\n| `commands.js` | Thin slash-command registry adapter |
 | `message-routing.js` | Pure policy for deciding when conversational AI may respond |
 | `status-server.js` | Read-only health and Minecraft status HTTP endpoints, including CORS policy |
 | `afk-store.js` | Persistent per-user Discord AFK state and validation |
@@ -110,7 +110,7 @@ The configured Minecraft account is **Server**.
 | `ai-knowledge.js` | Confirmed server facts, feature guides, aliases, help text, and AI system prompt |
 | `summary.js` | Channel-summary generation and dismiss-button behavior |
 | `unicode.js` | Shared Unicode-first presentation/theme layer |
-| `config.js` | Discord, Minecraft, access policy, reconnect, and server configuration |
+| `permissions.js` | Central command access policy driven by command registry metadata |\n| `config.js` | Discord, Minecraft, reconnect, and server configuration |
 | `.env.example` | Environment variable template |
 | `package.json` | Dependencies, scripts, and Node.js requirement |
 
@@ -120,7 +120,7 @@ Runtime state is deliberately kept outside source code.
 
 # Access model
 
-Feature access is centralized in `config.js`.
+Command access levels are declared once in `command-registry.js` and enforced by `permissions.js`.
 
 Current access levels include:
 
@@ -431,7 +431,7 @@ Equivalent:
 node index.js
 ```
 
-Startup should establish the Discord connection, reconcile slash commands, load persistent state, start the status bridge, and begin the configured Minecraft session.
+Startup establishes the Discord connection, reconciles slash commands, loads persistent state, starts the status bridge, and restores an explicitly saved voice session. The Minecraft AFK client remains stopped after a process restart until an authorized `/start` or `?start` command is used.
 
 ---
 
