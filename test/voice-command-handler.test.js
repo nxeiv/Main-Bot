@@ -9,17 +9,27 @@ const MessageFlags = { Ephemeral: 64 };
 const ChannelType = { GuildVoice: 2 };
 const PermissionFlagsBits = { ViewChannel: 1, Connect: 2 };
 
-function makeHarness({ action = 'status', authorized = true, channel = null, permissions = [1, 2], joinResult = { alreadyConnected: false }, voiceStatus = { active: false }, leaveResult = { left: true } } = {}) {
+function makeHarness({
+  action = 'status',
+  authorized = true,
+  channel = null,
+  joinResult = { alreadyConnected: false },
+  voiceStatus = { active: false },
+  leaveResult = { left: true },
+  guildId = 'guild-test',
+} = {}) {
   const calls = [];
   const voiceSession = {
     join: async value => { calls.push(['join', value.id]); return joinResult; },
-    leave: () => { calls.push(['leave']); return leaveResult; },
-    getStatus: () => voiceStatus,
+    leave: async id => { calls.push(['leave', id]); return leaveResult; },
+    getStatus: id => { calls.push(['status', id]); return voiceStatus; },
   };
   const interaction = {
+    guildId,
     options: { getSubcommand: () => action },
     member: { voice: { channel } },
     guild: {
+      id: guildId,
       members: {
         me: { id: 'bot' },
         fetchMe: async () => ({ id: 'bot' }),
@@ -78,18 +88,21 @@ test('vc join connects after permission checks and confirms the audio restrictio
   assert.match(calls[2][1].content, /microphone and audio reception are disabled/);
 });
 
-test('vc leave and status use the voice session manager', async () => {
-  const leave = makeHarness({ action: 'leave' });
+test('vc leave and status are scoped to the invoking guild', async () => {
+  const leave = makeHarness({ action: 'leave', guildId: 'guild-two' });
   await leave.handler(leave.interaction);
   const leaveReply = leave.calls.find(call => call[0] === 'reply');
-  assert.match(leaveReply[1].content, /connection stopped/);
+  assert.match(leaveReply[1].content, /connection stopped in this server/);
+  assert.deepEqual(leave.calls.find(call => call[0] === 'leave'), ['leave', 'guild-two']);
 
   const status = makeHarness({
     action: 'status',
+    guildId: 'guild-three',
     voiceStatus: { active: true, channelId: 'voice-2', connectionState: 'ready' },
   });
   await status.handler(status.interaction);
   const statusReply = status.calls.find(call => call[0] === 'reply');
   assert.match(statusReply[1].content, /voice-2/);
   assert.match(statusReply[1].content, /ready/);
+  assert.deepEqual(status.calls.find(call => call[0] === 'status'), ['status', 'guild-three']);
 });
