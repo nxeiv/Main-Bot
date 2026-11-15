@@ -1,6 +1,7 @@
 'use strict';
 
 const VOICE_SESSION_GROUP = 'cottage-main-24-7';
+const SESSION_FILE_VERSION = 2;
 
 function createVoiceSessionManager({
   client,
@@ -13,52 +14,115 @@ function createVoiceSessionManager({
     throw new TypeError('Voice session manager requires client, voice, fs, and filePath.');
   }
 
-  let connection = null;
-  let target = null;
-  let joining = null;
+  // Discord permits one voice connection per bot account per guild. Keep one
+  // independent session per guild so connecting in one server never replaces
+  // the bot's connection in another server.
+  const sessions = new Map();
 
-  function readSavedTarget() {
-    try {
-      if (!fs.existsSync(filePath)) return null;
-      const saved = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-      if (
-        !saved ||
-        typeof saved.guildId !== 'string' ||
-        typeof saved.channelId !== 'string'
-      ) {
-        return null;
-      }
-      return { guildId: saved.guildId, channelId: saved.channelId };
-    } catch (error) {
-      log('Voice', `Unable to read saved voice session: ${error.message}`);
+  function normalizeTarget(value, fallbackGuildId = null) {
+    if (!value || typeof value !== 'object') return null;
+
+    const guildId = typeof value.guildId === 'string' ? value.guildId : fallbackGuildId;
+    const channelId = value.channelId;
+
+    if (
+      typeof guildId !== 'string' || !guildId ||
+      typeof channelId !== 'string' || !channelId
+    ) {
       return null;
     }
+
+    return { guildId, channelId };
   }
 
-  function saveTarget(nextTarget) {
-    fs.writeFileSync(filePath, JSON.stringify(nextTarget, null, 2), 'utf8');
-  }
-
-  function clearSavedTarget() {
+  function readSavedTargets() {
     try {
-      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+      if (!fs.existsSync(filePath)) return [];
+
+      const saved = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+      if (!saved || typeof saved !== 'object') return [];
+
+      // Version 2 stores one target per guild. Accept the old single-target
+      // shape so existing WispByte deployments migrate without losing a session.
+      if (
+        saved.version === SESSION_FILE_VERSION &&
+        saved.sessions &&
+        typeof saved.sessions === 'object' &&
+        !Array.isArray(saved.sessions)
+      ) {
+        return Object.entries(saved.sessions)
+          .map(([guildId, target]) => normalizeTarget(target, guildId))
+          .filter(Boolean);
+      }
+
+      const legacyTarget = normalizeTarget(saved);
+      return legacyTarget ? [legacyTarget] : [];
     } catch (error) {
-      log('Voice', `Unable to clear saved voice session: ${error.message}`);
+      log('Voice', 'Unable to read saved voice sessions: ' + error.message);
+      return [];
     }
   }
 
-  function attachConnectionLogging(nextConnection) {
-    nextConnection.on('error', error => {
-      log('Voice', `Voice connection error: ${error?.message || error}`);
+  for (const target of readSavedTargets()) {
+    sessions.set(target.guildId, {
+      target,
+      connection: null,
+      joining: null,
+    });
+  }
+
+  function getOrCreateSession(guildId) {
+    let session = sessions.get(guildId);
+    if (!session) {
+      session = { target: null, connection: null, joining: null };
+      sessions.set(guildId, session);
+    }
+    return session;
+  }
+
+  function persistSessions() {
+    try {
+      const savedSessions = {};
+
+      for (const [guildId, session] of sessions) {
+        if (session.target) {
+          savedSessions[guildId] = { ...session.target };
+        }
+      }
+
+      if (Object.keys(savedSessions).length === 0) {
+        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        return;
+      }
+
+      fs.writeFileSync(filePath, JSON.stringify({
+        version: SESSION_FILE_VERSION,
+        sessions: savedSessions,
+      }, null, 2), 'utf8');
+    } catch (error) {
+      log('Voice', 'Unable to persist voice sessions: ' + error.message);
+    }
+  }
+
+  function attachConnectionLogging(connection, guildId) {
+    connection.on('error', error => {
+      log('Voice', 'Voice connection error in guild ' + guildId + ': ' + (error?.message || error));
     });
 
-    nextConnection.on('stateChange', (oldState, newState) => {
-      log('Voice', `Voice connection: ${oldState.status} → ${newState.status}.`);
+    connection.on('stateChange', (oldState, newState) => {
+      log('Voice', 'Voice connection in guild ' + guildId + ': ' + oldState.status + ' → ' + newState.status + '.');
     });
   }
 
   async function join(channel) {
-    if (!channel || !channel.guild || !channel.guild.voiceAdapterCreator) {
+    if (
+      !channel ||
+      !channel.guild ||
+      typeof channel.guild.id !== 'string' ||
+      !channel.guild.id ||
+      typeof channel.id !== 'string' ||
+      !channel.guild.voiceAdapterCreator
+    ) {
       throw new Error('Choose a voice channel in a server where the bot can connect.');
     }
 
@@ -67,122 +131,157 @@ function createVoiceSessionManager({
       channelId: channel.id,
     };
 
+    let session = getOrCreateSession(nextTarget.guildId);
+
+    // Serialize changes within one guild only. Joins in different guilds can
+    // proceed independently and therefore remain connected simultaneously.
+    if (session.joining) {
+      await session.joining.catch(() => {});
+      session = getOrCreateSession(nextTarget.guildId);
+    }
+
     if (
-      connection &&
-      target?.guildId === nextTarget.guildId &&
-      target?.channelId === nextTarget.channelId &&
-      connection.state.status === voice.VoiceConnectionStatus.Ready
+      session.connection &&
+      session.target?.channelId === nextTarget.channelId &&
+      session.connection.state.status === voice.VoiceConnectionStatus.Ready
     ) {
-      return { alreadyConnected: true, target: { ...target } };
+      return { alreadyConnected: true, target: { ...session.target } };
     }
 
-    if (joining) {
-      await joining;
-      if (
-        connection &&
-        target?.guildId === nextTarget.guildId &&
-        target?.channelId === nextTarget.channelId &&
-        connection.state.status === voice.VoiceConnectionStatus.Ready
-      ) {
-        return { alreadyConnected: true, target: { ...target } };
-      }
-    }
-
-    joining = (async () => {
-      if (connection) {
-        connection.destroy();
-        connection = null;
+    const operation = (async () => {
+      if (session.connection) {
+        session.connection.destroy();
+        session.connection = null;
       }
 
-      const nextConnection = voice.joinVoiceChannel({
-        channelId: nextTarget.channelId,
-        guildId: nextTarget.guildId,
-        adapterCreator: channel.guild.voiceAdapterCreator,
-        selfDeaf: true,
-        selfMute: true,
-        group: VOICE_SESSION_GROUP,
-      });
+      // If moving within this guild, remove the old saved target while the
+      // replacement connection is being established. Other guild targets stay.
+      session.target = null;
+      persistSessions();
 
-      connection = nextConnection;
-      attachConnectionLogging(nextConnection);
-
+      let nextConnection = null;
       try {
+        nextConnection = voice.joinVoiceChannel({
+          channelId: nextTarget.channelId,
+          guildId: nextTarget.guildId,
+          adapterCreator: channel.guild.voiceAdapterCreator,
+          selfDeaf: true,
+          selfMute: true,
+          group: VOICE_SESSION_GROUP,
+        });
+
+        session.connection = nextConnection;
+        attachConnectionLogging(nextConnection, nextTarget.guildId);
+
         await voice.entersState(
           nextConnection,
           voice.VoiceConnectionStatus.Ready,
           25_000,
         );
       } catch (error) {
-        // Keep the saved target only after a successful join. A failed attempt
-        // must not silently become a persistent reconnect request.
-        if (connection === nextConnection) {
+        if (session.connection === nextConnection && nextConnection) {
           nextConnection.destroy();
-          connection = null;
+          session.connection = null;
         }
-        throw new Error(`Could not connect to the voice channel: ${error.message}`);
+        session.target = null;
+        persistSessions();
+        throw new Error('Could not connect to the voice channel: ' + error.message);
       }
 
-      target = nextTarget;
-      saveTarget(target);
-      log('Voice', `Joined persistent voice channel ${target.channelId} in guild ${target.guildId}.`);
-      return { alreadyConnected: false, target: { ...target } };
+      session.target = nextTarget;
+      persistSessions();
+      log('Voice', 'Joined persistent voice channel ' + nextTarget.channelId + ' in guild ' + nextTarget.guildId + '.');
+
+      return { alreadyConnected: false, target: { ...nextTarget } };
     })();
 
+    session.joining = operation;
     try {
-      return await joining;
+      return await operation;
     } finally {
-      joining = null;
+      if (session.joining === operation) session.joining = null;
     }
   }
 
-  function leave() {
-    if (connection) {
-      connection.destroy();
-      connection = null;
+  async function leave(guildId) {
+    if (typeof guildId !== 'string' || !guildId) {
+      throw new TypeError('A guild ID is required to leave a voice session.');
     }
 
-    const hadTarget = Boolean(target || readSavedTarget());
-    target = null;
-    clearSavedTarget();
-    log('Voice', 'Persistent voice session stopped.');
-    return { left: hadTarget };
+    let session = sessions.get(guildId);
+    if (session?.joining) {
+      await session.joining.catch(() => {});
+      session = sessions.get(guildId);
+    }
+
+    const hadSession = Boolean(session?.target || session?.connection);
+
+    if (session?.connection) {
+      session.connection.destroy();
+    }
+
+    sessions.delete(guildId);
+    persistSessions();
+    log('Voice', 'Persistent voice session stopped in guild ' + guildId + '.');
+
+    return { left: hadSession };
   }
 
-  function getStatus() {
-    const saved = target || readSavedTarget();
+  function getStatus(guildId) {
+    const session = typeof guildId === 'string' ? sessions.get(guildId) : null;
+    const target = session?.target || null;
+
     return {
-      active: Boolean(saved),
-      guildId: saved?.guildId || null,
-      channelId: saved?.channelId || null,
-      connectionState: connection?.state?.status || 'Disconnected',
+      active: Boolean(target),
+      guildId: target?.guildId || guildId || null,
+      channelId: target?.channelId || null,
+      connectionState: session?.connection?.state?.status || 'Disconnected',
     };
   }
 
   async function restore() {
-    const saved = readSavedTarget();
-    if (!saved) return { restored: false, reason: 'no_saved_session' };
+    const savedTargets = [...sessions.values()]
+      .map(session => session.target)
+      .filter(Boolean)
+      .map(target => ({ ...target }));
 
-    const guild = await client.guilds.fetch(saved.guildId).catch(() => null);
-    if (!guild) {
-      log('Voice', 'Saved voice guild is unavailable; keeping the session file for a later restart.');
-      return { restored: false, reason: 'guild_unavailable' };
+    if (savedTargets.length === 0) {
+      return { restored: 0, attempted: 0 };
     }
 
-    const channel = await guild.channels.fetch(saved.channelId).catch(() => null);
-    if (!channel || !channel.isVoiceBased?.() || !channel.guild?.voiceAdapterCreator) {
-      log('Voice', 'Saved voice channel is unavailable; clearing the stale session.');
-      clearSavedTarget();
-      return { restored: false, reason: 'channel_unavailable' };
-    }
+    const results = await Promise.all(savedTargets.map(async saved => {
+      const guild = await client.guilds.fetch(saved.guildId).catch(() => null);
+      if (!guild) {
+        log('Voice', 'Saved voice guild ' + saved.guildId + ' is unavailable; keeping its session for a later restart.');
+        return false;
+      }
 
-    try {
-      await join(channel);
-      log('Voice', 'Restored the persistent voice session.');
-      return { restored: true };
-    } catch (error) {
-      log('Voice', `Could not restore the voice session: ${error.message}`);
-      return { restored: false, reason: 'connection_failed' };
-    }
+      const channel = await guild.channels.fetch(saved.channelId).catch(() => null);
+      if (!channel || !channel.isVoiceBased?.() || !channel.guild?.voiceAdapterCreator) {
+        const session = sessions.get(saved.guildId);
+        if (session?.target?.channelId === saved.channelId) {
+          session.target = null;
+          if (!session.connection) sessions.delete(saved.guildId);
+          persistSessions();
+        }
+        log('Voice', 'Saved voice channel ' + saved.channelId + ' in guild ' + saved.guildId + ' is unavailable; cleared that session.');
+        return false;
+      }
+
+      try {
+        await join(channel);
+        log('Voice', 'Restored the persistent voice session in guild ' + saved.guildId + '.');
+        return true;
+      } catch (error) {
+        log('Voice', 'Could not restore the voice session in guild ' + saved.guildId + ': ' + error.message);
+        return false;
+      }
+    }));
+
+    return {
+      restored: results.filter(Boolean).length,
+      attempted: savedTargets.length,
+    };
   }
 
   return {
