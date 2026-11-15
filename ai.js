@@ -10,25 +10,6 @@ const {
 } = require('./ai-knowledge');
 
 
-function formatMinecraftReply(text) {
-  return String(text || '')
-    .trim()
-    // Remove Markdown escaping before stripping Markdown syntax.
-    .replace(/\\([\\`*_{}\[\]()#+.!|>~-])/g, '$1')
-    // Turn Markdown links into their visible text.
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1')
-    // Remove common Markdown formatting markers.
-    .replace(/\*\*|__|~~/g, '')
-    .replace(/[*_~`]/g, '')
-    // Remove Markdown headings and convert unordered list markers to plain bullets.
-    .replace(/^\s{0,3}#{1,6}\s*/gm, '')
-    .replace(/^\s*[-+*]\s+/gm, '• ')
-    // Keep the Minecraft chat response as a single readable line.
-    .replace(/\r?\n|\r/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
 // ============================================================
 // AI RATE LIMITER
 // ============================================================
@@ -115,11 +96,7 @@ function runAiQualityChecks(text, options = {}) {
   let reply = normalizeAiReply(text);
   reply = reply.replace(/^(certainly|sure|absolutely|great question|of course)[!,.]?\s+/i, '');
 
-  if (options.platform === 'minecraft') {
-    reply = formatMinecraftReply(reply);
-  }
-
-  const maxLength = options.platform === 'minecraft' ? 240 : 1500;
+  const maxLength = 1500;
   if (reply.length > maxLength) {
     reply = `${reply.slice(0, maxLength - 3)}...`;
   }
@@ -1039,9 +1016,7 @@ async function ask(message, options = {}) {
     if (knownAnswer) {
       const reply = knownAnswer;
 
-      return options.platform === 'minecraft'
-        ? formatMinecraftReply(reply)
-        : reply;
+      return reply;
     }
   }
 
