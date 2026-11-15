@@ -24,6 +24,7 @@ function createVoiceCommandHandler({
       return;
     }
 
+    const guildId = interaction.guildId || interaction.guild?.id;
     const action = interaction.options.getSubcommand();
 
     if (action === 'join') {
@@ -56,33 +57,33 @@ function createVoiceCommandHandler({
         const result = await voiceSession.join(channel);
         return interaction.editReply({
           content: result.alreadyConnected
-            ? `ⓘ I am already connected to <#${channel.id}>.`
-            : `✓ Connected to <#${channel.id}>. I will remain there and restore this session after a normal bot restart. My microphone and audio reception are disabled.`,
+            ? 'ⓘ I am already connected to <#' + channel.id + '>.'
+            : '✓ Connected to <#' + channel.id + '> in this server. I will remain there and restore this session after a normal bot restart. My microphone and audio reception are disabled.',
         });
       } catch (error) {
-        log('Voice', `/vc join failed: ${error.message}`);
+        log('Voice', '/vc join failed: ' + error.message);
         return interaction.editReply({
-          content: `✕ I could not join that voice channel: ${error.message}`,
+          content: '✕ I could not join that voice channel: ' + error.message,
         });
       }
     }
 
     if (action === 'leave') {
-      const result = voiceSession.leave();
+      const result = await voiceSession.leave(guildId);
       return interaction.reply({
         content: result.left
-          ? '✓ Persistent voice connection stopped.'
-          : 'ⓘ I do not have an active persistent voice session.',
+          ? '✓ Persistent voice connection stopped in this server.'
+          : 'ⓘ I do not have an active persistent voice session in this server.',
         flags: MessageFlags.Ephemeral,
       });
     }
 
     if (action === 'status') {
-      const currentVoice = voiceSession.getStatus();
+      const currentVoice = voiceSession.getStatus(guildId);
       return interaction.reply({
         content: currentVoice.active
-          ? `◎ Saved voice channel: <#${currentVoice.channelId}>\nConnection state: **${currentVoice.connectionState}**`
-          : 'ⓘ No persistent voice channel is configured.',
+          ? '◎ Saved voice channel: <#' + currentVoice.channelId + '>\nConnection state: **' + currentVoice.connectionState + '**'
+          : 'ⓘ No persistent voice channel is configured in this server.',
         flags: MessageFlags.Ephemeral,
       });
     }
