@@ -22,24 +22,9 @@ jobs:
         with:
           node-version: 26
 
-      - name: Validate JavaScript syntax
+      - name: Validate every tracked JavaScript source and test file
         run: |
-          node --check index.js
-          node --check ai.js
-          node --check commands.js
-          node --check message-routing.js
-          node --check status-server.js
-          node --check afk-store.js
-          node --check ai-knowledge.js
-          node --check shutdown.js
-          node --check minecraft.js
-          node --check minecraft-chat.js
-          node --check voice-session.js
-          node --check role-access.js
-          node --check spark-login.js
-          node --check summary.js
-          node --check unicode.js
-          node --check config.js
+          find . -path './node_modules' -prune -o -name '*.js' -type f -print0 | xargs -0 -n1 node --check
       - name: Refresh lockfile for the updated dependency manifest
         run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
       - name: Install dependencies
