@@ -68,7 +68,7 @@ The goal is the same as the website: **quiet, warm, recognizable, and not overly
 - scheduled administrative actions with persistence
 - `/forget` and `/aforget`
 
-- administrator-only `/vc join`, `/vc leave`, and `/vc status` for a persistent, muted and deafened Discord voice connection
+- administrator-only, per-server `/vc join`, `/vc leave`, and `/vc status` controls for persistent, muted and deafened voice connections
 - public `/afk [reason]`
 - daily Minecraft player welcomes
 - Discord ↔ Minecraft chat integration
@@ -192,12 +192,12 @@ The public Java and Bedrock addresses are used for player joining. Bedrock guida
 | `/status` | Admin | Unified Discord, Minecraft connection, and AI diagnostics |
 | `/aforget` | Admin | Clears all Discord AI conversations |
 | `/vc join` | Admin | Joins the invoking member's current voice channel and restores the connection after normal bot restarts |
-| `/vc leave` | Admin | Stops and clears the persistent voice session |
-| `/vc status` | Admin | Shows the saved channel and current connection state |
+| `/vc leave` | Admin | Stops and clears only the voice session in the server where the command is used |
+| `/vc status` | Admin | Shows the saved channel and connection state for the current server |
 
 The bot's `/help` response mirrors the supported commands directly in Discord. Every slash-command response is ephemeral (visible only to the person who invoked it), including deferred and follow-up responses. Text shortcuts remain public; the bot explicitly mentions the person who issued the shortcut so their reply is highlighted. The Minecraft client no longer invokes Gemini; AI conversations remain in Discord.
 
-The `/vc` commands use the Discord voice gateway through `@discordjs/voice`. `/vc join` joins the administrator's current regular voice channel with the bot self-muted and self-deafened; it does not transmit or receive member audio. The selected channel is stored in the local `voice-session.json` runtime file and restored after a normal bot restart. The connection can recover from supported transient voice-gateway interruptions while the process remains online. This is not an uptime guarantee: hosting outages, process shutdowns, Discord outages, deleted channels, or removed permissions can interrupt the session. The bot needs the **Connect** permission in the target channel.
+The `/vc` commands use the Discord voice gateway through `@discordjs/voice`. `/vc join` joins the administrator's current regular voice channel with the bot self-muted and self-deafened; it does not transmit or receive member audio. Main Bot keeps one independent voice connection per Discord server, so it can remain in a Cottage★ voice channel while simultaneously staying in a channel in another configured server. Discord permits only one connection for the bot in each individual server; using `/vc join` in a different channel in the same server switches that server's connection. Each server's target is stored in the local `voice-session.json` runtime file and restored independently after a normal bot restart. The file automatically accepts the previous single-session format and converts it to the new multi-server format on the next successful save. The connection can recover from supported transient voice-gateway interruptions while the process remains online. This is not an uptime guarantee: hosting outages, process shutdowns, Discord outages, deleted channels, or removed permissions can interrupt a session. The bot needs the **Connect** permission in each target channel.
 
 **Conversational AI is opt-in.** Members in an explicitly configured guild must directly mention the bot or reply to one of its messages in a normal conversation channel. Ordinary chat and messages that merely contain a keyword do not trigger AI. DiscordSRV webhook messages, replies to Minecraft relay messages, and the configured Discord-to-Minecraft relay channel are excluded from conversational AI.
 
@@ -301,6 +301,7 @@ The following files are generated locally and should not be committed:
 - `daily-welcomes.json`
 - `scheduled-actions.json`
 - `user-afk.json`
+- `voice-session.json` (one persistent voice target per configured guild)
 - logs and local runtime data
 
 They contain state rather than source code.
@@ -378,7 +379,7 @@ Equivalent:
 node index.js
 ```
 
-Startup establishes the Discord connection, reconciles slash commands, loads persistent state, and restores an explicitly saved voice session. The Minecraft AFK client remains stopped after a process restart until an authorized `/start` or `?start` command is used.
+Startup establishes the Discord connection, reconciles slash commands, loads persistent state, and restores every saved per-guild voice session. The Minecraft AFK client remains stopped after a process restart until an authorized `/start` or `?start` command is used.
 
 ---
 
