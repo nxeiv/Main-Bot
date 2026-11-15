@@ -138,7 +138,7 @@ Current access levels include:
 
 Administrators can be granted through configured user IDs and the Cottage★ Moderator role.
 
-The project uses the central `featureAccess` map so access rules can be changed in one place rather than being scattered through command handlers.
+The command registry is the source of truth for public, admin, owner, and restricted access labels. Unknown commands fail closed.
 
 ---
 
