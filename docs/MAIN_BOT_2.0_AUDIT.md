@@ -22,8 +22,9 @@ This is a source-level audit. It does not replace a live staging deployment, a c
 | Minecraft connection | `minecraft.js`, `spark-login.js` | KEEP, IMPROVE. The client remains opt-in after process restarts and reconnects after transient failures once manually started. |
 | Minecraft chat relay | `minecraft-chat.js`, `message-routing.js` | KEEP. Input validation and relay/AI separation exist; add more integration coverage around webhook and mention edge cases. |
 | Voice connection | `voice-session.js` | KEEP, IMPROVE. Explicit join/leave and persistent restore exist. Improve diagnostics, recovery testing, and permission-loss handling. |
-| Website status bridge | `status-server.js` | KEEP, IMPROVE. Public status is filtered and CORS is allow-listed; add endpoint tests for malformed requests and operational health. |
+| Website status bridge | Removed. The old WispByte API module, tests, environment variables, and browser polling are retired; the SMP card no longer displays live status or player counts. |
 | Summaries | `summary.js` | KEEP. It is already separated from the main entry point and uses temporary private responses. |
+| Response utilities | `response-utils.js` | KEEP. Pure formatting helpers extracted from the runtime entry point and covered by unit tests. |
 | Shutdown | `shutdown.js` | KEEP. Extracted and testable; ensure every future service registers its cleanup. |
 | Presentation | `unicode.js` | KEEP. Small, focused presentation helper. |
 | Tests | `test/*.test.js` | KEEP, EXPAND. Existing unit tests cover many helpers; live service behavior still needs staging/manual verification. |
