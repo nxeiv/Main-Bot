@@ -28,7 +28,7 @@ const COMMAND_REGISTRY = Object.freeze([
 
 const TEXT_SHORTCUTS = Object.freeze(
   COMMAND_REGISTRY
-    .filter(command => command.shortcut)
+    .filter(command => command.shortcut && command.name !== 'summarize')
     .map(command => command.shortcut),
 );
 
@@ -77,15 +77,6 @@ function buildSlashCommands() {
 }
 
 function buildHelpMessage() {
-  const slashLines = COMMAND_REGISTRY
-    .filter(command => command.description)
-    .map(command => {
-      if (command.name === 'vc') return '• /vc join · /vc leave · /vc status — ' + command.help;
-      const usage = command.name === 'afk' ? '/afk [reason]' :
-        command.name === 'summarize' ? '/summarize <channel>' : '/' + command.name;
-      return '• ' + usage + ' — ' + command.help;
-    });
-
   const shortcutLines = COMMAND_REGISTRY
     .filter(command => command.shortcut)
     .map(command => {
@@ -95,13 +86,8 @@ function buildHelpMessage() {
     });
 
   const groups = ['General', 'Minecraft', 'Community', 'Administration'];
-  const section = (category, lines) => {
-    const matching = COMMAND_REGISTRY.filter(command => command.category === category && lines(command));
-    return matching;
-  };
-
   const slashByCategory = groups.map(category => {
-    const commands = section(category, command => Boolean(command.description));
+    const commands = COMMAND_REGISTRY.filter(command => command.category === category && command.description);
     if (!commands.length) return '';
     return '**' + category + ' commands**\n' + commands.map(command => {
       if (command.name === 'vc') return '• /vc join · /vc leave · /vc status — ' + command.help;
