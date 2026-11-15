@@ -38,7 +38,8 @@ test('help text describes opt-in AI and the new prefix shortcuts', () => {
   assert.match(BOT_HELP_MESSAGE, /\?ip/);
   assert.match(BOT_HELP_MESSAGE, /\?java/);
   assert.match(BOT_HELP_MESSAGE, /\?bedrock/);
-  assert.match(BOT_HELP_MESSAGE, /\?plugins/);
+  assert.match(BOT_HELP_MESSAGE, /\?pl/);
+  assert.doesNotMatch(BOT_HELP_MESSAGE, /\?plugins/);
   assert.match(BOT_HELP_MESSAGE, /\?world download/);
   assert.doesNotMatch(BOT_HELP_MESSAGE, /\/remind(?:ers|-cancel)?\b/i);
   assert.doesNotMatch(BOT_HELP_MESSAGE, /\/maintenance\b/i);
@@ -48,7 +49,8 @@ test('help text describes opt-in AI and the new prefix shortcuts', () => {
   assert.doesNotMatch(BOT_HELP_MESSAGE, /who are you\?/i);
   assert.match(SYSTEM_PROMPT, /Chapter 1 • Season 6/);
   assert.match(SYSTEM_PROMPT, /\?ip/);
-  assert.match(SYSTEM_PROMPT, /\?plugins/);
+  assert.match(SYSTEM_PROMPT, /\?pl/);
+  assert.doesNotMatch(SYSTEM_PROMPT, /\?plugins/);
   assert.match(SYSTEM_PROMPT, /\?world download/);
   assert.match(SYSTEM_PROMPT, /1507948745122381824/);
   assert.doesNotMatch(SYSTEM_PROMPT, /A Season 6 world download has not been published/);
