@@ -99,6 +99,9 @@ The configured Minecraft account is **Server**.
 | `command-registry.js` | Authoritative command metadata, slash-command generation, text shortcuts, categories, access labels, and generated help |
 | `commands.js` | Thin slash-command registry adapter |
 | `message-routing.js` | Pure policy for deciding when conversational AI may respond |
+| `minecraft-event-handlers.js` | Minecraft connection, reconnect, player join/leave event wiring |
+| `text-shortcut-handler.js` | Dependency-injected execution for registered text shortcuts |
+| `response-utils.js` | Shared uptime, AFK-duration, delay, and connection-state formatting |
 | `afk-store.js` | Persistent per-user Discord AFK state and validation |
 | `shutdown.js` | Idempotent cleanup of Minecraft and Discord connections |
 | `minecraft.js` | Mineflayer connection, reconnect logic, player tracking, chat, and anti-AFK behavior |
