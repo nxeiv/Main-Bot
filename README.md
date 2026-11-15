@@ -39,7 +39,7 @@ The bot uses a consistent **Unicode-first visual theme** across user-facing resp
 
 - Pictographic emoji are avoided where a suitable text/Unicode symbol exists.
 - Common interface states use symbols such as `✓`, `✕`, `ⓘ`, `⚠︎`, `⚒︎`, `⌂`, `⌫`, `◎`, and `⌁`.
-- AI-generated Discord and Minecraft responses pass through the same Unicode theme layer.
+- Discord AI responses pass through the shared Unicode theme layer.
 - Discord mentions, channel references, URLs, commands, and the **Cottage★** name are preserved.
 - Remaining default emoji-presentation characters are normalized so AI output does not unexpectedly switch back to pictographic emoji.
 
@@ -444,7 +444,7 @@ The Main Bot can run as a Node.js application under a Pterodactyl-style host.
 The repository expects:
 
 - Node.js 26+
-- dependencies installed with `npm install`
+- dependencies installed with `npm ci`
 - `index.js` as the entry point
 
 The application should use:
@@ -496,7 +496,7 @@ Run the automated unit tests and syntax checks before manual testing:
 npm test
 ```
 
-The GitHub Actions validation workflow runs JavaScript syntax checks and `npm test` on pull requests.
+The GitHub Actions validation workflow runs JavaScript syntax checks, installs the committed dependency tree with `npm ci`, audits production dependencies, and runs `npm test` on pull requests and pushes to `main`.
 
 A practical manual test order is:
 
