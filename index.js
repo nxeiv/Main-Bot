@@ -32,6 +32,8 @@ const { shouldHandleConversationalMessage, isMinecraftRelayMessage } = require('
 const { parseTextShortcut, normalizeIpChoice } = require('./text-shortcuts');
 const { isRejoinAuthorized } = require('./rejoin-access');
 const { memberHasAnyRole } = require('./role-access');
+const { createPermissionService } = require('./permissions');
+const { COMMAND_REGISTRY } = require('./command-registry');
 const { validateMinecraftChatMessage } = require('./minecraft-chat');
 const { startStatusServer } = require('./status-server');
 const { createAfkStore } = require('./afk-store');
@@ -272,31 +274,12 @@ const voiceSession = createVoiceSessionManager({
   log,
 });
 
-function isAdmin(userId, member = null) {
-  if (config.adminUserIds?.includes(userId)) {
-    return true;
-  }
-
-  return memberHasAnyRole(member, config.adminRoleIds);
-}
-
-function hasFeatureAccess(feature, userId, member = null) {
-  const access = config.featureAccess?.[feature] || 'admin';
-
-  if (access === 'public') {
-    return true;
-  }
-
-  if (access === 'admin' || access === 'moderator') {
-    return isAdmin(userId, member);
-  }
-
-  if (access === 'owner') {
-    return config.adminUserIds?.includes(userId);
-  }
-
-  return false;
-}
+const { isAdmin, hasFeatureAccess } = createPermissionService({
+  config,
+  commandRegistry: COMMAND_REGISTRY,
+  memberHasAnyRole,
+  isRejoinAuthorized,
+});
 
 async function requireFeatureAccess(interaction, feature) {
   if (hasFeatureAccess(
@@ -1402,7 +1385,7 @@ async function handleTextShortcut({ message, shortcut }) {
   }
 
   if (normalizedQuestion === 'rejoin') {
-    if (!isRejoinAuthorized(message.author.id, message.member)) {
+    if (!hasFeatureAccess('rejoin', message.author.id, message.member)) {
       log('Admin', `Rejected ?rejoin from ${message.author.tag} (${message.author.id}).`);
       await message.reply('Unknown or unavailable command.');
       return true;
@@ -2193,7 +2176,7 @@ const response = await ai.ask(contextualAiQuestion, {
 });
 client.on(Events.InteractionCreate, async interaction => {
   if (interaction.isButton() && interaction.customId === 'rejoin:retry') {
-    if (!isRejoinAuthorized(interaction.user.id, interaction.member)) {
+    if (!hasFeatureAccess('rejoin', interaction.user.id, interaction.member)) {
       return interaction.reply({
         content: 'Unknown or unavailable command.',
         flags: MessageFlags.Ephemeral,
