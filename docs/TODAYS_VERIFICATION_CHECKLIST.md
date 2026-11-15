@@ -9,6 +9,7 @@ Use this after deployment. Mark each item **PASS**, **FAIL**, or **NOT TESTED**.
 - #49 merged: restore the missing IP prompt key helper that caused the WispByte ReferenceError.
 - #50 merged: pin patched uuid 11.1.1 across the transitive dependency tree and explicitly deny the unnecessary protobufjs install script.
 - #51 merged: extract the IP prompt key into one shared, tested helper used by both message handlers.
+- #52 merged: configure multiple Discord guilds, enforce ephemeral slash responses, and explicitly mention users in public text replies.
 - Previously merged: #37, #38, #40, #41, #42, and #45.
 - #43 and #44 were closed without merging because #45 superseded their lockfile work.
 - No open pull requests remain in Main-Bot.
@@ -24,6 +25,15 @@ Use this after deployment. Mark each item **PASS**, **FAIL**, or **NOT TESTED**.
 - [ ] Run `npm audit --omit=dev` on WispByte and confirm 0 vulnerabilities.
 - [ ] Bot starts once, logs into Discord, and reconciles slash commands.
 - [ ] No secrets or runtime JSON files are committed.
+- [ ] `voice-session.json` remains deployment runtime state and is not committed to GitHub.
+
+## Multi-guild voice sessions
+- [ ] Join a voice channel in The Cottage★ with `/vc join`; confirm `/vc status` reports that guild's channel.
+- [ ] Join a voice channel in the second configured server; confirm the Cottage★ connection remains active.
+- [ ] Run `/vc status` in each server and confirm each reports its own channel and connection state.
+- [ ] Run `/vc leave` in the second server; confirm the Cottage★ connection remains active.
+- [ ] Restart the bot with two saved targets; confirm both guild sessions restore independently.
+- [ ] Confirm a saved legacy single-guild `voice-session.json` is accepted and migrated on the next save.
 
 ## Discord commands and permissions
 - [ ] `/help` lists the intended commands.
