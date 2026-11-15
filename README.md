@@ -163,7 +163,6 @@ Current `config.js` settings:
 
 | Setting | Current value |
 | --- | --- |
-| Java host | `the-cottage-c1-s6.playwithbao.com` |
 | Bedrock compatibility | Any (Geyser-supported Bedrock versions) — direct server entry only |
 | Server software/version | `Minecraft 26.2 / Paper 26.2` |
 | Mineflayer client protocol setting | `1.21.11` (separate from server version) |
