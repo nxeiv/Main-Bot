@@ -44,8 +44,8 @@ test('message reply helper does not duplicate an existing author mention', async
 });
 
 test('message reply helper rejects missing author IDs', async () => {
-  await assert.rejects(
-    replyMentioningAuthor({ author: {}, reply: async () => {} }, 'Hello.'),
+  assert.throws(
+    () => replyMentioningAuthor({ author: {}, reply: async () => {} }, 'Hello.'),
     TypeError,
   );
 });
