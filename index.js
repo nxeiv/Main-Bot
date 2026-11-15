@@ -725,7 +725,7 @@ function buildStatusEmbed() {
       {
         name: 'Minecraft',
         value:
-          `${mcState}\nPlayers: ${mcStatus.playerCount}\nReconnects: ${mcStatus.reconnectAttempts}`,
+          `${mcState}\nReconnects: ${mcStatus.reconnectAttempts}`,
         inline: true,
       },
       {
