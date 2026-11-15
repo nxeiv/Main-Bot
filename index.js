@@ -2585,27 +2585,16 @@ client.once(Events.ClientReady, async readyClient => {
     void commandWatchdog();
   }, COMMAND_WATCHDOG_INTERVAL_MS);
 
-  // Runtime watchdog: recover an unexpectedly inactive Minecraft session.
-  setInterval(() => {
-    const status = mc.getStatus();
-
-    if (
-      !status.connected &&
-      !status.connecting &&
-      !status.reconnecting &&
-      !status.manualStop
-    ) {
-      log('Watchdog', 'Minecraft session is inactive; attempting recovery.');
-      mc.start();
-    }
-  }, 10 * 60 * 1000);
+  // The Minecraft AFK client is intentionally opt-in. It remains stopped
+  // after a process restart until an authorized /start or ?start command is used.
+  // Once started manually, minecraft.js continues to reconnect after transient
+  // network failures for the lifetime of this process.
 
   updatePresence();
 
   restoreScheduledAdminActions();
 
-  log('Bot', 'Starting AFK session.');
-  mc.start();
+  log('Bot', 'Ready. Minecraft AFK client is stopped; use /start or ?start to enable it.');
 });
 
 process.on('uncaughtException', error => {
