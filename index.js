@@ -36,7 +36,6 @@ const { memberHasAnyRole } = require('./role-access');
 const { createPermissionService } = require('./permissions');
 const { COMMAND_REGISTRY } = require('./command-registry');
 const { validateMinecraftChatMessage } = require('./minecraft-chat');
-const { startStatusServer } = require('./status-server');
 const { createAfkStore } = require('./afk-store');
 const { createShutdownHandler } = require('./shutdown');
 
@@ -2547,11 +2546,9 @@ process.on('unhandledRejection', reason => {
   );
 });
 
-const statusServer = startStatusServer({ mc, log });
 const shutdown = createShutdownHandler({
   client,
   mc,
-  statusServer,
   log,
 });
 
