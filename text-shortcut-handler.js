@@ -1,5 +1,7 @@
 'use strict';
 
+const { getIpPromptKey } = require('./ip-prompt-key');
+
 function createTextShortcutHandler(dependencies) {
   const {
     SERVER_INFO, pendingIpChoices, setUserAfk, getUserAfk, ai,
@@ -11,10 +13,6 @@ function createTextShortcutHandler(dependencies) {
   if (!pendingIpChoices || typeof pendingIpChoices.set !== 'function') {
     throw new TypeError('Text shortcut handler requires a pending IP choice map.');
   }
-
-  function getIpPromptKey(message) {
-  return `${message.guild?.id || 'dm'}:${message.channel.id}:${message.author.id}`;
-}
 
 return async function handleTextShortcut({ message, shortcut }) {
   const rawShortcut = String(shortcut || '')
