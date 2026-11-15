@@ -216,33 +216,32 @@ const BOT_HELP_MESSAGE = `**The Cottage★ Help**
 Mention me or reply to one of my messages when you want an AI answer. I stay quiet during normal conversation.
 
 **Public commands**
-• \`/help\` — show this help
-• \`/afk [reason]\` — mark yourself AFK or update your reason
-• \`/forget\` — clear your own AI conversation context
-• \`/summarize <channel>\` — create a temporary private summary
+• /help — show this help
+• /afk [reason] — mark yourself AFK or update your reason
+• /forget — clear your own Discord AI conversation context
+• /summarize <channel> — create a temporary private summary
 
 **Admin commands**
-• \`/start\` · \`/stop\` · \`/status\` — control or check the Minecraft AFK session
-• \`/rejoin\` — disconnect and reconnect the AFK session after 30 seconds (restricted access)
-• \`/dashboard\` — check Discord, Minecraft, and AI health
-• \`/ping\` — check bot latency
-• \`/aforget\` — clear all AI conversation contexts
-• \`/ai status\` — inspect AI health and queue diagnostics
-• \`/vc join\` · \`/vc leave\` · \`/vc status\` — manage the persistent 24/7 voice connection (admin only)
-
-Slash-command access depends on the configured permissions.
+• /start · /stop — control the Minecraft AFK session
+• /status — unified Discord, Minecraft connection, and Discord AI diagnostics
+• /rejoin — reconnect the AFK session after 30 seconds (restricted access)
+• /ping — check bot latency
+• /aforget — clear all Discord AI conversation contexts
+• /vc join · /vc leave · /vc status — manage the persistent 24/7 voice connection
 
 **Text shortcuts**
-• ?ip — asks whether you use Java or Bedrock; reply to the prompt with your choice
-• ?java / ?bedrock — shows the corresponding server address
-• ?plugins — lists the current SMP plugins
-• ?world download — opens the Season 6 world download post
-• ?help, ?invite, ?roles, ?channels, and ?rules — quick information
-• ?start, ?stop, ?status, ?dashboard, and ?ai status — admin-only shortcuts
-• Mention me and use \`?rejoin\` to reconnect the AFK session (restricted access)
-• ?summarize <channel> — creates a temporary summary
+• ?ip — choose Java or Bedrock
+• ?java · ?bedrock — show server addresses
+• ?pl — list SMP plugins
+• ?world download — open the world download post
+• ?help · ?invite · ?roles · ?channels · ?rules — quick information
+• ?afk [reason] — mark yourself AFK; your next message clears it
+• ?start · ?stop · ?status — admin-only shortcuts
+• ?rejoin — reconnect the AFK session (restricted access)
+• ?summarize <channel> — create a temporary summary
 
-Shortcuts are case-insensitive and begin with ?. Ordinary conversation still requires a direct mention or reply to the bot.`;
+Shortcuts are case-insensitive and do not require a bot mention. Unknown question-mark messages are ignored. Administrative shortcuts check the triggering member's configured permissions. Shortcut replies are deterministic and never call Gemini.
+`;
 
 const SYSTEM_PROMPT = `
 You are The Cottage★, the community assistant for The Cottage★ Discord community.
@@ -283,7 +282,7 @@ When answering a question yourself:
 - Do not claim that cracked/non-premium Java clients are supported; the current public configuration does not confirm that.
 - Do not reuse unconfirmed Season 5 features or restrictions, including the old Netherite restriction, land claims, proximity voice chat, armor-stand customization, or custom mace mechanics. Team System, Better Mending, and Vein Mining are current Season 6 features; for exact plugin behavior, use only the confirmed details below.
 - Bedrock joining instructions must use the published direct address and port below as the only supported public method. If direct joining fails, direct the player to staff rather than offering an alternate invitation-based route. List version support as Any (Geyser-supported versions), but do not guarantee every client/account setup will work if a login fails.
-- Never invent an unlisted interface such as a new command, prefix, or special phrase. Confirmed Discord text shortcuts begin with ? and are case-insensitive; examples include ?ip, ?java, ?bedrock, ?plugins, ?world download, ?help, ?invite, ?roles, ?channels, ?rules, ?start, ?stop, ?status, ?dashboard, ?ai status, and ?summarize <channel>. The restricted ?rejoin shortcut requires a direct mention of the bot. ?ip asks the user to reply to its prompt with Java or Bedrock. Only describe joining methods and bot interactions that are explicitly confirmed below or implemented in the bot.
+- Never invent an unlisted interface such as a new command, prefix, or special phrase. Confirmed Discord text shortcuts begin with ? and are case-insensitive; examples include ?ip, ?java, ?bedrock, ?pl, ?world download, ?help, ?invite, ?roles, ?channels, ?rules, ?start, ?stop, ?status, and ?summarize <channel>. The restricted ?rejoin shortcut checks the dedicated access allow-list. ?ip asks the user to reply to its prompt with Java or Bedrock. Only describe joining methods and bot interactions that are explicitly confirmed below or implemented in the bot.
 - Do not invent commands, links, channels, IPs, ports, rules, features, joining procedures, or permissions.
 - If a server-specific fact is not confirmed below, say you do not know rather than guessing.
 - Do not contradict the deterministic bot answers.

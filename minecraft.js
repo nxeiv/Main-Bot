@@ -30,7 +30,9 @@ const state = {
   reconnectAttempts: 0,
   isConnecting: false,
   isReconnecting: false,
-  manualStop: false,
+  // Keep the Minecraft AFK client stopped after process restarts.
+  // An explicit /start or ?start opts it in for this runtime.
+  manualStop: true,
   playerCount: 0,
   intervals: [],
   reconnectTimer: null,

@@ -2,7 +2,7 @@
 
 The **The Cottage★ Main Bot** is the Discord and Minecraft companion service for **The Cottage★** and its SMP.
 
-It connects the Cottage★ community with Minecraft, provides public and administrative Discord tools, maintains the Minecraft AFK session, exposes a small read-only status bridge for the website, and provides Gemini-powered AI features.
+It connects the Cottage★ community with Minecraft, provides public and administrative Discord tools, can run an optional Minecraft AFK session, exposes a small read-only status bridge for the website, and provides Discord-only Gemini-powered AI features.
 
 > **The Cottage★ is the home. The SMP is the backyard.**
 
@@ -53,20 +53,20 @@ The goal is the same as the website: **quiet, warm, recognizable, and not overly
 
 ## Discord
 
-- AI chat with channel-aware conversation memory
+- Discord AI chat with channel-aware conversation memory
 - reply-aware AI follow-ups
 - deterministic answers for confirmed Cottage★ information
 - Discord/community help
 - Minecraft/SMP help
 - feature descriptions and tutorials
 - Minecraft connection and player-count status
-- administrative `/start`, `/stop`, `/rejoin`, `/status`, and `/dashboard`
+- administrative `/start`, `/stop`, `/rejoin`, and unified `/status`
 - `/ping` for a quick Discord latency check
 - `/summarize <channel>` for private channel summaries
 - admin-verified AI administrative requests
 - scheduled administrative actions with persistence
 - `/forget` and `/aforget`
-- administrator-only `/ai status`
+
 - administrator-only `/vc join`, `/vc leave`, and `/vc status` for a persistent, muted and deafened Discord voice connection
 - public `/afk [reason]`
 - daily Minecraft player welcomes
@@ -82,10 +82,10 @@ The Minecraft side uses Mineflayer and provides:
 - exponential reconnect backoff
 - player detection and count tracking
 - player join/leave detection
-- Minecraft chat integration
+- Minecraft chat relay (no Minecraft-side AI responses)
 - Discord ↔ Minecraft chat relay
 - lightweight anti-AFK activity
-- daily player welcomes
+- deterministic daily player welcomes
 - Minecraft status reporting to Discord
 - public website status data
 
@@ -134,9 +134,7 @@ Current access levels include:
 | `/stop` | Admin |
 | `/rejoin` | Dedicated allow-list (one user ID or the specified role) |
 | `/status` | Admin |
-| `/dashboard` | Admin |
 | `/aforget` | Admin |
-| `/ai status` | Admin |
 
 Administrators can be granted through configured user IDs and the Cottage★ Moderator role.
 
@@ -240,21 +238,19 @@ The public Java and Bedrock addresses are used for player joining. Bedrock guida
 | `/start` | Admin | Starts the Minecraft AFK session |
 | `/stop` | Admin | Stops the Minecraft AFK session |
 | `/rejoin` | Dedicated allow-list | Disconnects the AFK client, waits 30 seconds, then reconnects |
-| `/status` | Admin | Shows Minecraft status |
-| `/dashboard` | Admin | Shows Discord, Minecraft, and AI health |
-| `/aforget` | Admin | Clears all AI conversations |
-| `/ai status` | Admin | Shows AI health and queue diagnostics |
+| `/status` | Admin | Unified Discord, Minecraft connection, and AI diagnostics |
+| `/aforget` | Admin | Clears all Discord AI conversations |
 | `/vc join` | Admin | Joins the invoking member's current voice channel and restores the connection after normal bot restarts |
 | `/vc leave` | Admin | Stops and clears the persistent voice session |
 | `/vc status` | Admin | Shows the saved channel and current connection state |
 
-The bot's `/help` response mirrors the supported commands directly in Discord.
+The bot's `/help` response mirrors the supported commands directly in Discord. The Minecraft client no longer invokes Gemini; AI conversations remain in Discord.
 
 The `/vc` commands use the Discord voice gateway through `@discordjs/voice`. `/vc join` joins the administrator's current regular voice channel with the bot self-muted and self-deafened; it does not transmit or receive member audio. The selected channel is stored in the local `voice-session.json` runtime file and restored after a normal bot restart. The connection can recover from supported transient voice-gateway interruptions while the process remains online. This is not an uptime guarantee: hosting outages, process shutdowns, Discord outages, deleted channels, or removed permissions can interrupt the session. The bot needs the **Connect** permission in the target channel.
 
 **Conversational AI is opt-in.** Members must directly mention the bot or reply to one of its messages in a normal conversation channel. Ordinary chat and messages that merely contain a keyword do not trigger AI. DiscordSRV webhook messages, replies to Minecraft relay messages, and the configured Discord-to-Minecraft relay channel are excluded from conversational AI.
 
-**Case-insensitive text shortcuts** begin with `?` and do not require a bot mention. Examples: `?ip` (then reply to the bot's prompt with `Java` or `Bedrock`), `?java`, `?bedrock`, `?plugins`, `?world download`, `?help`, `?invite`, `?roles`, `?channels`, `?rules`, `?start`, `?stop`, `?status`, `?dashboard`, `?ai status`, and `?summarize <#channel>`. Administrative shortcuts still enforce their configured permissions. Use slash commands for AFK and summaries. The special `?rejoin` shortcut requires a direct mention of the Main Bot and the dedicated rejoin allow-list. The slash form uses the same allow-list. The command disconnects the Minecraft AFK client for 30 seconds, then reconnects it. The Retry button starts a fresh 30-second rejoin cycle.
+**Case-insensitive text shortcuts** begin with `?` and do not require a bot mention. Commands use one word, except `?world download` and `?summarize <#channel>`. Supported shortcuts: `?ip`, `?java`, `?bedrock`, `?pl`, `?world download`, `?help`, `?invite`, `?roles`, `?channels`, `?rules`, `?afk [reason]`, `?start`, `?stop`, `?rejoin`, `?status`, and `?summarize <#channel>`. Administrative shortcuts check the triggering member's configured permissions; `?rejoin` uses its dedicated allow-list. Shortcut replies are deterministic and do not call Gemini. Any ordinary message clears the author's AFK state and announces their return; mentioning an AFK member displays their reason and relative AFK timestamp.
 
 The configured Mineflayer client protocol is separate from the server version. The project currently depends on upstream `mineflayer` 4.39.x, which does not yet natively support Minecraft Java 26.2; do not change the client protocol to `26.2` until a compatible protocol stack is installed and tested.
 
@@ -262,7 +258,7 @@ The configured Mineflayer client protocol is separate from the server version. T
 
 # AFK system
 
-The bot's Minecraft client is designed to keep the SMP session available even when nobody else is online.
+The Minecraft connection client remains a separate server utility. It does not answer in-game chat with AI; conversational AI runs only in Discord. The AFK client is opt-in: it stays stopped after a Main Bot process restart and must be started with an authorized `/start` or `?start` command. Once started, it automatically reconnects after unexpected disconnects for the remainder of that process run.
 
 The anti-AFK system performs lightweight, randomized actions such as:
 
@@ -321,7 +317,7 @@ The system includes:
 - multiple Gemini-key failover
 - stateless administrative parsing
 - response quality checks
-- Minecraft-specific response formatting
+- Discord response formatting
 - the shared Unicode theme layer
 
 The bot should never invent unconfirmed Cottage★ information.
@@ -506,8 +502,8 @@ A practical manual test order is:
 2. Run `/help` as a public user; confirm the new `/rejoin` entry appears.
 3. Test `/afk`, `/forget`, and `/summarize`.
 4. Test a normal AI mention and a reply-aware follow-up.
-5. Test `?IP`, `?Ip`, and `?ip`; reply to each prompt with Java and Bedrock in separate tests.
-6. Test `?java`, `?bedrock`, `?plugins`, `?world download`, `?help`, `?invite`, `?roles`, `?channels`, and `?rules`.
+5. Test `?IP` and `?ip`; reply to the prompt with Java and Bedrock in separate tests.
+6. Test `?java`, `?bedrock`, `?pl`, `?world download`, `?help`, `?invite`, `?roles`, `?channels`, and `?rules`.
 7. Confirm `?server features`, `?server ip`, and `?smp join` are no longer handled as shortcuts.
 8. Test existing admin shortcuts and slash commands with authorized and unauthorized accounts.
 9. Test `/rejoin` using the explicitly allowed user ID and a member with the required role; other users should receive a generic unavailable response.

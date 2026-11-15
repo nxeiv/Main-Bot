@@ -1,26 +1,9 @@
 'use strict';
 
 const SUPPORTED_TEXT_SHORTCUTS = new Set([
-  'ip',
-  'java',
-  'java ip',
-  'java address',
-  'bedrock',
-  'bedrock ip',
-  'bedrock address',
-  'plugins',
-  'world download',
-  'help',
-  'invite',
-  'roles',
-  'channels',
-  'rules',
-  'start',
-  'stop',
-  'rejoin',
-  'status',
-  'dashboard',
-  'ai status',
+  'ip', 'java', 'bedrock', 'pl', 'world download',
+  'help', 'invite', 'roles', 'channels', 'rules',
+  'start', 'stop', 'rejoin', 'status', 'afk',
 ]);
 
 function parseTextShortcut(content) {
@@ -30,17 +13,21 @@ function parseTextShortcut(content) {
     return null;
   }
 
-  const command = text
+  const rawCommand = text
     .slice(1)
     .trim()
-    .replace(/\s+/g, ' ')
-    .toLowerCase();
+    .replace(/\s+/g, ' ');
+  const command = rawCommand.toLowerCase();
 
   if (SUPPORTED_TEXT_SHORTCUTS.has(command)) {
     return command;
   }
 
-  // The channel mention is required, matching the command handler's input.
+  // Normalize only the command name; preserve the user's reason casing.
+  if (/^afk(?:\s+.{1,200})?$/i.test(rawCommand)) {
+    return `afk${rawCommand.slice(3)}`;
+  }
+
   if (/^summarize <#\d+>$/.test(command)) {
     return command;
   }

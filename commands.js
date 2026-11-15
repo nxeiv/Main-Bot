@@ -20,7 +20,7 @@ const commands = [
 
   new SlashCommandBuilder()
     .setName('status')
-    .setDescription('ⓘ Shows Minecraft AFK status'),
+    .setDescription('◎ Shows unified Discord, Minecraft connection, and AI health'),
 
   new SlashCommandBuilder()
     .setName('afk')
@@ -39,19 +39,6 @@ const commands = [
   new SlashCommandBuilder()
     .setName('aforget')
     .setDescription('⌫ Forgets all AI conversation contexts (admin only)'),
-
-  new SlashCommandBuilder()
-    .setName('ai')
-    .setDescription('◉ AI diagnostics (admin only)')
-    .addSubcommand(subcommand =>
-      subcommand
-        .setName('status')
-        .setDescription('ⓘ Shows AI health and queue diagnostics'),
-    ),
-
-  new SlashCommandBuilder()
-    .setName('dashboard')
-    .setDescription('◎ Shows Discord, Minecraft, and AI health'),
 
   new SlashCommandBuilder()
     .setName('help')

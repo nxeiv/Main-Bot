@@ -233,6 +233,10 @@ function loadScheduledAdminActions() {
   }
 }
 
+const { createAfkNotificationCooldown } = require('./afk-notifications');
+
+const afkNotificationCooldown = createAfkNotificationCooldown({ cooldownMs: 60_000 });
+
 const afkStore = createAfkStore({
   filePath: path.join(__dirname, 'user-afk.json'),
   log: message => log('AFK', message),
@@ -739,27 +743,7 @@ function forgetAllConversations() {
   return '⌫ All AI conversation contexts have been forgotten.';
 }
 
-function buildStatusEmbed(status, title, color) {
-  return createEmbed(title, color)
-    .addFields(
-      { name: 'Server', value: `\`${status.server}\``, inline: true },
-      { name: 'Bot Status', value: getBotState(status), inline: true },
-      { name: 'Players Online', value: String(status.playerCount), inline: true },
-      {
-        name: 'Uptime',
-        value: status.connected ? formatUptime(status.uptime) : 'Not connected',
-        inline: true,
-      },
-      {
-        name: 'Reconnect Attempts',
-        value: String(status.reconnectAttempts),
-        inline: true,
-      },
-      { name: 'Bot Name', value: `\`${config.bot.username}\``, inline: true },
-    );
-}
-
-function buildDashboardEmbed() {
+function buildStatusEmbed() {
   const mcStatus = mc.getStatus();
   const aiStatus = ai.getAiDiagnostics();
   const readyAt = client.readyAt || new Date();
@@ -782,7 +766,7 @@ function buildDashboardEmbed() {
     'The Cottage★ Main Bot',
     mcStatus.connected ? Colors.Green : Colors.Blurple,
   )
-    .setDescription('◎ Unified Discord, Minecraft, and AI health')
+    .setDescription('◎ Unified Discord, Minecraft connection, and Discord AI health')
     .addFields(
       {
         name: 'Discord',
@@ -829,10 +813,10 @@ function buildDashboardEmbed() {
     );
 }
 
-function buildDashboardComponents() {
+function buildStatusComponents() {
   return new ActionRowBuilder().addComponents(
     new ButtonBuilder()
-      .setCustomId('dashboard:refresh')
+      .setCustomId('status:refresh')
       .setLabel('↻ Refresh')
       .setStyle(ButtonStyle.Secondary),
   );
@@ -1301,34 +1285,7 @@ mc.emitter.on('stopped', () => {
   void notifyChannel(embed);
 });
 
-mc.emitter.on('minecraftChat', async ({ username, message }) => {
-  const trigger = /^server[,:]?\s+/i;
-
-  if (!trigger.test(message)) return;
-
-  const question = message.replace(trigger, '').trim();
-
-  if (!question) return;
-
-  try {
-    log('AI', `Minecraft ${username}: ${question}`);
-
-const response = await ai.ask(question, {
-  userId: `mc:${username}`,
-  platform: 'minecraft',
-});
-
-    log('AI', `Minecraft response: ${response}`);
-
-    mc.chat(response);
-  } catch (error) {
-    log(
-      'AI',
-      `Unable to answer Minecraft chat: ${error.message}`,
-    );
-  }
-});
-
+// Minecraft chat relay remains available; in-game AI responses are disabled.
 mc.emitter.on('minecraftPlayerJoined', async ({ username }) => {
   if (!username || username === config.bot.username) {
     return;
@@ -1339,34 +1296,11 @@ mc.emitter.on('minecraftPlayerJoined', async ({ username }) => {
   }
 
   await new Promise(resolve => setTimeout(resolve, 1500));
-
   try {
-    log('AI', `Generating daily welcome for Minecraft player ${username}.`);
-
-    const response = await ai.ask(
-      `A player named ${username} just joined The Cottage★ SMP. Give them a short, friendly in-game welcome. Mention their username, make it feel natural and welcoming, and keep it under 180 characters. Do not use Markdown, emojis, commands, server facts, or a question.`,
-      {
-        userId: `mc:welcome:${username}`,
-        platform: 'minecraft',
-      },
-    );
-
-    mc.chat(response);
-    log('AI', `Sent daily welcome to ${username}: ${response}`);
+    mc.chat(`Welcome to The Cottage★, ${username}!`);
+    log('Minecraft', `Sent daily welcome to ${username}.`);
   } catch (error) {
-    log(
-      'AI',
-      `Unable to generate daily welcome for ${username}: ${error.message}`,
-    );
-
-    try {
-      mc.chat(`Welcome to The Cottage★, ${username}!`);
-    } catch (chatError) {
-      log(
-        'AI',
-        `Unable to send fallback welcome to ${username}: ${chatError.message}`,
-      );
-    }
+    log('Minecraft', `Unable to send daily welcome to ${username}: ${error.message}`);
   }
 });
 
@@ -1384,10 +1318,10 @@ function getIpPromptKey(message) {
 }
 
 async function handleTextShortcut({ message, shortcut }) {
-  const normalizedQuestion = String(shortcut || '')
+  const rawShortcut = String(shortcut || '')
     .trim()
-    .toLowerCase()
     .replace(/\s+/g, ' ');
+  const normalizedQuestion = rawShortcut.toLowerCase();
 
   if (normalizedQuestion === 'ip') {
     const prompt = await message.reply(
@@ -1402,13 +1336,45 @@ async function handleTextShortcut({ message, shortcut }) {
     return true;
   }
 
-  if (['java', 'java ip', 'java address'].includes(normalizedQuestion)) {
+  if (normalizedQuestion === 'java') {
     await message.reply('Java IP: ' + SERVER_INFO.javaAddress);
     return true;
   }
 
-  if (['bedrock', 'bedrock ip', 'bedrock address'].includes(normalizedQuestion)) {
+  if (normalizedQuestion === 'bedrock') {
     await message.reply('Bedrock IP: ' + SERVER_INFO.bedrockAddress);
+    return true;
+  }
+
+  if (normalizedQuestion.startsWith('afk')) {
+    const reason = rawShortcut.slice(3).trim() || 'AFK';
+    setUserAfk(message.author.id, reason);
+    const saved = getUserAfk(message.author.id);
+    const safeReason = saved.reason.replace(/([*_~|>])/g, '\\$1');
+    const startedAt = Math.floor(saved.setAt / 1000);
+    await message.reply({
+      content: `✓ You are now AFK. Reason: **${safeReason}** · <t:${startedAt}:F>`,
+      allowedMentions: { parse: [] },
+    });
+    return true;
+  }
+
+  if (normalizedQuestion === 'pl') {
+    await message.reply(ai.getInstantAnswer('plugins') || 'The plugin list is currently unavailable.');
+    return true;
+  }
+
+  if (normalizedQuestion === 'channels') {
+    await message.reply({
+      content:
+        'Here are the main channels around the community:\n' +
+        '- Rules: <#1478166898020585592>\n' +
+        '- Roles: <#1398624929099812937>\n' +
+        '- General chat: <#1398568017708978258>\n' +
+        '- Minecraft status: <#1533895421988962334>\n' +
+        '- Minecraft community: <#1533883039287873566>',
+      allowedMentions: { parse: [] },
+    });
     return true;
   }
 
@@ -1417,8 +1383,6 @@ async function handleTextShortcut({ message, shortcut }) {
     normalizedQuestion === 'stop' ||
     normalizedQuestion === 'rejoin' ||
     normalizedQuestion === 'status' ||
-    normalizedQuestion === 'ai status' ||
-    normalizedQuestion === 'dashboard' ||
     /^summarize\s+<\#\d+>$/.test(normalizedQuestion);
 
   if (!isShortcut) {
@@ -1506,107 +1470,8 @@ async function handleTextShortcut({ message, shortcut }) {
     }
 
     await message.reply({
-      embeds: [
-        buildStatusEmbed(
-          mc.getStatus(),
-          'Status Check',
-          Colors.Blurple,
-        ),
-      ],
-    });
-
-    return true;
-  }
-
-  if (normalizedQuestion === 'dashboard') {
-    if (!hasFeatureAccess('dashboard', message.author.id, message.member)) {
-      await message.reply('✕ You are not authorized to use this command.');
-      return true;
-    }
-
-    await message.reply({
-      embeds: [buildDashboardEmbed()],
-      components: [buildDashboardComponents()],
-    });
-
-    return true;
-  }
-
-  if (normalizedQuestion === 'ai status') {
-    if (!hasFeatureAccess('ai', message.author.id, message.member)) {
-      await message.reply('✕ You are not authorized to use this command.');
-      return true;
-    }
-
-    const diagnostics = ai.getAiDiagnostics();
-
-    const embed = createEmbed(
-      'AI Diagnostics',
-      Colors.Blurple,
-    ).addFields(
-      {
-        name: 'Model',
-        value: `\`${diagnostics.model}\``,
-        inline: true,
-      },
-      {
-        name: 'Configured Keys',
-        value: String(diagnostics.configuredKeys),
-        inline: true,
-      },
-      {
-        name: 'Active Normal Key',
-        value: String(diagnostics.activeNormalKey),
-        inline: true,
-      },
-      {
-        name: 'Active Admin Key',
-        value: String(diagnostics.activeAdminKey),
-        inline: true,
-      },
-      {
-        name: 'Queued Requests',
-        value: `${diagnostics.queuedRequests}/${diagnostics.queueLimit}`,
-        inline: true,
-      },
-      {
-        name: 'Active Cooldowns',
-        value: String(diagnostics.activeCooldowns),
-        inline: true,
-      },
-      {
-        name: 'Conversation Sessions',
-        value: String(diagnostics.conversationSessions),
-        inline: true,
-      },
-      {
-        name: 'Context Limit',
-        value: `${diagnostics.contextLimitMessages} messages`,
-        inline: true,
-      },
-      {
-        name: 'AI Requests',
-        value: String(diagnostics.totalRequests),
-        inline: true,
-      },
-      {
-        name: 'AI Errors',
-        value: String(diagnostics.totalErrors),
-        inline: true,
-      },
-      {
-        name: 'Last AI Error',
-        value: diagnostics.lastError
-          ? `\`${diagnostics.lastError.slice(0, 900)}\``
-          : 'None recorded',
-        inline: false,
-      },
-    ).setDescription(
-      'Admin access confirmed. This view exposes health metadata only; API keys and private conversation contents are never shown.',
-    );
-
-    await message.reply({
-      embeds: [embed],
+      embeds: [buildStatusEmbed()],
+      components: [buildStatusComponents()],
     });
 
     return true;
@@ -1653,29 +1518,44 @@ async function handleTextShortcut({ message, shortcut }) {
   return false;
 }
 
+client.on(Events.GuildMemberRemove, member => {
+  if (member.guild?.id !== config.discord.guildId) return;
+  if (clearUserAfk(member.id)) {
+    log('AFK', `Cleared AFK state for departing member ${member.id}.`);
+  }
+  afkNotificationCooldown.clearUser(member.id);
+});
+
 client.on(Events.MessageCreate, async message => {
   if (message.author.bot || message.webhookId) {
     return;
   }
 
-  // AFK STATE CLEANUP
-
-  // Any ordinary message means the author has returned.
+  // Any ordinary message clears the author's AFK state and announces their return.
   if (message.guild?.id === config.discord.guildId) {
-    const afkStatus = getUserAfk(message.author.id);
-
-    if (afkStatus) {
-      const afkDuration = formatAfkDuration(
-        Date.now() - afkStatus.setAt,
-      );
-
+    const ownAfkStatus = getUserAfk(message.author.id);
+    if (ownAfkStatus) {
+      const safeReason = ownAfkStatus.reason.replace(/([*_~|>])/g, '\\$1');
       clearUserAfk(message.author.id);
+      await message.reply({
+        content: `Your AFK status (**${safeReason}**) was removed, <@!${message.author.id}>. Welcome back!`,
+        allowedMentions: { users: [message.author.id] },
+      });
+      log('AFK', `${message.author.tag} returned; cleared AFK after ${formatAfkDuration(Date.now() - ownAfkStatus.setAt)}.`);
+    }
 
-      log(
-        'AFK',
-        message.author.tag + ' returned; cleared their AFK status after ' +
-          afkDuration + '.',
-      );
+    for (const mentionedUser of message.mentions.users.values()) {
+      if (mentionedUser.id === message.author.id) continue;
+      if (mentionedUser.bot) continue;
+      const afkStatus = getUserAfk(mentionedUser.id);
+      if (!afkStatus) continue;
+      if (!afkNotificationCooldown.shouldNotify(mentionedUser.id, message.channel.id)) continue;
+      const safeReason = afkStatus.reason.replace(/([*_~|>])/g, '\\$1');
+      const since = Math.floor(afkStatus.setAt / 1000);
+      await message.reply({
+        content: `<@!${mentionedUser.id}> is currently AFK: **${safeReason}** · <t:${since}:R>`,
+        allowedMentions: { users: [mentionedUser.id] },
+      });
     }
   }
 
@@ -1704,34 +1584,7 @@ client.on(Events.MessageCreate, async message => {
     return;
   }
 
-  // ?rejoin is intentionally different from the other shortcuts: it requires
-  // an actual mention of this bot, either before or after the shortcut text.
-  const contentWithoutBotMention = client.user
-    ? message.content
-      .replace(new RegExp('<@!?' + client.user.id + '>', 'g'), '')
-      .trim()
-    : message.content;
-  const rejoinShortcut = parseTextShortcut(contentWithoutBotMention);
-
-  if (rejoinShortcut === 'rejoin') {
-    const isBotMentionedForRejoin =
-      Boolean(client.user) &&
-      (
-        message.mentions.users.has(client.user.id) ||
-        new RegExp('<@!?' + client.user.id + '>').test(message.content)
-      );
-
-    if (
-      isBotMentionedForRejoin &&
-      message.guild?.id === config.discord.guildId
-    ) {
-      await handleTextShortcut({ message, shortcut: 'rejoin' });
-    }
-
-    return;
-  }
-
-  // Other case-insensitive ?-prefix shortcuts do not require a bot mention.
+  // Every registered shortcut can be used without mentioning Main Bot.
   const textShortcut = parseTextShortcut(message.content);
 
   if (textShortcut !== null && message.guild?.id === config.discord.guildId) {
@@ -2382,10 +2235,10 @@ client.on(Events.InteractionCreate, async interaction => {
     }
   }
 
-  if (interaction.isButton() && interaction.customId === 'dashboard:refresh') {
+  if (interaction.isButton() && interaction.customId === 'status:refresh') {
     return interaction.update({
-      embeds: [buildDashboardEmbed()],
-      components: [buildDashboardComponents()],
+      embeds: [buildStatusEmbed()],
+      components: [buildStatusComponents()],
     });
   }
 
@@ -2687,13 +2540,8 @@ client.on(Events.InteractionCreate, async interaction => {
       }
 
       return interaction.reply({
-        embeds: [
-          buildStatusEmbed(
-            status,
-            'Status Check',
-            status.connected ? Colors.Green : Colors.Blurple,
-          ),
-        ],
+        embeds: [buildStatusEmbed()],
+        components: [buildStatusComponents()],
         flags: MessageFlags.Ephemeral,
       });
     }
@@ -2713,122 +2561,10 @@ client.on(Events.InteractionCreate, async interaction => {
       const storedReason = getUserAfk(interaction.user.id).reason;
       const safeReason = storedReason.replace(/([*_~|>])/g, '\\$1');
 
+      const startedAt = Math.floor(getUserAfk(interaction.user.id).setAt / 1000);
       return interaction.reply({
-        content: '✓ You are now marked as AFK: **' + safeReason + '**',
+        content: `✓ You are now AFK. Reason: **${safeReason}** · <t:${startedAt}:F>`,
         allowedMentions: { parse: [] },
-      });
-    }
-
-    case 'dashboard': {
-      if (!hasFeatureAccess('dashboard', interaction.user.id, interaction.member)) {
-        return interaction.reply({
-          content: '✕ You are not authorized to use this command.',
-          flags: MessageFlags.Ephemeral,
-        });
-      }
-
-      return interaction.reply({
-        embeds: [buildDashboardEmbed()],
-        components: [buildDashboardComponents()],
-        flags: MessageFlags.Ephemeral,
-      });
-    }
-
-    case 'ai': {
-      if (!hasFeatureAccess('ai', interaction.user.id, interaction.member)) {
-        log(
-          'Admin',
-          `Rejected /ai from unauthorized user ${interaction.user.tag} (${interaction.user.id}).`,
-        );
-
-        return interaction.reply({
-          content: '✕ You are not authorized to use this command.',
-          flags: MessageFlags.Ephemeral,
-        });
-      }
-
-      log(
-        'Admin',
-        `Verified /ai request from ${interaction.user.tag} (${interaction.user.id}).`,
-      );
-
-      if (interaction.options.getSubcommand() === 'status') {
-        const diagnostics = ai.getAiDiagnostics();
-
-        const embed = createEmbed(
-          'AI Diagnostics',
-          Colors.Blurple,
-        ).addFields(
-          {
-            name: 'Model',
-            value: `\`${diagnostics.model}\``,
-            inline: true,
-          },
-          {
-            name: 'Configured Keys',
-            value: String(diagnostics.configuredKeys),
-            inline: true,
-          },
-          {
-            name: 'Active Normal Key',
-            value: String(diagnostics.activeNormalKey),
-            inline: true,
-          },
-          {
-            name: 'Active Admin Key',
-            value: String(diagnostics.activeAdminKey),
-            inline: true,
-          },
-          {
-            name: 'Queued Requests',
-            value: `${diagnostics.queuedRequests}/${diagnostics.queueLimit}`,
-            inline: true,
-          },
-          {
-            name: 'Active Cooldowns',
-            value: String(diagnostics.activeCooldowns),
-            inline: true,
-          },
-          {
-            name: 'Conversation Sessions',
-            value: String(diagnostics.conversationSessions),
-            inline: true,
-          },
-          {
-            name: 'Context Limit',
-            value: `${diagnostics.contextLimitMessages} messages`,
-            inline: true,
-          },
-          {
-            name: 'AI Requests',
-            value: String(diagnostics.totalRequests),
-            inline: true,
-          },
-          {
-            name: 'AI Errors',
-            value: String(diagnostics.totalErrors),
-            inline: true,
-          },
-          {
-            name: 'Last AI Error',
-            value: diagnostics.lastError
-              ? `\`${diagnostics.lastError.slice(0, 900)}\``
-              : 'None recorded',
-            inline: false,
-          },
-        ).setDescription(
-          'Admin access confirmed. This view exposes health metadata only; API keys and private conversation contents are never shown.',
-        );
-
-        return interaction.reply({
-          embeds: [embed],
-          flags: MessageFlags.Ephemeral,
-        });
-      }
-
-      return interaction.reply({
-        content: '✕ Unknown AI subcommand.',
-        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -2863,27 +2599,16 @@ client.once(Events.ClientReady, async readyClient => {
     void commandWatchdog();
   }, COMMAND_WATCHDOG_INTERVAL_MS);
 
-  // Runtime watchdog: recover an unexpectedly inactive Minecraft session.
-  setInterval(() => {
-    const status = mc.getStatus();
-
-    if (
-      !status.connected &&
-      !status.connecting &&
-      !status.reconnecting &&
-      !status.manualStop
-    ) {
-      log('Watchdog', 'Minecraft session is inactive; attempting recovery.');
-      mc.start();
-    }
-  }, 10 * 60 * 1000);
+  // The Minecraft AFK client is intentionally opt-in. It remains stopped
+  // after a process restart until an authorized /start or ?start command is used.
+  // Once started manually, minecraft.js continues to reconnect after transient
+  // network failures for the lifetime of this process.
 
   updatePresence();
 
   restoreScheduledAdminActions();
 
-  log('Bot', 'Starting AFK session.');
-  mc.start();
+  log('Bot', 'Ready. Minecraft AFK client is stopped; use /start or ?start to enable it.');
 });
 
 process.on('uncaughtException', error => {

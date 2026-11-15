@@ -38,12 +38,10 @@ const config = {
   featureAccess: {
     help: 'public',
     status: 'admin',
-    dashboard: 'admin',
     start: 'admin',
     stop: 'admin',
     forget: 'public',
     aforeget: 'admin',
-    ai: 'admin',
     summarize: 'public',
     ping: 'admin',
     vc: 'admin',
