@@ -20,7 +20,12 @@ function createPermissionService({
   }
 
   function hasFeatureAccess(feature, userId, member = null) {
-    const access = entries.get(feature)?.access || 'admin';
+    const command = entries.get(feature);
+
+    // Unknown feature names must never inherit an admin policy.
+    if (!command || typeof command.access !== 'string') return false;
+
+    const access = command.access;
 
     if (access === 'public') return true;
     if (access === 'admin' || access === 'moderator') return isAdmin(userId, member);
