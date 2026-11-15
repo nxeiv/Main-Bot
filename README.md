@@ -375,9 +375,9 @@ Startup establishes the Discord connection, reconciles slash commands, loads per
 
 ---
 
-# WispByte / Pterodactyl
+# Hosting
 
-The Main Bot can run as a Node.js application under a Pterodactyl-style host.
+Main Bot can run on any Node.js hosting provider that supports Node.js 26 or newer. Configure secrets in the provider's private environment settings.
 
 The repository expects:
 
@@ -434,6 +434,8 @@ npm test
 ```
 
 The GitHub Actions validation workflow runs JavaScript syntax checks, installs the committed dependency tree with `npm ci`, audits production dependencies, and runs `npm test` on pull requests and pushes to `main`.
+
+The full post-deployment checklist is in [docs/TODAYS_VERIFICATION_CHECKLIST.md](docs/TODAYS_VERIFICATION_CHECKLIST.md). Use it to record PASS, FAIL, or NOT TESTED for each live check.
 
 A practical manual test order is:
 
