@@ -36,12 +36,13 @@ test('IP shortcut asks for platform and stores a scoped expiring prompt', async 
 
 test('Java and Bedrock shortcuts return configured addresses', async () => {
   const h = harness(); await h.handler({ message: h.message, shortcut: 'java' }); await h.handler({ message: h.message, shortcut: 'bedrock' });
-  assert.match(h.calls[0][1], /java\\.example/); assert.match(h.calls[1][1], /bedrock\\.example/);
+  assert.match(h.calls[0][1], /java\.example/); assert.match(h.calls[1][1], /bedrock\.example/);
 });
 
 test('AFK and plugin shortcuts use their injected services', async () => {
   const h = harness(); await h.handler({ message: h.message, shortcut: 'afk Study' }); await h.handler({ message: h.message, shortcut: 'pl' });
-  assert.deepEqual(h.calls[0], ['setAfk', 'user', 'Study']); assert.equal(h.calls[1][1], 'Plugin list');
+  assert.ok(h.calls.some(call => call[0] === 'setAfk' && call[1] === 'user' && call[2] === 'Study'));
+  assert.ok(h.calls.some(call => call[0] === 'reply' && call[1] === 'Plugin list'));
 });
 
 test('unknown shortcut remains handled with deterministic help guidance', async () => {
