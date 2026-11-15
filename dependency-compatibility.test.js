@@ -14,7 +14,9 @@ test('all transitive UUID dependencies resolve to the patched release', () => {
     fs.readFileSync(path.join(__dirname, 'package-lock.json'), 'utf8'),
   );
   const uuidEntries = Object.entries(lock.packages).filter(
-    ([packagePath]) => /(^|\\/)node_modules\\/uuid$/.test(packagePath),
+    ([packagePath]) =>
+      packagePath === 'node_modules/uuid' ||
+      packagePath.endsWith('/node_modules/uuid'),
   );
 
   assert.deepEqual(
