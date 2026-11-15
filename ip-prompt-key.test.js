@@ -28,13 +28,23 @@ test('IP prompt keys are scoped to guild, channel, and author', () => {
 
 test('IP prompt keys use a separate scope for direct messages', () => {
   assert.equal(
-    getIpPromptKey({ guild: null, channel: { id: 'dm-channel' }, author: { id: 'user-1' } }),
+    getIpPromptKey({
+      guild: null,
+      channel: { id: 'dm-channel' },
+      author: { id: 'user-1' },
+    }),
     'dm:dm-channel:user-1',
   );
 });
 
 test('IP prompt key rejects messages missing channel or author IDs', () => {
   assert.throws(() => getIpPromptKey(null), TypeError);
-  assert.throws(() => getIpPromptKey({ guild: null, channel: {}, author: { id: 'user-1' } }), TypeError);
-  assert.throws(() => getIpPromptKey({ guild: null, channel: { id: 'channel-1' }, author: {} }), TypeError);
+  assert.throws(
+    () => getIpPromptKey({ guild: null, channel: {}, author: { id: 'user-1' } }),
+    TypeError,
+  );
+  assert.throws(
+    () => getIpPromptKey({ guild: null, channel: { id: 'channel-1' }, author: {} }),
+    TypeError,
+  );
 });
