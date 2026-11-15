@@ -216,29 +216,29 @@ const BOT_HELP_MESSAGE = `**The Cottage★ Help**
 Mention me or reply to one of my messages when you want an AI answer. I stay quiet during normal conversation.
 
 **Public commands**
-• \\\`/help\\\` — show this help
-• \\\`/afk [reason]\\\` — mark yourself AFK or update your reason
-• \\\`/forget\\\` — clear your own Discord AI conversation context
-• \\\`/summarize <channel>\\\` — create a temporary private summary
+• \\`/help\\` — show this help
+• \\`/afk [reason]\\` — mark yourself AFK or update your reason
+• \\`/forget\\` — clear your own Discord AI conversation context
+• \\`/summarize <channel>\\` — create a temporary private summary
 
 **Admin commands**
-• \\\`/start\\\` · \\\`/stop\\\` — control the Minecraft AFK session
-• \\\`/status\\\` — unified Discord, Minecraft connection, and Discord AI diagnostics
-• \\\`/rejoin\\\` — reconnect the AFK session after 30 seconds (restricted access)
-• \\\`/ping\\\` — check bot latency
-• \\\`/aforget\\\` — clear all Discord AI conversation contexts
-• \\\`/vc join\\\` · \\\`/vc leave\\\` · \\\`/vc status\\\` — manage the persistent 24/7 voice connection
+• \\`/start\\` · \\`/stop\\` — control the Minecraft AFK session
+• \\`/status\\` — unified Discord, Minecraft connection, and Discord AI diagnostics
+• \\`/rejoin\\` — reconnect the AFK session after 30 seconds (restricted access)
+• \\`/ping\\` — check bot latency
+• \\`/aforget\\` — clear all Discord AI conversation contexts
+• \\`/vc join\\` · \\`/vc leave\\` · \\`/vc status\\` — manage the persistent 24/7 voice connection
 
 **Text shortcuts**
-• \\\`?ip\\\` — choose Java or Bedrock
-• \\\`?java\\\` · \\\`?bedrock\\\` — show server addresses
-• \\\`?pl\\\` — list SMP plugins
-• \\\`?world download\\\` — open the world download post
-• \\\`?help\\\` · \\\`?invite\\\` · \\\`?roles\\\` · \\\`?channels\\\` · \\\`?rules\\\` — quick information
-• \\\`?afk [reason]\\\` — mark yourself AFK; your next message clears it
-• \\\`?start\\\` · \\\`?stop\\\` · \\\`?status\\\` — admin-only shortcuts
-• \\\`?rejoin\\\` — reconnect the AFK session (restricted access)
-• \\\`?summarize <channel>\\\` — create a temporary summary
+• \\`?ip\\` — choose Java or Bedrock
+• \\`?java\\` · \\`?bedrock\\` — show server addresses
+• \\`?pl\\` — list SMP plugins
+• \\`?world download\\` — open the world download post
+• \\`?help\\` · \\`?invite\\` · \\`?roles\\` · \\`?channels\\` · \\`?rules\\` — quick information
+• \\`?afk [reason]\\` — mark yourself AFK; your next message clears it
+• \\`?start\\` · \\`?stop\\` · \\`?status\\` — admin-only shortcuts
+• \\`?rejoin\\` — reconnect the AFK session (restricted access)
+• \\`?summarize <channel>\\` — create a temporary summary
 
 Shortcuts are case-insensitive and do not require a bot mention. Unknown question-mark messages are ignored. Administrative shortcuts check the triggering member's configured permissions. Shortcut replies are deterministic and never call Gemini.`;
 
