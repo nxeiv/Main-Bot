@@ -317,7 +317,7 @@ The system includes:
 - multiple Gemini-key failover
 - stateless administrative parsing
 - response quality checks
-- Minecraft-specific response formatting
+- Discord response formatting
 - the shared Unicode theme layer
 
 The bot should never invent unconfirmed Cottage★ information.
