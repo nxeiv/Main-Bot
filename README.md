@@ -220,8 +220,6 @@ The anti-AFK system performs lightweight, randomized actions such as:
 
 The goal is to keep the session active without turning the bot into an intrusive player.
 
-Player count excludes the `Server` account itself.
-
 ---
 
 # Channel summaries
