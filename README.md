@@ -393,7 +393,6 @@ Two instances would compete for:
 - the same Discord bot account
 - the same Minecraft account
 - the same administrative state
-- the same public status role
 
 ---
 
