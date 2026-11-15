@@ -2,9 +2,17 @@
 
 Use this after deployment. Mark each item **PASS**, **FAIL**, or **NOT TESTED**. CI does not replace live testing.
 
+## Merge record
+- #46 merged first: voice command extraction, text shortcut handler, Minecraft event handlers, shared response utilities, WispByte website status API removal, tests, docs, and checklist.
+- #47 merged second: Discord interaction routing extraction.
+- #48 merged third: general and admin command handler separation.
+- Previously merged: #37, #38, #40, #41, #42, and #45.
+- #43 and #44 were closed without merging because #45 superseded their lockfile work.
+- No open pull requests remain in Main-Bot.
+
 ## Build and startup
-- [ ] PR changes are merged to `main` in dependency order.
-- [ ] GitHub Actions is green on the final merge commit.
+- [x] PR changes are merged to `main` in dependency order: #46 → #47 → #48.
+- [x] GitHub Actions is green on the final `main` commit (run #297, success).
 - [ ] Host runs Node.js 26+ and installs with `npm ci`.
 - [ ] Bot starts once, logs into Discord, and reconciles slash commands.
 - [ ] No secrets or runtime JSON files are committed.
