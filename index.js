@@ -869,7 +869,7 @@ async function replaceSlashCommandsInBulk(source = 'Registrar', guildId = config
 
 async function reconcileSlashCommands(source = 'Registrar', guildId = config.discord.guildId) {
   const rest = discordRest;
-  const route = getSlashCommandRoute();
+  const route = getSlashCommandRoute(guildId);
 
   const expectedByName = new Map(
     commands.map(command => [command.name, command]),
