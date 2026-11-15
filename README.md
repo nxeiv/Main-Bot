@@ -150,7 +150,7 @@ The command registry is the source of truth for public, admin, owner, and restri
 
 # Website integration
 
-The website does not depend on a live API hosted by the Minecraft utility bot. The SMP card is informational and does not display a live player count. This removes the former WispByte-hosted status bridge and its external polling dependency.
+The website does not depend on a live API hosted by the Minecraft utility bot. The SMP card is informational and does not display a live player count. This removes the former WispByte-hosted status bridge and its external polling dependency. The admin-only Discord `/status` diagnostic now reports Minecraft connection state and reconnect attempts without displaying a player count.
 
 ---
 
