@@ -65,7 +65,7 @@ This is a source-level audit. It does not replace a live staging deployment, a c
 4. **AI session lifecycle:** sessions are in-memory and keyed by caller context. They need explicit idle expiry and bounded total session storage in addition to bounded request history.
 5. **Operational health semantics:** the status view should report actual recent service checks and stale data, not only whether credentials are configured.
 6. **Voice restore constraints:** persistence restores the configured channel after normal process restart, but hosting uptime, Discord availability, and channel permissions remain external requirements.
-7. **Dependency/lockfile consistency:** dependency manifest and lockfile must be updated together. The validation workflow currently refreshes the lockfile in CI before installation; that should not be used as a substitute for committing the updated lockfile.
+7. **Dependency/lockfile consistency:** dependency manifest and lockfile must be updated together. CI now installs from the committed lockfile with `npm ci` and no longer refreshes it automatically, so dependency drift fails validation rather than being silently repaired.
 8. **Sensitive diagnostics:** error stacks and raw error messages can contain request details. Review log/report paths and redact secrets before forwarding errors to Discord.
 9. **Hard-coded operational identifiers:** service/channel IDs and the restricted rejoin allow-list should be reviewed and centralized as validated configuration values.
 10. **Live compatibility:** the Minecraft client protocol is intentionally separate from the SMP server version. Do not change protocol versions based only on the server's advertised version.
