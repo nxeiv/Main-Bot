@@ -42,3 +42,20 @@ test('argument-based shortcuts remain strict', () => {
   assert.equal(parseTextShortcut('?plugins'), null);
   assert.equal(parseTextShortcut('???'), null);
 });
+
+
+test('sticky and say commands are registered as administrator-only channel message tools', () => {
+  for (const name of ['sticky', 'say']) {
+    const entry = COMMAND_REGISTRY.find(command => command.name === name);
+    assert.ok(entry, name + ' command is missing');
+    assert.equal(entry.access, 'admin');
+    assert.equal(entry.options, 'channel-message');
+  }
+  const generated = buildSlashCommands();
+  for (const name of ['sticky', 'say']) {
+    const command = generated.find(entry => entry.name === name);
+    assert.ok(command);
+    assert.deepEqual(command.options.map(option => option.name), ['channel', 'message']);
+    assert.equal(command.options[1].max_length, 2000);
+  }
+});
