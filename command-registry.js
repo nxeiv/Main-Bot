@@ -125,7 +125,7 @@ function buildHelpMessage() {
     '**Text shortcuts**',
     ...shortcutLines,
     '',
-    'Shortcuts are case-insensitive and do not require a bot mention. Unknown question-mark messages are ignored. Administrative shortcuts check the triggering member\\'s configured permissions; ?rejoin uses its dedicated allow-list. Shortcut replies are deterministic and never call Gemini.',
+    "Shortcuts are case-insensitive and do not require a bot mention. Unknown question-mark messages are ignored. Administrative shortcuts check the triggering member's configured permissions; ?rejoin uses its dedicated allow-list. Shortcut replies are deterministic and never call Gemini.",
   ].join('\n');
 }
 
