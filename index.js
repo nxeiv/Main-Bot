@@ -45,6 +45,7 @@ const { validateMinecraftChatMessage } = require('./minecraft-chat');
 const { createAfkStore } = require('./afk-store');
 const { createShutdownHandler } = require('./shutdown');
 const { createStatusServer } = require('./status-server');
+const { createStickyMessageManager } = require('./sticky-message-manager');
 
 const scheduledAdminActions = new Map();
 const pendingIpChoices = new Map();
@@ -272,6 +273,11 @@ function log(tag, message) {
   const timestamp = new Date().toISOString().replace('T', ' ').slice(0, 19);
   console.log(`[${timestamp}] [${tag}] ${message}`);
 }
+
+const stickyMessages = createStickyMessageManager({
+  filePath: path.join(__dirname, 'sticky-messages.json'),
+  log: message => log('Sticky', message),
+});
 
 
 const voiceSession = createVoiceSessionManager({
@@ -1173,6 +1179,9 @@ client.on(Events.MessageCreate, async message => {
     return;
   }
 
+  // Keep the configured sticky message at the bottom of its channel.
+  void stickyMessages.handleMemberMessage(message);
+
   // Any ordinary message clears the author's AFK state and announces their return.
   if (config.discord.guildIds.includes(message.guild?.id)) {
     const ownAfkStatus = getUserAfk(message.author.id);
@@ -1839,7 +1848,7 @@ registerInteractionHandlers({
   getDiscordPing, forgetUserConversation, getInteractionAiSessionId,
   forgetAllConversations, executeAdministrativeAction, createEmbed, Colors,
   config, isRejoinAuthorized, buildRejoinComponents, requireFeatureAccess,
-  handleVoiceCommand, setUserAfk, getUserAfk,
+  handleVoiceCommand, setUserAfk, getUserAfk, stickyMessages,
 });
 
 client.on(Events.Error, error => {

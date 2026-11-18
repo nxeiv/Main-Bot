@@ -121,6 +121,9 @@ The configured Minecraft account is **Server**.
 | `.env.example` | Environment variable template |
 | `minecraft-status.js` | Private Java status ping and sanitized monitor snapshot |
 | `status-server.js` | Read-only public status API with response allowlist |
+| `sticky-message-manager.js` | Persistent per-guild/channel sticky message state and bottom-of-channel refresh |
+| `community-message-command-handler.js` | Permission-gated `/sticky` and `/say` message commands |
+| `dashboard/` | First visual dashboard foundation for community-management controls |
 | `package.json` | Dependencies, scripts, and Node.js requirement |
 
 Runtime state is deliberately kept outside source code.
@@ -153,7 +156,7 @@ The command registry is the source of truth for public, admin, owner, and restri
 
 # Website integration
 
-The website reads a separate, read-only status API hosted by Main Bot. The API pings the Java server from the backend and returns only online state, player counts, version, and check time. It never returns the connection address, port, MOTD, player names, or raw errors. The admin-only Discord `/status` diagnostic remains separate from this public status endpoint.
+The website reads a separate, read-only status API hosted by Main Bot. A first visual dashboard foundation is being developed in `dashboard/`; Discord OAuth2, per-server authorization, persistent configuration, audit history, and live bot API wiring are not yet enabled. The API pings the Java server from the backend and returns only online state, player counts, version, and check time. It never returns the connection address, port, MOTD, player names, or raw errors. The admin-only Discord `/status` diagnostic remains separate from this public status endpoint.
 
 ---
 
@@ -164,7 +167,7 @@ Current `config.js` settings:
 | Setting | Current value |
 | --- | --- |
 | Bedrock compatibility | Any (Geyser-supported Bedrock versions) — direct server entry only |
-| Server software/version | `Minecraft 26.2 / Paper 26.2` |
+| Server software/version | `Minecraft 26.3 / Paper 26.3` |
 | Mineflayer client protocol setting | `1.21.11` (separate from server version) |
 | Bot username | `Server` |
 | Authentication | `offline` |
@@ -192,6 +195,8 @@ Java and Bedrock connection details are maintained privately in the deployment e
 | `/vc join` | Admin | Joins the invoking member's current voice channel in that server; other servers keep their own independent connections |
 | `/vc leave` | Admin | Stops and clears only the voice session in the server where the command is used |
 | `/vc status` | Admin | Shows the saved channel and connection state for the current server |
+| `/sticky <channel> <message>` | Admin | Sets or updates the channel's sticky message; it refreshes after member messages |
+| `/say <channel> <message>` | Admin | Posts a bot-authored message in the selected channel without parsing mentions |
 
 The bot's `/help` response mirrors the supported commands directly in Discord. Every slash-command response is ephemeral (visible only to the person who invoked it), including deferred and follow-up responses. Text shortcuts remain public; the bot explicitly mentions the person who issued the shortcut so their reply is highlighted. The Minecraft client no longer invokes Gemini; AI conversations remain in Discord.
 
@@ -299,7 +304,8 @@ The following files are generated locally and should not be committed:
 - `daily-welcomes.json`
 - `scheduled-actions.json`
 - `user-afk.json`
-- `voice-session.json` (one persistent voice target per configured guild)
+- `voice-session.json`
+- `sticky-messages.json` (one persistent voice target per configured guild)
 - logs and local runtime data
 
 They contain state rather than source code.

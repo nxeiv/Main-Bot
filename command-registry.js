@@ -24,6 +24,8 @@ const COMMAND_REGISTRY = Object.freeze([
   { name: 'ping', category: 'Administration', access: 'admin', description: 'Shows the bot latency', help: 'Checks Discord bot latency.' },
   { name: 'aforget', category: 'Administration', access: 'admin', description: '⌫ Forgets all AI conversation contexts (admin only)', help: 'Clears all Discord AI conversation contexts.' },
   { name: 'vc', category: 'Administration', access: 'admin', description: 'Manage the persistent 24/7 voice connection (admin only)', help: 'Manage the persistent voice connection.', options: 'vc' },
+  { name: 'sticky', category: 'Administration', access: 'admin', description: 'Set or update a channel sticky message', help: 'Creates or updates the sticky message for a channel.', options: 'channel-message' },
+  { name: 'say', category: 'Administration', access: 'admin', description: 'Post a message as The Cottage★ BOT', help: 'Posts a message in the selected channel.', options: 'channel-message' },
 ]);
 
 const TEXT_SHORTCUTS = Object.freeze(
@@ -60,6 +62,20 @@ function buildSlashCommands() {
           .setRequired(true));
       }
 
+      if (command.options === 'channel-message') {
+        builder
+          .addChannelOption(option => option
+            .setName('channel')
+            .setDescription('Channel where the message should appear')
+            .addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement)
+            .setRequired(true))
+          .addStringOption(option => option
+            .setName('message')
+            .setDescription('Message content (up to 2,000 characters)')
+            .setMaxLength(2000)
+            .setRequired(true));
+      }
+
       if (command.options === 'vc') {
         for (const [name, description] of [
           ['join', 'Join the voice channel you are currently in and stay there'],
@@ -92,7 +108,9 @@ function buildHelpMessage() {
     return '**' + category + ' commands**\n' + commands.map(command => {
       if (command.name === 'vc') return '• /vc join · /vc leave · /vc status — ' + command.help;
       const usage = command.name === 'afk' ? '/afk [reason]' :
-        command.name === 'summarize' ? '/summarize <channel>' : '/' + command.name;
+        command.name === 'summarize' ? '/summarize <channel>' :
+        command.name === 'sticky' || command.name === 'say' ? '/' + command.name + ' <channel> <message>' :
+        '/' + command.name;
       return '• ' + usage + ' — ' + command.help;
     }).join('\n');
   }).filter(Boolean);
@@ -107,7 +125,7 @@ function buildHelpMessage() {
     '**Text shortcuts**',
     ...shortcutLines,
     '',
-    'Shortcuts are case-insensitive and do not require a bot mention. Unknown question-mark messages are ignored. Administrative shortcuts check the triggering member\'s configured permissions; ?rejoin uses its dedicated allow-list. Shortcut replies are deterministic and never call Gemini.',
+    "Shortcuts are case-insensitive and do not require a bot mention. Unknown question-mark messages are ignored. Administrative shortcuts check the triggering member's configured permissions; ?rejoin uses its dedicated allow-list. Shortcut replies are deterministic and never call Gemini.",
   ].join('\n');
 }
 

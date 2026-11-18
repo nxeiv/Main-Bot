@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#55644a">
+  <meta name="description" content="The Cottage★ BOT community management dashboard.">
+  <title>The Cottage★ BOT — Dashboard</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script defer src="./app.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="#overview" aria-label="The Cottage BOT dashboard home">
+        <span class="brand-mark">★</span>
+        <span class="brand-copy"><strong>The Cottage★</strong><small>BOT DASHBOARD</small></span>
+      </a>
+
+      <div class="server-picker">
+        <label for="guild-select">WORKSPACE</label>
+        <select id="guild-select" disabled>
+          <option>The Cottage★</option>
+        </select>
+        <small>Multi-server support is planned.</small>
+      </div>
+
+      <nav class="navigation" aria-label="Dashboard sections">
+        <span class="nav-label">HOME</span>
+        <button class="nav-item active" data-view="overview"><span>⌂</span> Overview</button>
+        <span class="nav-label">COMMUNITY TOOLS</span>
+        <button class="nav-item" data-view="reaction-roles"><span>◎</span> Reaction roles</button>
+        <button class="nav-item" data-view="sticky"><span>⌁</span> Sticky messages</button>
+        <button class="nav-item" data-view="say"><span>↗</span> Say a message</button>
+        <span class="nav-label">MEMBERS</span>
+        <button class="nav-item" data-view="welcome"><span>✦</span> Welcome</button>
+        <button class="nav-item" data-view="boost"><span>✧</span> Server boosts</button>
+        <button class="nav-item" data-view="leave"><span>↙</span> Leave messages</button>
+        <span class="nav-label">VOICE</span>
+        <button class="nav-item" data-view="voice"><span>⌁</span> Join-to-create</button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <span class="status-dot"></span>
+        <span><strong>One bot. One home.</strong><small>The Cottage★ ecosystem</small></span>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div class="breadcrumb">The Cottage★ <span>/</span> BOT Dashboard</div>
+        <div class="profile-chip"><span class="avatar">★</span><span>Discord sign-in <small>Coming next</small></span></div>
+      </header>
+
+      <div class="page-wrap">
+        <div class="page-heading">
+          <div><p class="eyebrow">COMMUNITY CONTROL ROOM</p><h1 id="page-title">Overview</h1><p id="page-description">The tools that keep the Cottage running, in one place.</p></div>
+          <span class="version-pill">FOUNDATION PREVIEW</span>
+        </div>
+
+        <div class="preview-notice"><strong>Preview build</strong><span>This is the first dashboard layout. Discord sign-in, live server data, and saving changes will be connected in the next development phase.</span></div>
+
+        <section class="view active" id="view-overview">
+          <div class="welcome-panel">
+            <div><p class="eyebrow">THE COTTAGE★ BOT</p><h2>Less bot clutter.<br><em>More room for people.</em></h2><p>Manage community features across your connected Discord servers without jumping between bot dashboards.</p></div>
+            <div class="welcome-art"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="star">★</div><span class="art-caption">HOME IS THE COMMUNITY</span></div>
+          </div>
+          <div class="section-heading"><div><h2>Community tools</h2><p>Each feature can be configured independently for each server.</p></div></div>
+          <div class="tool-grid">
+            <button class="tool-card" data-view="reaction-roles"><span class="tool-icon">◎</span><strong>Reaction roles</strong><small>Connect emoji reactions to server roles.</small><span class="card-arrow">↗</span></button>
+            <button class="tool-card" data-view="sticky"><span class="tool-icon">⌁</span><strong>Sticky messages</strong><small>Keep important information at the bottom of a channel.</small><span class="card-arrow">↗</span></button>
+            <button class="tool-card" data-view="say"><span class="tool-icon">↗</span><strong>Say a message</strong><small>Post a bot-authored message in a chosen channel.</small><span class="card-arrow">↗</span></button>
+            <button class="tool-card" data-view="welcome"><span class="tool-icon">✦</span><strong>Welcome messages</strong><small>Give new members a proper hello.</small><span class="card-arrow">↗</span></button>
+            <button class="tool-card" data-view="boost"><span class="tool-icon">✧</span><strong>Boost messages</strong><small>Celebrate server boosts with a custom message.</small><span class="card-arrow">↗</span></button>
+            <button class="tool-card" data-view="leave"><span class="tool-icon">↙</span><strong>Leave messages</strong><small>Choose what happens when a member leaves.</small><span class="card-arrow">↗</span></button>
+            <button class="tool-card" data-view="voice"><span class="tool-icon">⌁</span><strong>Join-to-create</strong><small>Let members create temporary voice channels.</small><span class="card-arrow">↗</span></button>
+          </div>
+          <div class="bottom-note"><span class="note-mark">i</span><p><strong>Built around your server.</strong> The dashboard is designed for per-server settings, administrator access, previews, and an audit trail. Sapphire AI is not part of this project.</p></div>
+        </section>
+
+        <section class="view" id="view-reaction-roles">
+          <div class="editor-layout"><div class="editor-card"><div class="card-heading"><div><p class="eyebrow">COMMUNITY TOOLS</p><h2>Reaction roles</h2><p>Choose a message and connect reactions to roles.</p></div><span class="feature-mark">◎</span></div>
+            <label>Message channel<select disabled><option>Select a channel after connecting Discord</option></select></label>
+            <label>Message ID<input disabled placeholder="Paste the message ID"></label>
+            <div class="mapping-row"><label>Emoji<input disabled placeholder="e.g. 🌿"></label><label>Role<select disabled><option>Select a role</option></select></label></div>
+            <button class="secondary-button" disabled>＋ Add another role mapping</button><button class="primary-button" disabled>Save reaction roles</button>
+          </div><aside class="side-card"><h3>How it works</h3><p>Pick a message, assign an emoji to each role, and let members choose their own roles.</p><div class="preview-box"><span class="preview-label">MESSAGE PREVIEW</span><strong>Choose your roles</strong><p>React below to select the roles you want.</p><div class="reaction-chip">🌿  12</div></div></aside></div>
+        </section>
+
+        <section class="view" id="view-sticky">
+          <div class="editor-layout"><div class="editor-card"><div class="card-heading"><div><p class="eyebrow">COMMUNITY TOOLS</p><h2>Sticky messages</h2><p>Keep one important message at the bottom of a channel.</p></div><span class="feature-mark">⌁</span></div>
+            <label>Channel<select disabled><option>Select a channel after connecting Discord</option></select></label>
+            <label>Message<textarea disabled rows="5" placeholder="Write the message you want to keep visible..."></textarea></label>
+            <div class="button-row"><button class="primary-button" disabled>Save sticky message</button><button class="secondary-button" disabled>Remove sticky</button></div>
+            <p class="field-help">When a member sends a message, the bot refreshes its sticky so it stays at the bottom. Bot and webhook messages are ignored.</p>
+          </div><aside class="side-card"><h3>Message preview</h3><div class="preview-box"><span class="preview-label"># welcome</span><p>Welcome to The Cottage★! Please read the rules and choose your roles below.</p><small>THE COTTAGE★ BOT · JUST NOW</small></div></aside></div>
+        </section>
+
+        <section class="view" id="view-say">
+          <div class="editor-layout"><div class="editor-card"><div class="card-heading"><div><p class="eyebrow">COMMUNITY TOOLS</p><h2>Say a message</h2><p>Send a message as The Cottage★ BOT.</p></div><span class="feature-mark">↗</span></div>
+            <label>Channel<select disabled><option>Select a channel after connecting Discord</option></select></label>
+            <label>Message<textarea disabled rows="5" placeholder="Write the message the bot should post..."></textarea></label>
+            <button class="primary-button" disabled>Send message</button><p class="field-help">Useful for setting up reaction-role messages and other channel announcements. Mentions are disabled by default to prevent accidental pings.</p>
+          </div><aside class="side-card"><h3>Message preview</h3><div class="preview-box"><span class="preview-label"># roles</span><p>Choose the roles you'd like to have in the community. React below to get started.</p><small>THE COTTAGE★ BOT · PREVIEW</small></div></aside></div>
+        </section>
+
+        <section class="view" id="view-welcome"><div class="editor-layout"><div class="editor-card"><div class="card-heading"><div><p class="eyebrow">MEMBERS</p><h2>Welcome messages</h2><p>Customize the message new members receive.</p></div><span class="feature-mark">✦</span></div><label>Channel<select disabled><option>Select a channel after connecting Discord</option></select></label><label>Message<textarea disabled rows="5" placeholder="Welcome {user} to {server}!"></textarea></label><div class="mapping-row"><label>Embed color<input disabled value="#7F936F"></label><label>Image URL<input disabled placeholder="https://..."></label></div><button class="primary-button" disabled>Save welcome message</button></div><aside class="side-card"><h3>Available placeholders</h3><p><code>{user}</code> · <code>{username}</code> · <code>{server}</code> · <code>{memberCount}</code></p></aside></div></section>
+        <section class="view" id="view-boost"><div class="editor-layout"><div class="editor-card"><div class="card-heading"><div><p class="eyebrow">MEMBERS</p><h2>Server boost messages</h2><p>Thank members when they boost your server.</p></div><span class="feature-mark">✧</span></div><label>Channel<select disabled><option>Select a channel after connecting Discord</option></select></label><label>Message<textarea disabled rows="5" placeholder="Thank you {user} for boosting {server}!"></textarea></label><div class="mapping-row"><label>Embed color<input disabled value="#C9A968"></label><label>Image URL<input disabled placeholder="https://..."></label></div><button class="primary-button" disabled>Save boost message</button></div><aside class="side-card"><h3>Preview</h3><div class="preview-box"><strong>Thank you for the boost!</strong><p>Your support helps keep this community going.</p></div></aside></div></section>
+        <section class="view" id="view-leave"><div class="editor-layout"><div class="editor-card"><div class="card-heading"><div><p class="eyebrow">MEMBERS</p><h2>Leave messages</h2><p>Choose a channel and message for member departures.</p></div><span class="feature-mark">↙</span></div><label>Channel<select disabled><option>Select a channel after connecting Discord</option></select></label><label>Message<textarea disabled rows="5" placeholder="{username} has left {server}."></textarea></label><button class="primary-button" disabled>Save leave message</button></div><aside class="side-card"><h3>Available placeholders</h3><p><code>{username}</code> · <code>{server}</code> · <code>{memberCount}</code></p></aside></div></section>
+        <section class="view" id="view-voice"><div class="editor-layout"><div class="editor-card"><div class="card-heading"><div><p class="eyebrow">VOICE</p><h2>Join-to-create</h2><p>Members join one channel to create their own temporary voice room.</p></div><span class="feature-mark">⌁</span></div><label>Join-to-create channel<select disabled><option>Select a voice channel after connecting Discord</option></select></label><label>Category for created channels<select disabled><option>Select a category</option></select></label><label>Channel name template<input disabled value="{username}'s room"></label><button class="primary-button" disabled>Save voice settings</button></div><aside class="side-card"><h3>Planned controls</h3><ul><li>Move the member into their new room</li><li>Give the room owner basic controls</li><li>Delete empty temporary rooms</li><li>Configure category and permissions</li></ul></aside></div></section>
+      </div>
+      <footer class="page-footer">THE COTTAGE★ <span>·</span> The home is the community. The SMP is the backyard.</footer>
+    </main>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

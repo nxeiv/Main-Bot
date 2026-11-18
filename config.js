@@ -57,7 +57,7 @@ const config = {
     bedrockPort: Number.isInteger(bedrockPort) && bedrockPort > 0 && bedrockPort <= 65535
       ? bedrockPort
       : null,
-    version: 'Paper 26.2',
+    version: 'Paper 26.3',
     clientProtocolVersion: '1.21.11',
   },
 

@@ -21,6 +21,7 @@ function harness(overrides = {}) {
     isRejoinAuthorized: () => false, buildRejoinComponents: () => [],
     requireFeatureAccess: async () => false, handleVoiceCommand: async () => calls.push(['vc']),
     setUserAfk: () => {}, getUserAfk: () => ({ reason: 'AFK', setAt: 1000 }),
+    stickyMessages: { setSticky: async value => calls.push(['sticky', value]) },
     ...overrides,
   };
   registerInteractionHandlers(dependencies);
@@ -62,4 +63,56 @@ test('slash commands are rejected privately in guilds outside the allow-list', a
   assert.equal(result.flags, 64);
   assert.match(result.content, /not enabled in this server/);
   assert.equal(h.calls.some(call => call[0] === 'log' && String(call[2]).includes('/help requested')), false);
+});
+
+
+test('sticky command requires admin access and configures the selected channel', async () => {
+  const calls = [];
+  const h = harness({
+    hasFeatureAccess: feature => feature === 'sticky',
+    stickyMessages: { setSticky: async value => calls.push(value) },
+  });
+  const target = {
+    id: 'target-channel',
+    guildId: 'cottage-guild',
+    isTextBased: () => true,
+    send: async () => {},
+  };
+  const command = interaction('sticky');
+  command.options = {
+    getChannel: () => target,
+    getString: () => 'Pick your roles.',
+  };
+  const result = await h.client.listeners('interactionCreate')[0](command);
+  assert.match(result.content, /Sticky message updated/);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].content, 'Pick your roles.');
+});
+
+test('say command posts without parsing mentions and denies unauthorized users', async () => {
+  const h = harness({ hasFeatureAccess: feature => feature === 'say' });
+  let sent = null;
+  const target = {
+    id: 'target-channel',
+    guildId: 'cottage-guild',
+    isTextBased: () => true,
+    send: async payload => { sent = payload; },
+  };
+  const command = interaction('say');
+  command.options = {
+    getChannel: () => target,
+    getString: () => 'Welcome!',
+  };
+  const result = await h.client.listeners('interactionCreate')[0](command);
+  assert.match(result.content, /Message sent/);
+  assert.deepEqual(sent, {
+    content: 'Welcome!',
+    allowedMentions: { parse: [] },
+  });
+
+  const denied = harness();
+  const deniedCommand = interaction('say');
+  deniedCommand.options = command.options;
+  const deniedResult = await denied.client.listeners('interactionCreate')[0](deniedCommand);
+  assert.match(deniedResult.content, /not authorized/);
 });

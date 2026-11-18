@@ -24,11 +24,13 @@ test('the existing public and administrative command set is preserved', () => {
     'help',
     'ping',
     'summarize',
+    'sticky',
+    'say',
   ]) {
     assert.ok(names.has(name), 'missing slash command: ' + name);
   }
 
-  assert.equal(names.size, 11);
+  assert.equal(names.size, 13);
 
   const voiceCommand = commands.find(command => command.name === 'vc');
   assert.deepEqual(

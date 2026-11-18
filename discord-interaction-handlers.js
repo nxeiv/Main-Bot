@@ -1,9 +1,9 @@
 'use strict';
 
 const { createEphemeralInteraction } = require('./ephemeral-interaction');
-
 const { createGeneralCommandHandler } = require('./general-command-handler');
 const { createAdminCommandHandler } = require('./admin-command-handler');
+const { createCommunityMessageCommandHandler } = require('./community-message-command-handler');
 
 function registerInteractionHandlers(dependencies) {
   const {
@@ -12,7 +12,7 @@ function registerInteractionHandlers(dependencies) {
     getDiscordPing, forgetUserConversation, getInteractionAiSessionId,
     forgetAllConversations, executeAdministrativeAction, createEmbed, Colors,
     config, isRejoinAuthorized, buildRejoinComponents, requireFeatureAccess,
-    handleVoiceCommand, setUserAfk, getUserAfk,
+    handleVoiceCommand, setUserAfk, getUserAfk, stickyMessages,
   } = dependencies;
 
   if (!client?.on || !Events?.InteractionCreate) {
@@ -29,6 +29,9 @@ function registerInteractionHandlers(dependencies) {
     isRejoinAuthorized, buildRejoinComponents,
     requireFeatureAccess, buildStatusEmbed, buildStatusComponents,
   });
+  const handleCommunityMessageCommand = createCommunityMessageCommandHandler({
+    stickyMessages, MessageFlags, log,
+  });
 
   client.on(Events.InteractionCreate, async interaction => {
     if (interaction.isButton() && interaction.customId === 'rejoin:retry') {
@@ -38,7 +41,7 @@ function registerInteractionHandlers(dependencies) {
           flags: MessageFlags.Ephemeral,
         });
       }
-  
+
       try {
         const result = mc.rejoin(REJOIN_DELAY_MS, { replacePending: true });
         if (!result.scheduled) {
@@ -47,16 +50,14 @@ function registerInteractionHandlers(dependencies) {
             flags: MessageFlags.Ephemeral,
           });
         }
-  
-        log('Admin', `Rejoin retry requested by ${interaction.user.tag} (${interaction.user.id}).`);
-  
-        const updatedMessage = await interaction.update({
+
+        log('Admin', 'Rejoin retry requested by ' + interaction.user.tag + ' (' + interaction.user.id + ').');
+        return interaction.update({
           content: 'Retrying... A fresh 30-second disconnect window has started.',
           components: [],
         });
-        return updatedMessage;
       } catch (error) {
-        log('Admin', `Rejoin retry failed: ${error.message}`);
+        log('Admin', 'Rejoin retry failed: ' + error.message);
         if (!interaction.replied && !interaction.deferred) {
           return interaction.reply({
             content: '✕ Error: the AFK bot could not be scheduled to rejoin.',
@@ -65,17 +66,15 @@ function registerInteractionHandlers(dependencies) {
         }
       }
     }
-  
+
     if (interaction.isButton() && interaction.customId === 'status:refresh') {
       return interaction.update({
         embeds: [buildStatusEmbed()],
         components: [buildStatusComponents()],
       });
     }
-  
-    if (!interaction.isChatInputCommand()) {
-      return;
-    }
+
+    if (!interaction.isChatInputCommand()) return;
 
     const allowedGuildIds = config?.discord?.guildIds;
     if (
@@ -96,7 +95,7 @@ function registerInteractionHandlers(dependencies) {
 
     log(
       'Discord',
-      `/${commandInteraction.commandName} requested by ${commandInteraction.user.tag}.`,
+      '/' + commandInteraction.commandName + ' requested by ' + commandInteraction.user.tag + '.',
     );
 
     const status = mc.getStatus();
@@ -109,6 +108,15 @@ function registerInteractionHandlers(dependencies) {
       case 'help':
       case 'afk':
         return handleGeneralCommand(commandInteraction);
+      case 'sticky':
+      case 'say':
+        if (!hasFeatureAccess(commandInteraction.commandName, commandInteraction.user.id, commandInteraction.member)) {
+          return commandInteraction.reply({
+            content: '✕ You are not authorized to use this command.',
+            flags: MessageFlags.Ephemeral,
+          });
+        }
+        return handleCommunityMessageCommand(commandInteraction);
       case 'ping':
       case 'aforget':
       case 'start':
