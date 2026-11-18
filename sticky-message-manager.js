@@ -9,11 +9,13 @@ function createStickyMessageManager({
   filePath,
   log = () => {},
   fsModule = fs,
+  refreshDelayMs = 150,
 } = {}) {
   if (!filePath) throw new TypeError('Sticky message manager requires a file path.');
 
   const absolutePath = path.resolve(filePath);
   const queues = new Map();
+  const pendingRefreshes = new Map();
   let entries = load();
 
   function keyFor(guildId, channelId) {
@@ -55,6 +57,14 @@ function createStickyMessageManager({
     fsModule.renameSync(temporaryPath, absolutePath);
   }
 
+  function cancelPendingRefresh(key) {
+    const pending = pendingRefreshes.get(key);
+    if (!pending) return;
+    clearTimeout(pending.timer);
+    pendingRefreshes.delete(key);
+    for (const resolve of pending.resolvers) resolve(false);
+  }
+
   async function deletePrevious(channel, entry) {
     if (!entry?.messageId) return;
     try {
@@ -87,6 +97,7 @@ function createStickyMessageManager({
     }
 
     const key = keyFor(guildId, channel.id);
+    cancelPendingRefresh(key);
     const previous = entries[key];
     const entry = {
       guildId: String(guildId),
@@ -98,7 +109,13 @@ function createStickyMessageManager({
     };
 
     entries[key] = entry;
-    await post(channel, entry);
+    try {
+      await post(channel, entry);
+    } catch (error) {
+      if (previous) entries[key] = previous;
+      else delete entries[key];
+      throw error;
+    }
     log('Sticky message configured for ' + guildId + '/' + channel.id + '.');
     return { ...entry };
   }
@@ -106,6 +123,7 @@ function createStickyMessageManager({
   async function removeSticky({ guildId, channel } = {}) {
     if (!guildId || !channel?.id) throw new TypeError('A guild and channel are required.');
     const key = keyFor(guildId, channel.id);
+    cancelPendingRefresh(key);
     const previous = entries[key];
     if (!previous) return false;
 
@@ -127,31 +145,51 @@ function createStickyMessageManager({
       .map(entry => ({ ...entry }));
   }
 
-  async function handleMemberMessage(message) {
-    if (!message || message.author?.bot || message.webhookId || !message.guildId || !message.channel) return false;
+  function handleMemberMessage(message) {
+    if (!message || message.author?.bot || message.webhookId || !message.guildId || !message.channel) {
+      return Promise.resolve(false);
+    }
 
     const key = keyFor(message.guildId, message.channel.id);
-    if (!entries[key]) return false;
+    if (!entries[key]) return Promise.resolve(false);
 
-    const previousTask = queues.get(key) || Promise.resolve();
-    const task = previousTask.catch(() => {}).then(async () => {
-      const current = entries[key];
-      if (!current) return false;
-      try {
-        await post(message.channel, current);
-        return true;
-      } catch (error) {
-        log('Unable to refresh sticky in ' + message.channel.id + ': ' + String(error?.message || error));
-        return false;
+    return new Promise(resolve => {
+      let pending = pendingRefreshes.get(key);
+      if (pending) {
+        clearTimeout(pending.timer);
+        pending.resolvers.push(resolve);
+      } else {
+        pending = { resolvers: [resolve], timer: null };
+        pendingRefreshes.set(key, pending);
       }
-    });
 
-    queues.set(key, task);
-    try {
-      return await task;
-    } finally {
-      if (queues.get(key) === task) queues.delete(key);
-    }
+      pending.timer = setTimeout(async () => {
+        if (pendingRefreshes.get(key) !== pending) return;
+        pendingRefreshes.delete(key);
+
+        const previousTask = queues.get(key) || Promise.resolve();
+        const task = previousTask.catch(() => {}).then(async () => {
+          const current = entries[key];
+          if (!current) return false;
+          try {
+            await post(message.channel, current);
+            return true;
+          } catch (error) {
+            log('Unable to refresh sticky in ' + message.channel.id + ': ' + String(error?.message || error));
+            return false;
+          }
+        });
+
+        queues.set(key, task);
+        let result = false;
+        try {
+          result = await task;
+        } finally {
+          if (queues.get(key) === task) queues.delete(key);
+          for (const finish of pending.resolvers) finish(result);
+        }
+      }, Math.max(0, Number(refreshDelayMs) || 0));
+    });
   }
 
   return {
