@@ -99,3 +99,23 @@ test('loads sticky configurations after a restart', async () => {
   assert.equal(second.getSticky('guild-1', 'channel-1').content, 'Persistent');
   fs.rmSync(f.directory, { recursive: true, force: true });
 });
+
+
+test('coalesces quick member messages into one sticky refresh', async () => {
+  const f = fixture();
+  const manager = createStickyMessageManager({ filePath: f.filePath, refreshDelayMs: 20 });
+  await manager.setSticky({ guildId: 'guild-1', channel: f.channel, content: 'Sticky' });
+  const message = {
+    guildId: 'guild-1',
+    channel: f.channel,
+    author: { bot: false },
+    webhookId: null,
+  };
+
+  const first = manager.handleMemberMessage(message);
+  const second = manager.handleMemberMessage(message);
+  assert.deepEqual(await Promise.all([first, second]), [true, true]);
+  assert.equal(f.sent.length, 2);
+  assert.deepEqual(f.deleted, ['message-1']);
+  fs.rmSync(f.directory, { recursive: true, force: true });
+});
